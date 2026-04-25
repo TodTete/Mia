@@ -21,6 +21,20 @@ import {
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DynamicTagCloud } from "@/components/ui/dynamic-tag-cloud";
+import { 
+  Label, 
+  PolarGrid, 
+  PolarRadiusAxis,
+  PolarAngleAxis,
+  RadialBar, 
+  RadialBarChart 
+} from "recharts";
+import { 
+  ChartContainer, 
+  type ChartConfig 
+} from "@/components/ui/chart";
+import { TrendingUpIcon } from "@heroicons/react/24/outline";
 
 export default function RegistroEmocionalPage() {
   const [selectedMood, setSelectedMood] = useState<string>("Ansioso");
@@ -90,30 +104,13 @@ export default function RegistroEmocionalPage() {
           <p className="text-on-surface-variant text-base font-manrope">Registra tu estado actual para el seguimiento de salud bio-digital.</p>
         </section>
 
-        {/* Mood Grid */}
-        <section className="grid grid-cols-5 gap-sm">
-          {moods.map((mood) => {
-            const isActive = selectedMood === mood.name;
-            return (
-              <button 
-                key={mood.name}
-                onClick={() => setSelectedMood(mood.name)}
-                className={cn(
-                  "p-sm rounded-2xl flex flex-col items-center gap-xs transition-all duration-300 group",
-                  isActive ? "glass-surface-active bg-primary/20 scale-105" : "glass-surface hover:bg-on-surface/5"
-                )}
-              >
-                <mood.icon className={cn(
-                  "w-8 h-8 transition-colors",
-                  isActive ? "text-primary fill-primary/20" : "text-on-surface-variant group-hover:text-primary"
-                )} />
-                <span className={cn(
-                  "text-[10px] font-bold tracking-widest",
-                  isActive ? "text-primary" : "text-on-surface-variant"
-                )}>{mood.label}</span>
-              </button>
-            );
-          })}
+        {/* Mood Cloud */}
+        <section>
+          <DynamicTagCloud 
+            tags={moods.map(m => ({ id: m.name, label: m.label, icon: m.icon }))}
+            selectedId={selectedMood}
+            onSelect={setSelectedMood}
+          />
         </section>
 
         {/* Intensity Selector */}
@@ -122,18 +119,73 @@ export default function RegistroEmocionalPage() {
             <h3 className="text-lg font-bold font-public-sans">Intensidad</h3>
             <span className="text-2xl font-bold text-primary font-space-grotesk">{intensity}/10</span>
           </div>
-          <input 
-            type="range" 
-            min="1" 
-            max="10" 
-            value={intensity} 
-            onChange={(e) => setIntensity(parseInt(e.target.value))}
-            className="intensity-slider"
-          />
-          <div className="flex justify-between text-[10px] font-bold tracking-widest text-on-surface-variant uppercase">
-            <span>Leve</span>
-            <span>Moderado</span>
-            <span>Extremo</span>
+          <div className="grid md:grid-cols-2 gap-lg items-center">
+            <div className="space-y-md">
+              <input 
+                type="range" 
+                min="1" 
+                max="10" 
+                value={intensity} 
+                onChange={(e) => setIntensity(parseInt(e.target.value))}
+                className="intensity-slider"
+              />
+              <div className="flex justify-between text-[10px] font-bold tracking-widest text-on-surface-variant uppercase">
+                <span>Leve</span>
+                <span>Moderado</span>
+                <span>Extremo</span>
+              </div>
+            </div>
+
+            {/* Radial Chart Visualization */}
+            <div className="flex flex-col items-center justify-center">
+              <ChartContainer 
+                config={{
+                  intensity: {
+                    label: "Intensidad",
+                    color: "hsl(var(--primary))",
+                  },
+                }} 
+                className="mx-auto aspect-square max-h-[180px] w-full"
+              >
+                <RadialBarChart 
+                  data={[{ value: intensity, fill: "var(--color-primary)" }]} 
+                  startAngle={90} 
+                  endAngle={450} 
+                  innerRadius={60} 
+                  outerRadius={80}
+                >
+                  <PolarAngleAxis
+                    type="number"
+                    domain={[0, 10]}
+                    angleAxisId={0}
+                    tick={false}
+                  />
+                  <RadialBar 
+                    dataKey="value" 
+                    background 
+                    cornerRadius={10}
+                  />
+                  <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
+                    <Label
+                      content={({ viewBox }) => {
+                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                          return (
+                            <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                              <tspan x={viewBox.cx} y={viewBox.cy} className="fill-on-surface text-2xl font-bold font-space-grotesk">
+                                {intensity}/10
+                              </tspan>
+                              <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 16} className="fill-on-surface-variant uppercase text-[8px] font-bold tracking-widest">
+                                Intensidad
+                              </tspan>
+                            </text>
+                          )
+                        }
+                      }}
+                    />
+                  </PolarRadiusAxis>
+                </RadialBarChart>
+              </ChartContainer>
+            </div>
           </div>
         </section>
 
