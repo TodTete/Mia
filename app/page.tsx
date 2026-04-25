@@ -19,6 +19,7 @@ import {
   BeakerIcon 
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const teamViews = [
   {
@@ -134,6 +135,7 @@ export default function Home() {
           <img src="/mia-white.png" alt="Logo" className="h-10 hidden dark:block" />
         </div>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <div className="w-10 h-10 rounded-full overflow-hidden border border-on-surface/20">
             <img 
               alt="User Profile" 

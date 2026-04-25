@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { MoonIcon, SunIcon } from "@heroicons/react/24/outline"
+import { MoonIcon as MoonSolid, SunIcon as SunSolid } from "@heroicons/react/24/solid"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { flushSync } from "react-dom"
@@ -37,11 +37,11 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="w-10 h-10 rounded-full bg-on-surface/5 hover:bg-on-surface/10 backdrop-blur-md border border-on-surface/10"
+      className="w-10 h-10 rounded-full bg-on-surface/5 hover:bg-primary/10 transition-all duration-300 border border-on-surface/10 hover:border-primary/30 shadow-inner"
       onClick={toggleTheme}
     >
-      <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-primary" />
-      <MoonIcon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-primary" />
+      <SunSolid className="h-[1.4rem] w-[1.4rem] rotate-0 scale-100 transition-all duration-500 dark:-rotate-90 dark:scale-0 text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+      <MoonSolid className="absolute h-[1.4rem] w-[1.4rem] rotate-90 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100 text-indigo-400 drop-shadow-[0_0_10px_rgba(129,140,248,0.5)]" />
       <span className="sr-only">Toggle theme</span>
     </Button>
   )
