@@ -20,7 +20,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { DynamicTagCloud } from "@/components/ui/dynamic-tag-cloud";
 import { 
   Label, 
@@ -86,7 +85,6 @@ export default function RegistroEmocionalPage() {
           <h1 className="text-lg font-semibold tracking-tight text-primary font-public-sans">Registro Emocional</h1>
         </div>
         <div className="flex items-center gap-4">
-          <ThemeToggle />
           <div className="w-10 h-10 rounded-full overflow-hidden border border-on-surface/20">
             <img 
               alt="User Profile" 

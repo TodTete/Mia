@@ -98,8 +98,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-[100dvh] w-full flex-col items-center justify-center bg-slate-50 px-4 py-8 font-sans text-slate-900">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-12">
+    <main className="flex min-h-[100dvh] w-full flex-col items-center justify-center px-4 py-8 font-sans">
+      <div className="card-mia w-full max-w-md sm:p-12">
         
         {/* header y logo */}
         <div className="mb-10 flex flex-col items-center text-center">
@@ -116,8 +116,8 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Entrar a MIA</h1>
-          <p className="mt-2 text-sm text-slate-500">Tu asistente de salud personal</p>
+          <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Entrar a MIA</h1>
+          <p className="mt-2 text-sm text-black/60 dark:text-white/60">Tu asistente de salud personal</p>
         </div>
 
         {error && (
@@ -137,7 +137,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Correo electrónico"
               required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+              className="input-mia"
             />
           </div>
           <div className="relative">
@@ -149,7 +149,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña"
               required
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 pr-12 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+              className="input-mia pr-12"
             />
             <button
               type="button"
@@ -170,10 +170,10 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <button
+           <button
             type="submit"
             disabled={loading}
-            className="mt-2 w-full rounded-xl bg-[#3649cc] px-4 py-3.5 text-sm font-semibold text-white shadow-md shadow-[#3649cc]/20 transition-all hover:bg-[#2b3aa3] hover:shadow-lg hover:shadow-[#3649cc]/30 disabled:opacity-50"
+            className="btn-mia-primary mt-2 w-full py-3.5"
           >
             {loading ? "Procesando..." : "Continuar"}
           </button>
@@ -187,7 +187,7 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black px-4 py-3.5 text-sm font-medium text-black dark:text-white shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-zinc-900 disabled:opacity-50"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path

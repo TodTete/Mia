@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter, Public_Sans, Manrope, Space_Grotesk } from "n
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 const publicSans = Public_Sans({subsets:['latin'],variable:'--font-public-sans'});
@@ -22,6 +23,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Mia - Libro Mayor de Salud",
   description: "Sistema de salud bio-digital en tiempo real.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Mia",
+  },
+};
+
+export const viewport = {
+  themeColor: "#3649cc",
 };
 
 export default function RootLayout({
@@ -43,13 +54,16 @@ export default function RootLayout({
         spaceGrotesk.variable
       )}
     >
-      <body className="min-h-full font-manrope">
+      <body className="min-h-full font-manrope bg-slate-50 dark:bg-black text-black dark:text-white transition-colors duration-300">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
+          <div className="fixed top-4 right-6 z-[100] md:top-8 md:right-10">
+            <ThemeToggle />
+          </div>
           {children}
         </ThemeProvider>
       </body>
