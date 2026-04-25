@@ -1,65 +1,93 @@
-import Image from "next/image";
+import Link from "next/link";
+
+const teamViews = [
+  {
+    name: "Usuario 1",
+    href: "/vistas/usuario-1",
+    focus: "Pantalla principal y navegación base.",
+  },
+  {
+    name: "Usuario 2",
+    href: "/vistas/usuario-2",
+    focus: "Formularios, validaciones y flujo de captura.",
+  },
+  {
+    name: "Usuario 3",
+    href: "/vistas/usuario-3",
+    focus: "Listados, consultas y visualización de datos.",
+  },
+  {
+    name: "Usuario 4",
+    href: "/vistas/usuario-4",
+    focus: "Configuración, soporte y utilidades compartidas.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_40%),linear-gradient(180deg,#0f172a_0%,#111827_45%,#f8fafc_45%,#f8fafc_100%)] px-6 py-8 text-slate-950 sm:px-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
+        <section className="rounded-[2rem] border border-white/10 bg-slate-950 px-8 py-10 text-white shadow-2xl shadow-slate-950/30">
+          <p className="text-sm uppercase tracking-[0.35em] text-sky-300">
+            Proyecto en equipo
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          <div className="mt-4 max-w-3xl space-y-4">
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+              Estructura limpia para 4 personas y 4 áreas de trabajo.
+            </h1>
+            <p className="max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+              Esta portada organiza el proyecto por vistas y separa responsabilidades
+              para que cada integrante trabaje en su propia carpeta sin interferir
+              con el resto del equipo.
+            </p>
+          </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {teamViews.map((view) => (
+            <Link
+              key={view.href}
+              href={view.href}
+              className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">
+                {view.name}
+              </p>
+              <h2 className="mt-4 text-2xl font-semibold text-slate-950">
+                {view.href.replace("/vistas/", "")}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{view.focus}</p>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-slate-950">
+                Entrar a la vista
+                <span className="transition-transform group-hover:translate-x-1">→</span>
+              </span>
+            </Link>
+          ))}
+        </section>
+
+        <section className="grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-950">
+              Árbol base recomendado
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+              La idea es que cada vista tenga su propia carpeta, con sus componentes,
+              hooks, servicios y datos locales. Lo compartido queda fuera para evitar
+              duplicación y conflictos.
+            </p>
+          </div>
+          <div className="rounded-2xl bg-slate-950 p-5 text-sm text-slate-200">
+            <p className="font-semibold text-white">Carpetas compartidas</p>
+            <ul className="mt-3 space-y-2">
+              <li>components/ui</li>
+              <li>components/common</li>
+              <li>lib/firebase</li>
+              <li>lib/utils</li>
+              <li>types</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
