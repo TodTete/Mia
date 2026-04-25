@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "533211368663",
+    "firebase_url": "https://mia-610eb-default-rtdb.firebaseio.com",
+    "project_id": "mia-610eb",
+    "storage_bucket": "mia-610eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533211368663:android:3fc9393f580cb3e2a23492",
+        "android_client_info": {
+          "package_name": "crafters.v01"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPgyxYSlx4g3olwDGwgmNh_EauJOENoMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
