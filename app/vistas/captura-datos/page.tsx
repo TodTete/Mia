@@ -102,7 +102,21 @@ const FIELD_LABELS: Record<keyof PatientProfile, string> = {
   discapacidad: "Discapacidad",
   medicacion: "Medicacion",
   alergias: "Alergias",
-  contactoEmergencia: "Contacto de emergencia",
+  contactoEmergencia: "Contacto de Emergencia",
+};
+
+const INTERVIEW_QUESTIONS: Record<keyof PatientProfile, string> = {
+  nombre: "Hola, soy Mia. ¿Cuál es tu nombre completo?",
+  edad: "Mucho gusto. ¿Cuántos años tienes?",
+  peso: "Perfecto. Ahora dime, ¿cuál es tu peso en kilogramos?",
+  estatura: "Entendido. ¿Y cuánto mides en centímetros?",
+  genero: "¿Cómo defines tu género?",
+  localidad: "¿En qué país vives actualmente?",
+  tipoSangre: "¿Cuál es tu tipo de sangre?",
+  discapacidad: "¿Tienes alguna discapacidad que debamos registrar?",
+  medicacion: "¿Tomas algún medicamento actualmente?",
+  alergias: "¿Padeces alguna alergia?",
+  contactoEmergencia: "Finalmente, ¿cuál es el teléfono de tu contacto de emergencia?",
 };
 
 const OPTIONAL_FIELDS: Array<keyof PatientProfile> = [
@@ -443,6 +457,9 @@ export default function CapturaDatosPage() {
   const [transcript, setTranscript] = useState<string>("");
   const [isListening, setIsListening] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isInterviewing, setIsInterviewing] = useState(false);
+  const [activeInterviewField, setActiveInterviewField] = useState<keyof PatientProfile | null>(null);
+  const [interviewTranscript, setInterviewTranscript] = useState("");
   const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -604,6 +621,133 @@ export default function CapturaDatosPage() {
     } finally {
       setIsAnalyzing(false);
     }
+  }
+
+  async function askQuestion(field: keyof PatientProfile) {
+    const text = INTERVIEW_QUESTIONS[field];
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-MX";
+    utterance.rate = 1.0;
+    utterance.pitch = 2.0; // Un tono ligeramente más femenino
+
+    // Intentar encontrar una voz femenina en español
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => 
+      (v.lang.includes("es") || v.lang.includes("ES")) && 
+      (v.name.toLowerCase().includes("google") || 
+       v.name.toLowerCase().includes("female") || 
+       v.name.toLowerCase().includes("monica") || 
+       v.name.toLowerCase().includes("paulina") || 
+       v.name.toLowerCase().includes("helena") ||
+       v.name.toLowerCase().includes("sabina"))
+    );
+    
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+    
+    utterance.onstart = () => {
+       setIsListening(false);
+    };
+
+    utterance.onend = () => {
+      startInterviewListening();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function startInterviewListening() {
+    const voiceWindow = window as WindowWithSpeech;
+    const SpeechCtor = voiceWindow.SpeechRecognition ?? voiceWindow.webkitSpeechRecognition;
+    if (!SpeechCtor) return;
+
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch(e) {}
+    }
+
+    const recognition = new SpeechCtor();
+    recognition.lang = "es-MX";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+
+    recognition.onresult = (event) => {
+      const result = event.results[0];
+      const transcript = result[0].transcript;
+      setInterviewTranscript(transcript);
+
+      if (result.isFinal && activeInterviewField) {
+        processInterviewAnswer(activeInterviewField, transcript);
+      }
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+  }
+
+  async function processInterviewAnswer(field: keyof PatientProfile, answer: string) {
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch("/api/deepseek/extract-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: `Para el campo ${FIELD_LABELS[field]}, el usuario respondió: ${answer}`,
+          currentProfile: profile,
+        }),
+      });
+
+      if (response.ok) {
+        const { extracted } = await response.json();
+        const newVal = extracted[field];
+        if (newVal) {
+          setProfile(prev => ({ ...prev, [field]: newVal }));
+          setLastUpdatedFields(new Set([field]));
+          setTimeout(() => setLastUpdatedFields(new Set()), 2000);
+        }
+      }
+    } catch (e) {
+      console.error("Error", e);
+    } finally {
+      setIsAnalyzing(false);
+      setInterviewTranscript("");
+      moveToNextInterviewField(field);
+    }
+  }
+
+  function moveToNextInterviewField(currentField: keyof PatientProfile) {
+    const fields = Object.keys(INTERVIEW_QUESTIONS) as Array<keyof PatientProfile>;
+    const currentIndex = fields.indexOf(currentField);
+    
+    if (currentIndex < fields.length - 1) {
+      const nextField = fields[currentIndex + 1];
+      setActiveInterviewField(nextField);
+      askQuestion(nextField);
+    } else {
+      setIsInterviewing(false);
+      setActiveInterviewField(null);
+      setStatus("Entrevista completada.");
+    }
+  }
+
+  function startInterview() {
+    setIsInterviewing(true);
+    setMode("voz");
+    const firstField = "nombre" as keyof PatientProfile;
+    setActiveInterviewField(firstField);
+    askQuestion(firstField);
+  }
+
+  function stopInterview() {
+    window.speechSynthesis.cancel();
+    if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch(e) {}
+    }
+    setIsInterviewing(false);
+    setActiveInterviewField(null);
   }
 
   function startVoiceCapture() {
@@ -968,14 +1112,14 @@ export default function CapturaDatosPage() {
                 <div className="space-y-3">
                   {!isListening ? (
                     <button
-                      onClick={startVoiceCapture}
-                      disabled={mode !== "voz" || !isEditing || isAnalyzing}
+                      onClick={startInterview}
+                      disabled={isInterviewing || isAnalyzing}
                       className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
                       </svg>
-                      Hablar con Mia
+                      Iniciar Entrevista con Mia
                     </button>
                   ) : (
                     <button
@@ -1071,6 +1215,74 @@ export default function CapturaDatosPage() {
           </aside>
         </div>
       </div>
+
+      {/* Modal de Entrevista */}
+      {isInterviewing && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="card-mia w-full max-w-lg border-2 border-[#3345CC]/30 shadow-[0_0_50px_rgba(51,69,204,0.2)]">
+            <div className="flex flex-col items-center text-center space-y-8 py-6">
+              <div className="relative">
+                <div className={`w-24 h-24 rounded-full bg-[#3345CC] flex items-center justify-center shadow-xl shadow-[#3345CC]/40 transition-all duration-300 ${isListening ? "scale-110" : "scale-100"}`}>
+                   {isListening ? (
+                     <div className="flex gap-1.5 items-center">
+                        <div className="w-1.5 h-4 bg-white rounded-full animate-[bounce_0.6s_infinite]" />
+                        <div className="w-1.5 h-8 bg-white rounded-full animate-[bounce_0.6s_infinite_0.1s]" />
+                        <div className="w-1.5 h-4 bg-white rounded-full animate-[bounce_0.6s_infinite_0.2s]" />
+                     </div>
+                   ) : (
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                     </svg>
+                   )}
+                </div>
+                {isAnalyzing && (
+                  <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-full animate-pulse shadow-lg">
+                    PROCESANDO...
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-[#3345CC]">Mia pregunta:</h3>
+                <p className="text-2xl font-bold leading-tight">
+                  {activeInterviewField ? INTERVIEW_QUESTIONS[activeInterviewField] : "Iniciando..."}
+                </p>
+              </div>
+
+              <div className="w-full bg-slate-50 dark:bg-white/5 rounded-2xl p-6 min-h-[100px] flex items-center justify-center border border-slate-100 dark:border-white/5">
+                {interviewTranscript ? (
+                  <p className="text-xl font-medium text-black dark:text-white italic">
+                    &quot;{interviewTranscript}&quot;
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-400">
+                    {isListening ? "Te escucho..." : "Mia está hablando..."}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-4 w-full">
+                <button
+                  onClick={() => activeInterviewField && askQuestion(activeInterviewField)}
+                  disabled={isAnalyzing}
+                  className="flex-1 py-4 bg-[#3345CC]/10 text-[#3345CC] hover:bg-[#3345CC]/20 text-sm font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Repetir Pregunta
+                </button>
+                <button
+                  onClick={stopInterview}
+                  className="flex-1 py-4 bg-slate-100 dark:bg-white/5 hover:bg-red-500/10 hover:text-red-500 text-sm font-bold rounded-2xl transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
