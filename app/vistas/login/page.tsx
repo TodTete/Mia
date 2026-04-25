@@ -58,7 +58,7 @@ export default function LoginPage() {
         await set(ref(db, `users/${user.uid}/lastLogin`), new Date().toISOString());
       }
 
-      router.push("/vistas/captura"); 
+      router.push("/vistas/captura-datos"); 
     } catch (err: any) {
       setError(err.message || "Error al continuar con correo");
     } finally {
@@ -89,7 +89,7 @@ export default function LoginPage() {
         await set(ref(db, `users/${user.uid}/lastLogin`), new Date().toISOString());
       }
 
-      router.push("/vistas/captura");
+      router.push("/vistas/captura-datos");
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión con Google");
     } finally {
