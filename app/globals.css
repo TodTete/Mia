@@ -52,18 +52,18 @@
   --color-foreground: var(--on-surface);
 
   /* Border Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-full: 9999px;
+  --radius-app-sm: 0.25rem;
+  --radius-app-md: 0.75rem;
+  --radius-app-lg: 1rem;
+  --radius-app-xl: 1.5rem;
+  --radius-app-full: 9999px;
 
   /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 12px;
-  --spacing-md: 24px;
-  --spacing-lg: 40px;
-  --spacing-xl: 64px;
+  --spacing-app-xs: 4px;
+  --spacing-app-sm: 12px;
+  --spacing-app-md: 24px;
+  --spacing-app-lg: 40px;
+  --spacing-app-xl: 64px;
   --spacing-gutter: 24px;
   --spacing-margin: 32px;
 }
