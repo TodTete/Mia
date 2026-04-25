@@ -16,6 +16,24 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Configuracion DeepSeek (captura por voz de Mia)
+
+La vista de captura de datos usa una API interna en `app/api/deepseek/extract-profile/route.ts` para extraer campos desde conversacion de voz.
+
+1. Crea un archivo `.env.local` en la raiz del proyecto.
+2. Agrega estas variables:
+
+```bash
+DEEPSEEK_API_KEY=tu_api_key
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+3. Reinicia el servidor (`npm run dev`) despues de guardar `.env.local`.
+
+Notas:
+- La API key se usa solo en servidor, no se expone al cliente.
+- `deepseek-chat` sera deprecado, por eso se recomienda `deepseek-v4-flash`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
