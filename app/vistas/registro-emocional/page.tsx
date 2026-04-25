@@ -7,6 +7,7 @@ import {
   HomeIcon,
   FaceSmileIcon,
   SparklesIcon,
+  AdjustmentsHorizontalIcon,
   CpuChipIcon,
   FaceFrownIcon,
   BoltIcon,
@@ -118,7 +119,7 @@ export default function RegistroEmocionalPage() {
           <div className="flex justify-between items-center border-b border-on-surface/5 pb-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-primary/10">
-                <SparklesIcon className="w-6 h-6 text-primary" />
+                <AdjustmentsHorizontalIcon className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-bold font-public-sans">Intensidad del Sentimiento</h3>
             </div>
