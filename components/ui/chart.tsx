@@ -39,21 +39,56 @@ export function ChartContainer({
   const uniqueId = React.useId()
   const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`
 
+  const [isMounted, setIsMounted] = React.useState(false)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [dimensions, setDimensions] = React.useState<{ width: number; height: number } | null>(null)
+
+  React.useEffect(() => {
+    setIsMounted(true)
+    
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect()
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height })
+        }
+      }
+    }
+
+    // Initial check
+    updateDimensions()
+    
+    // Observer for changes
+    const observer = new ResizeObserver(updateDimensions)
+    if (containerRef.current) {
+      observer.observe(containerRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <ChartContext.Provider value={{ config }}>
       <div
+        ref={containerRef}
         data-slot="chart"
         data-chart={chartId}
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "block text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          !className?.includes("aspect-") && !className?.includes("h-") && "aspect-video",
+          "min-h-0 min-w-0 w-full relative",
           className
         )}
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
-          {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        {isMounted && dimensions ? (
+          <div className="absolute inset-0">
+            <RechartsPrimitive.ResponsiveContainer width={dimensions.width} height={dimensions.height}>
+              {children}
+            </RechartsPrimitive.ResponsiveContainer>
+          </div>
+        ) : null}
       </div>
     </ChartContext.Provider>
   )
@@ -82,6 +117,21 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
 export const ChartTooltip = RechartsPrimitive.Tooltip
 
+export interface ChartTooltipContentProps
+  extends React.ComponentProps<"div"> {
+    active?: boolean
+    payload?: any[]
+    label?: any
+    labelFormatter?: any
+    labelClassName?: string
+    formatter?: any
+    color?: string
+    nameKey?: string
+    labelKey?: string
+    hideLabel?: boolean
+    indicator?: "line" | "dot" | "dashed"
+  }
+
 export function ChartTooltipContent({
   active,
   payload,
@@ -95,13 +145,7 @@ export function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  React.ComponentProps<"div"> & {
-    hideLabel?: boolean
-    indicator?: "line" | "dot" | "dashed"
-    nameKey?: string
-    labelKey?: string
-  }) {
+}: ChartTooltipContentProps) {
   const { config } = useChart()
 
   const tooltipLabel = React.useMemo(() => {
