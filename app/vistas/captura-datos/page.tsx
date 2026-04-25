@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { auth, db } from "../../../lib/firebase/firebase";
+import { ref, set } from "firebase/database";
+import { useRouter } from "next/navigation";
 
 type CaptureMode = "manual" | "voz";
 
@@ -426,6 +429,7 @@ function mergeProfile(
 }
 
 export default function CapturaDatosPage() {
+  const router = useRouter();
   const countryOptions = useMemo(() => getCountryOptions(), []);
   const countryMap = useMemo(() => buildCountryMap(countryOptions), [countryOptions]);
   const initialStoredProfile = useMemo(() => readStoredProfile(), []);
@@ -525,7 +529,7 @@ export default function CapturaDatosPage() {
     return "";
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     const validationError = validate(profile);
     if (validationError) {
       setError(validationError);
@@ -533,11 +537,24 @@ export default function CapturaDatosPage() {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    setSavedProfile(profile);
-    setIsEditing(false);
-    setError("");
-    setStatus("Datos guardados correctamente. Ya puedes continuar al dashboard.");
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+      
+      const user = auth.currentUser;
+      if (user) {
+        await set(ref(db, `users/${user.uid}/profile`), profile);
+      }
+
+      setSavedProfile(profile);
+      setIsEditing(false);
+      setError("");
+      setStatus("Datos guardados correctamente. Redirigiendo al inicio...");
+      setTimeout(() => {
+        router.push("/vistas/inicio");
+      }, 1500);
+    } catch (err: any) {
+      setError("Error al guardar en base de datos: " + err.message);
+    }
   }
 
   async function analyzeWithDeepSeek(fullTranscript: string) {
@@ -624,6 +641,10 @@ export default function CapturaDatosPage() {
       recognitionRef.current.interimResults = true;
       recognitionRef.current.continuous = true;
 
+      recognitionRef.current.onstart = () => {
+        setStatus("🎙️ El micrófono está listo. ¡Ya puedes hablar!");
+      };
+
       recognitionRef.current.onresult = (event) => {
         let finalized = "";
         let current = "";
@@ -672,7 +693,7 @@ export default function CapturaDatosPage() {
     setIsListening(true);
     setError("");
     setTranscript("");
-    setStatus("Escuchando de forma continua. Deten cuando termines de hablar.");
+    setStatus("Iniciando micrófono, por favor espera un segundo...");
     recognitionRef.current.start();
   }
 
