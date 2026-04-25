@@ -64,7 +64,7 @@ function parseDeepSeekError(raw: string) {
 
 export async function POST(req: Request) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-v4-flash";
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
 
   if (!apiKey) {
     return NextResponse.json(
@@ -94,17 +94,11 @@ export async function POST(req: Request) {
 
     const prompt = [
       "Extrae datos de paciente desde una conversación en español.",
-      "Devuelve SOLO un objeto JSON sin markdown y sin texto extra.",
-      "Si no detectas un campo, devuelve cadena vacía.",
-      "Campos exactos: nombre, edad, peso, estatura, genero, localidad, tipoSangre, discapacidad, medicacion, alergias, contactoEmergencia.",
-      "Edad solo número. Peso y estatura pueden ser número con decimal.",
-      "Genero permitido: hombre, mujer, prefiero no decir. Si llega masculino, mapear a hombre; si llega femenino, mapear a mujer.",
-      "Si en campos opcionales se detecta ninguna, ninguno, no aplica o similar, devolver N/A.",
-      "Localidad debe ser pais, no ciudad.",
-      "Contacto de emergencia debe ser solo numerico si se detecta telefono.",
-      "No inventes datos.",
-      `Perfil actual de referencia: ${JSON.stringify(currentProfile)}.`,
-      `Conversación: ${transcript}`,
+      "Devuelve SOLO JSON.",
+      "Campos: nombre, edad, peso, estatura, genero (hombre, mujer, otro, prefiero no decir), localidad (país), tipoSangre, discapacidad, medicacion, alergias, contactoEmergencia.",
+      "Si no hay dato, usa cadena vacía.",
+      `Contexto actual: ${JSON.stringify(currentProfile)}`,
+      `Texto: ${transcript}`,
     ].join("\n");
 
     const deepseekResponse = await fetch("https://api.deepseek.com/chat/completions", {

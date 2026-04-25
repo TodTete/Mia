@@ -722,7 +722,7 @@ export default function CapturaDatosPage() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="w-1 bg-[#0028b3] rounded-full animate-bounce"
+          className="w-1 bg-[#3345CC] rounded-full animate-bounce"
           style={{
             height: `${Math.random() * 100 + 20}%`,
             animationDelay: `${i * 0.1}s`,
