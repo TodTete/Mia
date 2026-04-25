@@ -1,31 +1,67 @@
 # Estructura del proyecto
 
-La idea es separar el trabajo por vistas y, dentro de cada vista, por áreas pequeñas y predecibles. Así cada integrante puede avanzar sin pisar el trabajo del resto.
+La idea es separar el trabajo por funciones reales del asistente Mia. Cada carpeta corresponde a una vista o flujo del producto, no a una persona.
 
 ```text
 app/
   layout.tsx
   page.tsx
   vistas/
-    usuario-1/
+    login/
       page.tsx
       components/
       hooks/
       services/
       data/
-    usuario-2/
+    captura-datos/
       page.tsx
       components/
       hooks/
       services/
       data/
-    usuario-3/
+    inicio/
       page.tsx
       components/
       hooks/
       services/
       data/
-    usuario-4/
+    diagnostico/
+      page.tsx
+      components/
+      hooks/
+      services/
+      data/
+    recomendaciones/
+      page.tsx
+      components/
+      hooks/
+      services/
+      data/
+    recordatorios/
+      page.tsx
+      components/
+      hooks/
+      services/
+      data/
+    avances/
+      page.tsx
+      components/
+      hooks/
+      services/
+      data/
+    emergencias/
+      page.tsx
+      components/
+      hooks/
+      services/
+      data/
+    registro-emocional/
+      page.tsx
+      components/
+      hooks/
+      services/
+      data/
+    registro-salud/
       page.tsx
       components/
       hooks/
@@ -45,13 +81,21 @@ types/
 
 ## Reglas de trabajo
 
-- `app/vistas/usuario-1`: primera vista y navegación base.
-- `app/vistas/usuario-2`: formularios, validaciones y captura.
-- `app/vistas/usuario-3`: listados, tablas, consultas y reportes.
-- `app/vistas/usuario-4`: configuración, utilidades y soporte compartido.
+- `app/vistas/login`: acceso y consentimiento.
+- `app/vistas/captura-datos`: datos manuales o por voz.
+- `app/vistas/inicio`: resumen del paciente y punto de entrada.
+- `app/vistas/diagnostico`: enfermedad, medicamentos y orientación inicial.
+- `app/vistas/recomendaciones`: ejercicios, comida y buenos hábitos.
+- `app/vistas/recordatorios`: horarios, control de medicina y futuras consultas.
+- `app/vistas/avances`: gráficas y evolución del paciente.
+- `app/vistas/emergencias`: números locales y aviso para urgencias.
+- `app/vistas/registro-emocional`: ánimo, estrés y alertas emocionales.
+- `app/vistas/registro-salud`: sueño, hábitos y feedback general.
 
 ## Convención
 
-- Lo que sea reutilizable va en `components/`, `lib/` o `types/`.
-- Lo que sea exclusivo de una vista se queda dentro de su carpeta.
+- Lo reutilizable va en `components/`, `lib/` o `types/`.
+- Lo exclusivo de una vista se queda dentro de su carpeta.
 - Si una pieza empieza a crecer, se extrae a `components/` o `lib/`.
+- La IA debe orientar o sugerir, no diagnosticar.
+- Debe existir aviso de emergencia y consentimiento para datos sensibles.
