@@ -1,26 +1,198 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* Fonts */
+  --font-public-sans: var(--font-public-sans);
+  --font-manrope: var(--font-manrope);
+  --font-space-grotesk: var(--font-space-grotesk);
+
+  /* Colors mapped to CSS variables */
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-surface-tint: var(--surface-tint);
+  
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-inverse-primary: var(--inverse-primary);
+  
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
+  
+  --color-tertiary: var(--tertiary);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  
+  --color-error: var(--error);
+  --color-on-error: var(--on-error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+
+  --color-background: var(--surface);
+  --color-foreground: var(--on-surface);
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 12px;
+  --spacing-md: 24px;
+  --spacing-lg: 40px;
+  --spacing-xl: 64px;
+  --spacing-gutter: 24px;
+  --spacing-margin: 32px;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: #f8fafc;
+  --surface-dim: #f1f5f9;
+  --surface-bright: #ffffff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f8fafc;
+  --surface-container: #f1f5f9;
+  --surface-container-high: #e2e8f0;
+  --surface-container-highest: #cbd5e1;
+  --on-surface: #0f172a;
+  --on-surface-variant: #475569;
+  --inverse-surface: #1e293b;
+  --inverse-on-surface: #f8fafc;
+  --outline: #94a3b8;
+  --outline-variant: #cbd5e1;
+  --surface-tint: #3345cc;
+  --primary: #3345cc;
+  --on-primary: #ffffff;
+  --primary-container: #dfe0ff;
+  --on-primary-container: #000d5f;
+  --inverse-primary: #bcc2ff;
+  --secondary: #ba1a1a;
+  --on-secondary: #ffffff;
+  --secondary-container: #ffdad6;
+  --on-secondary-container: #410002;
+  --tertiary: #3046ca;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #c1c8ff;
+  --on-tertiary-container: #000d5f;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #410002;
+  
+  --x: 50%;
+  --y: 50%;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --surface: #121414;
+  --surface-dim: #121414;
+  --surface-bright: #37393a;
+  --surface-container-lowest: #0c0f0f;
+  --surface-container-low: #1a1c1c;
+  --surface-container: #1e2020;
+  --surface-container-high: #282a2b;
+  --surface-container-highest: #333535;
+  --on-surface: #e2e2e2;
+  --on-surface-variant: #c5c5d7;
+  --inverse-surface: #e2e2e2;
+  --inverse-on-surface: #2f3131;
+  --outline: #8f8fa0;
+  --outline-variant: #454654;
+  --surface-tint: #bcc2ff;
+  --primary: #bcc2ff;
+  --on-primary: #00179b;
+  --primary-container: #3345cc;
+  --on-primary-container: #c3c8ff;
+  --inverse-primary: #3d4ed5;
+  --secondary: #ffb4ab;
+  --on-secondary: #690006;
+  --secondary-container: #b70012;
+  --on-secondary-container: #ffc2bc;
+  --tertiary: #bbc3ff;
+  --on-tertiary: #001c94;
+  --tertiary-container: #3046ca;
+  --on-tertiary-container: #c1c8ff;
+  --error: #ffb4ab;
+  --on-error: #690005;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-outline/20;
+  }
+  body {
+    @apply bg-background text-foreground font-manrope;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-public-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+/* View Transitions Circle Implementation */
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  z-index: 9999;
+  clip-path: circle(0% at var(--x) var(--y));
+}
+
+/* We only animate the clip-path of the new view */
+.dark::view-transition-new(root),
+:root:not(.dark)::view-transition-new(root) {
+  animation: reveal-circle 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes reveal-circle {
+  from {
+    clip-path: circle(0% at var(--x) var(--y));
+  }
+  to {
+    clip-path: circle(150% at var(--x) var(--y));
+  }
+}
+
+@layer components {
+  .glass-surface {
+    @apply bg-on-surface/5 backdrop-blur-[20px] border border-on-surface/10;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  }
+  
+  .glass-surface-active {
+    @apply bg-on-surface/10 backdrop-blur-[30px] border border-on-surface/20;
+  }
+
+  .neon-glow-primary {
+    box-shadow: 0 0 15px rgba(var(--primary), 0.2);
+  }
 }

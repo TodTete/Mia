@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Public_Sans, Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const publicSans = Public_Sans({subsets:['latin'],variable:'--font-public-sans'});
+const manrope = Manrope({subsets:['latin'],variable:'--font-manrope'});
+const spaceGrotesk = Space_Grotesk({subsets:['latin'],variable:'--font-space-grotesk'});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Proyecto en equipo",
-  description: "Estructura modular de Next.js para 4 integrantes.",
+  title: "Mia - Libro Mayor de Salud",
+  description: "Sistema de salud bio-digital en tiempo real.",
 };
 
 export default function RootLayout({
@@ -24,11 +31,27 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="es"
+      suppressHydrationWarning
+      className={cn(
+        "h-full antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        inter.variable,
+        publicSans.variable,
+        manrope.variable,
+        spaceGrotesk.variable
+      )}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-950">
-        {children}
+      <body className={cn("min-h-full flex flex-col font-manrope", manrope.className)}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
