@@ -1,7 +1,10 @@
 "use client"
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { 
   UserCircleIcon, 
   ChatBubbleLeftRightIcon, 
@@ -95,6 +98,28 @@ const supportViews = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace("/vistas/login");
+      } else {
+        setLoadingAuth(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loadingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-container-lowest">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-surface-container-lowest text-on-surface font-manrope selection:bg-primary/30 pb-24 transition-colors duration-300">
       {/* Background decoration */}
@@ -106,10 +131,8 @@ export default function Home() {
       {/* Header */}
       <header className="fixed top-0 w-full z-50 flex items-center justify-between px-margin h-16 bg-surface/80 backdrop-blur-xl border-b border-on-surface/10">
         <div className="flex items-center gap-sm">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <HeartIcon className="w-5 h-5 text-on-primary fill-on-primary" />
-          </div>
-          <span className="text-xl font-bold tracking-tighter text-primary font-public-sans">MIA</span>
+          <img src="/mia-black.png" alt="Logo" className="h-10 dark:hidden" />
+          <img src="/mia-white.png" alt="Logo" className="h-10 hidden dark:block" />
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />

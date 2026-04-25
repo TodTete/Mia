@@ -43,10 +43,10 @@ export default function RootLayout({
         spaceGrotesk.variable
       )}
     >
-      <body className={cn("min-h-full flex flex-col font-manrope", manrope.className)}>
+      <body className="min-h-full font-manrope">
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
