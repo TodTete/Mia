@@ -58,7 +58,7 @@ export default function LoginPage() {
         await set(ref(db, `users/${user.uid}/lastLogin`), new Date().toISOString());
       }
 
-      router.push("/vistas/captura"); 
+      router.push("/vistas/captura-datos"); 
     } catch (err: any) {
       setError(err.message || "Error al continuar con correo");
     } finally {
@@ -89,7 +89,7 @@ export default function LoginPage() {
         await set(ref(db, `users/${user.uid}/lastLogin`), new Date().toISOString());
       }
 
-      router.push("/vistas/captura");
+      router.push("/vistas/captura-datos");
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión con Google");
     } finally {
@@ -98,8 +98,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-10 font-sans text-slate-900">
-      <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-12">
+    <main className="flex min-h-[100dvh] w-full flex-col items-center justify-center bg-slate-50 px-4 py-8 font-sans text-slate-900">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-12">
         
         {/* header y logo */}
         <div className="mb-10 flex flex-col items-center text-center">
