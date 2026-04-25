@@ -46,7 +46,7 @@ export default function RootLayout({
       <body className={cn("min-h-full flex flex-col font-manrope", manrope.className)}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
