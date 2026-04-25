@@ -8,19 +8,6 @@ import { flushSync } from "react-dom"
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full">
-        <span className="sr-only">Toggle theme</span>
-      </Button>
-    )
-  }
 
   const toggleTheme = (event: React.MouseEvent<HTMLButtonElement>) => {
     const isDark = resolvedTheme === "dark"

@@ -189,27 +189,9 @@ function normalize(text: string) {
 }
 
 function getCountryOptions() {
-  if (
-    typeof Intl !== "undefined" &&
-    "supportedValuesOf" in Intl &&
-    typeof Intl.supportedValuesOf === "function" &&
-    typeof Intl.DisplayNames === "function"
-  ) {
-    try {
-      const regions = Intl.supportedValuesOf("region");
-      const display = new Intl.DisplayNames(["es"], { type: "region" });
-      const names = regions
-        .map((code) => display.of(code) ?? "")
-        .map((name) => name.trim())
-        .filter((name) => name.length > 0 && !name.toLowerCase().includes("unknown"));
-
-      return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b, "es"));
-    } catch {
-      return COUNTRY_FALLBACK;
-    }
-  }
-
-  return COUNTRY_FALLBACK;
+  return Array.from(new Set(COUNTRY_FALLBACK)).sort((a, b) =>
+    a.localeCompare(b, "es"),
+  );
 }
 
 function valueFromPattern(input: string, patterns: RegExp[]) {
