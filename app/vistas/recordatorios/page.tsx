@@ -5,7 +5,6 @@ import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
-import { useRouter } from "next/navigation";
 
 type Medicine = {
   id: string;
@@ -24,7 +23,6 @@ type Appointment = {
 };
 
 export default function RecordatoriosPage() {
-  const router = useRouter();
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -76,23 +74,20 @@ export default function RecordatoriosPage() {
             setStreak(data.streak || 0);
             setLastStreakUpdate(data.lastStreakUpdate || 0);
           } else {
-            // First time setup if empty somehow
             setMedicines([]);
             setAppointments([]);
           }
           setLoadingData(false);
         });
 
-        return () => {
-          // Cleanup real-time listener is tricky inside onAuthStateChanged,
-          // but we can just let it be or rely on unmount.
-        };
+        return () => {};
       } else {
-        router.push("/vistas/login");
+        // No user logged in — allow page to work without Firebase sync
+        setLoadingData(false);
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   // Update current time every minute for the alarms
   useEffect(() => {
