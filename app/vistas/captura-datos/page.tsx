@@ -27,16 +27,20 @@ type SpeechRecognitionLike = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
+  onstart: (() => void) | null;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
   start: () => void;
   stop: () => void;
+  abort: () => void;
 };
 
+type SpeechResult = ArrayLike<{ transcript: string }> & { isFinal: boolean };
+
 type SpeechRecognitionEventLike = {
-  resultIndex?: number;
-  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+  resultIndex: number;
+  results: ArrayLike<SpeechResult>;
 };
 
 type WindowWithSpeech = Window & {
@@ -122,13 +126,13 @@ const INTERVIEW_QUESTIONS: Record<keyof PatientProfile, string> = {
   edad: "Mucho gusto. ¿Cuántos años tienes?",
   peso: "Perfecto. Ahora dime, ¿cuál es tu peso en kilogramos?",
   estatura: "Entendido. ¿Y cuánto mides en centímetros?",
-  genero: "¿Cómo defines tu género?",
+  genero: "¿Cómo defines tu género? Puedes decir hombre, mujer, u otro.",
   nacionalidad: "¿Cuál es tu nacionalidad?",
-  tipoSangre: "¿Cuál es tu tipo de sangre?",
-  discapacidad: "¿Tienes alguna discapacidad que debamos registrar?",
-  medicacion: "¿Tomas algún medicamento actualmente?",
-  alergias: "¿Padeces alguna alergia?",
-  contactoEmergencia: "Finalmente, ¿cuál es el teléfono de tu contacto de emergencia?",
+  tipoSangre: "¿Cuál es tu tipo de sangre? Por ejemplo A positivo, O negativo. Si no lo sabes di no sé.",
+  discapacidad: "¿Tienes alguna discapacidad que debamos registrar? Si no tienes, di ninguna.",
+  medicacion: "¿Tomas algún medicamento actualmente? Si no tomas, di ninguno.",
+  alergias: "¿Padeces alguna alergia? Si no tienes, di ninguna.",
+  contactoEmergencia: "Por último, ¿cuál es el número de teléfono de tu contacto de emergencia? Solo los dígitos.",
 };
 
 const OPTIONAL_FIELDS: Array<keyof PatientProfile> = [
@@ -232,7 +236,10 @@ function readStoredProfile(): PatientProfile | null {
   }
 
   try {
-    return JSON.parse(stored) as PatientProfile;
+    const parsed = JSON.parse(stored) as Partial<PatientProfile>;
+    // Fusionar con EMPTY_PROFILE para que los campos nuevos nunca sean undefined
+    // (importante si el usuario tenía datos guardados de una versión anterior)
+    return { ...EMPTY_PROFILE, ...parsed };
   } catch {
     localStorage.removeItem(STORAGE_KEY);
     return null;
@@ -479,6 +486,9 @@ export default function CapturaDatosPage() {
   const [interviewTranscript, setInterviewTranscript] = useState("");
   const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
   const [currentStep, setCurrentStep] = useState(0);
+  // Número de campos visibles en la animación de intro
+  const [introFieldCount, setIntroFieldCount] = useState(0);
+  const introTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [apiNationalities, setApiNationalities] = useState<{name: string, flag: string}[]>([]);
 
   useEffect(() => {
@@ -498,21 +508,26 @@ export default function CapturaDatosPage() {
     }
     fetchNationalities();
   }, []);
-
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const shouldKeepListeningRef = useRef(false);
   const fullTranscriptRef = useRef("");
+  const activeFieldRef = useRef<keyof PatientProfile | null>(null);
+  const profileRef = useRef<PatientProfile>(initialStoredProfile ?? EMPTY_PROFILE);
+  // Contador de sesión: cada llamada a listenForAnswer incrementa este número.
+  // Los callbacks verifican que su sesión siga vigente antes de actuar.
+  const interviewSessionRef = useRef(0);
 
   const missingRequiredFields = useMemo(() => {
-    return REQUIRED_FIELDS.filter((field) => !profile[field].trim());
+    return REQUIRED_FIELDS.filter((field) => !(profile[field] ?? "").trim());
   }, [profile]);
 
   function updateField(field: keyof PatientProfile, value: string, isFromIA = false) {
     const normalizedValue = normalizeByField(field, value, countryMap);
-    setProfile((prev) => ({
-      ...prev,
-      [field]: normalizedValue,
-    }));
+    setProfile((prev) => {
+      const next = { ...prev, [field]: normalizedValue };
+      profileRef.current = next; // sincronizar ref
+      return next;
+    });
 
     if (isFromIA) {
       setLastUpdatedFields((prev) => new Set([...prev, field]));
@@ -672,131 +687,291 @@ export default function CapturaDatosPage() {
     }
   }
 
-  async function askQuestion(field: keyof PatientProfile) {
-    const text = INTERVIEW_QUESTIONS[field];
+  // ── ENTREVISTA GUIADA ──────────────────────────────────────────────────────
+  // Diseño: el campo activo se guarda en activeFieldRef (no en estado React)
+  // para que los callbacks de SpeechRecognition siempre lean el valor actual.
+
+  function speakText(text: string, onDone: () => void) {
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "es-MX";
     utterance.rate = 1.0;
-    utterance.pitch = 2.0; // Un tono ligeramente más femenino
+    utterance.pitch = 1.8;
 
-    // Intentar encontrar una voz femenina en español
-    const voices = window.speechSynthesis.getVoices();
-    const femaleVoice = voices.find(v => 
-      (v.lang.includes("es") || v.lang.includes("ES")) && 
-      (v.name.toLowerCase().includes("google") || 
-       v.name.toLowerCase().includes("female") || 
-       v.name.toLowerCase().includes("monica") || 
-       v.name.toLowerCase().includes("paulina") || 
-       v.name.toLowerCase().includes("helena") ||
-       v.name.toLowerCase().includes("sabina"))
-    );
-    
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    // Esperar a que las voces estén cargadas
+    const trySpeak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const spanishVoice = voices.find(v =>
+        v.lang.startsWith("es") &&
+        (v.name.toLowerCase().includes("google") ||
+          v.name.toLowerCase().includes("paulina") ||
+          v.name.toLowerCase().includes("monica") ||
+          v.name.toLowerCase().includes("helena"))
+      ) ?? voices.find(v => v.lang.startsWith("es"));
+      if (spanishVoice) utterance.voice = spanishVoice;
+      utterance.onend = onDone;
+      utterance.onerror = () => onDone(); // si falla, igual continuar
+      window.speechSynthesis.speak(utterance);
+    };
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+      trySpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        trySpeak();
+      };
     }
-    
-    utterance.onstart = () => {
-       setIsListening(false);
-    };
-
-    utterance.onend = () => {
-      startInterviewListening();
-    };
-
-    window.speechSynthesis.speak(utterance);
   }
 
-  function startInterviewListening() {
+  function listenForAnswer(field: keyof PatientProfile) {
     const voiceWindow = window as WindowWithSpeech;
     const SpeechCtor = voiceWindow.SpeechRecognition ?? voiceWindow.webkitSpeechRecognition;
-    if (!SpeechCtor) return;
-
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch(e) {}
+    if (!SpeechCtor) {
+      setError("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+      setIsInterviewing(false);
+      return;
     }
 
-    const recognition = new SpeechCtor();
-    recognition.lang = "es-MX";
-    recognition.interimResults = true;
-    recognition.continuous = false;
+    // Incrementar sesión: invalida todos los callbacks de llamadas anteriores
+    const mySession = ++interviewSessionRef.current;
+    recognitionRef.current = null;
 
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
+    const rec = new SpeechCtor() as SpeechRecognitionLike;
+    rec.lang = "es-MX";
+    rec.interimResults = true;
+    rec.continuous = false;
 
-    recognition.onresult = (event) => {
-      const result = event.results[0];
-      const transcript = result[0].transcript;
-      setInterviewTranscript(transcript);
+    let resultProcessed = false;
 
-      if (result.isFinal && activeInterviewField) {
-        processInterviewAnswer(activeInterviewField, transcript);
+    rec.onstart = () => {
+      if (interviewSessionRef.current !== mySession) return;
+      setIsListening(true);
+      setInterviewTranscript("");
+      setStatus("🎙️ Escuchando tu respuesta...");
+    };
+
+    rec.onerror = (event) => {
+      if (interviewSessionRef.current !== mySession || resultProcessed) return;
+      setIsListening(false);
+
+      if (event.error === "no-speech" || event.error === "network") {
+        const msg = event.error === "no-speech"
+          ? "No te escuché, intenta de nuevo..."
+          : "Reintentando conexión de voz...";
+        setStatus(msg);
+        setError("");
+        setTimeout(() => {
+          if (interviewSessionRef.current === mySession) listenForAnswer(field);
+        }, 1200);
+      } else if (event.error === "not-allowed") {
+        setError("Debes permitir el acceso al micrófono en tu navegador.");
+        setIsInterviewing(false);
+      } else {
+        setStatus(`Reintentando (${event.error})...`);
+        setError("");
+        setTimeout(() => {
+          if (interviewSessionRef.current === mySession) listenForAnswer(field);
+        }, 1500);
       }
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
+    rec.onend = () => {
+      if (interviewSessionRef.current !== mySession) return;
+      setIsListening(false);
+      // Solo reintentar si no se procesó ningún resultado en esta sesión
+      if (!resultProcessed) {
+        setTimeout(() => {
+          if (interviewSessionRef.current === mySession) listenForAnswer(field);
+        }, 800);
+      }
+    };
+
+    rec.onresult = (event) => {
+      if (interviewSessionRef.current !== mySession || resultProcessed) return;
+
+      let partial = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i];
+        partial += chunk[0].transcript;
+
+        if (chunk.isFinal) {
+          resultProcessed = true;
+          // Invalidar esta sesión inmediatamente para cancelar cualquier retry pendiente
+          interviewSessionRef.current++;
+          const answer = chunk[0].transcript.trim();
+          setInterviewTranscript(answer);
+          // No llamar abort() — causa error 'network' en Chrome
+          handleInterviewAnswer(field, answer);
+          return;
+        }
+      }
+      setInterviewTranscript(partial);
+    };
+
+    try {
+      rec.start();
+      recognitionRef.current = rec;
+    } catch (e) {
+      console.error("No se pudo iniciar el micrófono", e);
+      setError("No se pudo activar el micrófono. Verifica permisos en tu navegador.");
+      setIsInterviewing(false);
+    }
   }
 
-  async function processInterviewAnswer(field: keyof PatientProfile, answer: string) {
+  async function handleInterviewAnswer(field: keyof PatientProfile, answer: string) {
+    setIsListening(false);
     setIsAnalyzing(true);
+    setStatus(`Procesando con IA: "${answer}"...`);
+
+    let valueToSave = "";
+
     try {
+      const currentProfile = profileRef.current;
+
       const response = await fetch("/api/deepseek/extract-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          transcript: `Para el campo ${FIELD_LABELS[field]}, el usuario respondió: ${answer}`,
-          currentProfile: profile,
+          transcript: `Pregunta: ${INTERVIEW_QUESTIONS[field]}\nRespuesta del usuario: "${answer}"`,
+          currentProfile,
         }),
       });
 
       if (response.ok) {
-        const { extracted } = await response.json();
-        const newVal = extracted[field];
-        if (newVal) {
-          setProfile(prev => ({ ...prev, [field]: newVal }));
-          setLastUpdatedFields(new Set([field]));
-          setTimeout(() => setLastUpdatedFields(new Set()), 2000);
-        }
+        const { extracted } = (await response.json()) as { extracted: Partial<PatientProfile> };
+        const aiVal = (extracted[field] ?? "").trim();
+        valueToSave = aiVal || normalizeByField(field, answer, countryMap);
+      } else {
+        valueToSave = normalizeByField(field, answer, countryMap);
       }
-    } catch (e) {
-      console.error("Error", e);
+    } catch {
+      valueToSave = normalizeByField(field, answer, countryMap);
     } finally {
       setIsAnalyzing(false);
       setInterviewTranscript("");
-      moveToNextInterviewField(field);
     }
+
+    // ── Validación por campo ───────────────────────────────────────────────────
+    // Si el valor capturado no es válido, Mia vuelve a pedir el dato.
+    const validationError = validateField(field, valueToSave);
+    if (validationError) {
+      speakText(`No pude entender bien ese dato. ${validationError} Intenta de nuevo.`, () => {
+        listenForAnswer(field);
+      });
+      setStatus(`⚠️ ${validationError}`);
+      return;
+    }
+
+    // Guardar el valor válido
+    setProfile(prev => {
+      const next = { ...prev, [field]: valueToSave };
+      profileRef.current = next;
+      return next;
+    });
+    setLastUpdatedFields(new Set([field]));
+    setTimeout(() => setLastUpdatedFields(new Set()), 2500);
+
+    advanceInterview(field);
   }
 
-  function moveToNextInterviewField(currentField: keyof PatientProfile) {
+  // Validación individual por campo (solo para los obligatorios)
+  function validateField(field: keyof PatientProfile, value: string): string {
+    if (OPTIONAL_FIELDS.includes(field)) return ""; // opcionales siempre pasan
+
+    if (!value.trim()) {
+      return "Por favor dime ese dato."
+    }
+
+    if (field === "nombres") {
+      // Al menos dos palabras (nombre y apellido)
+      const parts = value.trim().split(/\s+/);
+      if (parts.length < 2) return "Necesito tu nombre completo, incluyendo apellidos.";
+    }
+
+    if (field === "edad") {
+      const age = Number(value);
+      if (!Number.isFinite(age) || age < 1 || age > 120)
+        return "La edad debe ser un número entre 1 y 120 años.";
+    }
+
+    if (field === "peso") {
+      const w = Number(value);
+      if (!Number.isFinite(w) || w < 20 || w > 300)
+        return "El peso debe ser un número entre 20 y 300 kilogramos.";
+    }
+
+    if (field === "estatura") {
+      const h = Number(value);
+      if (!Number.isFinite(h) || h < 90 || h > 250)
+        return "La estatura debe ser un número entre 90 y 250 centímetros.";
+    }
+
+    if (field === "genero") {
+      const valid = ["hombre", "mujer", "otro", "prefiero no decir"];
+      if (!valid.includes(value.toLowerCase()))
+        return "Por favor di: hombre, mujer, otro, o prefiero no decir.";
+    }
+
+    if (field === "nacionalidad") {
+      if (value.length < 2) return "Necesito saber tu nacionalidad.";
+    }
+
+    return "";
+  }
+
+  function advanceInterview(currentField: keyof PatientProfile) {
     const fields = Object.keys(INTERVIEW_QUESTIONS) as Array<keyof PatientProfile>;
-    const currentIndex = fields.indexOf(currentField);
-    
-    if (currentIndex < fields.length - 1) {
-      const nextField = fields[currentIndex + 1];
+    const idx = fields.indexOf(currentField);
+
+    if (idx < fields.length - 1) {
+      const nextField = fields[idx + 1];
+      activeFieldRef.current = nextField;
       setActiveInterviewField(nextField);
-      askQuestion(nextField);
+      // Dar una pequeña pausa para que el usuario procese el cambio
+      setTimeout(() => {
+        speakText(INTERVIEW_QUESTIONS[nextField], () => {
+          listenForAnswer(nextField);
+        });
+      }, 400);
     } else {
-      setIsInterviewing(false);
+      // Entrevista completa
+      activeFieldRef.current = null;
       setActiveInterviewField(null);
-      setStatus("Entrevista completada.");
+      setIsInterviewing(false);
+      speakText("Perfecto, hemos terminado. Ya puedes revisar y guardar tu información.", () => {});
+      setStatus("✅ ¡Entrevista completada! Revisa los datos y presiona Guardar.");
     }
   }
 
   function startInterview() {
+    if (isInterviewing) return;
+    const firstField: keyof PatientProfile = "nombres";
+    activeFieldRef.current = firstField;
+    setActiveInterviewField(firstField);
     setIsInterviewing(true);
     setMode("voz");
-    const firstField = "nombres" as keyof PatientProfile;
-    setActiveInterviewField(firstField);
-    askQuestion(firstField);
+    setError("");
+    profileRef.current = profile;
+    speakText(INTERVIEW_QUESTIONS[firstField], () => {
+      listenForAnswer(firstField);
+    });
   }
 
   function stopInterview() {
+    // Invalidar la sesión activa — cancela todos los retries pendientes
+    interviewSessionRef.current++;
     window.speechSynthesis.cancel();
     if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch(e) {}
+      try { recognitionRef.current.abort(); } catch (_) {}
+      recognitionRef.current = null;
     }
+    activeFieldRef.current = null;
     setIsInterviewing(false);
+    setIsListening(false);
     setActiveInterviewField(null);
+    setInterviewTranscript("");
+    setStatus("Entrevista pausada. Puedes reanudarla cuando quieras.");
   }
 
   function startVoiceCapture() {
@@ -824,12 +999,12 @@ export default function CapturaDatosPage() {
       recognitionRef.current.onresult = (event) => {
         let finalized = "";
         let current = "";
-        const start = event.resultIndex ?? 0;
+        const start = event.resultIndex;
 
         for (let i = start; i < event.results.length; i += 1) {
           const result = event.results[i];
           const piece = result[0]?.transcript ?? "";
-          const isFinal = (result as unknown as { isFinal?: boolean }).isFinal;
+          const isFinal = result.isFinal;
 
           if (isFinal) {
             finalized += `${piece} `;
@@ -914,6 +1089,55 @@ export default function CapturaDatosPage() {
     setStatus("Modo edicion activado.");
   }
 
+  // ── FLUJO DE VOZ: intro animada + grabación continua ────────────────────
+  // Datos que Mia menciona — se animan uno a uno mientras ella habla
+  const VOICE_FIELDS = [
+    { emoji: "📝", label: "Nombre completo" },
+    { emoji: "🎂", label: "Edad" },
+    { emoji: "👤", label: "Género" },
+    { emoji: "🌍", label: "País donde vives" },
+    { emoji: "⚖️", label: "Peso en kilogramos" },
+    { emoji: "📏", label: "Estatura en centímetros" },
+    { emoji: "🩸", label: "Tipo de sangre (si lo sabes)" },
+    { emoji: "💊", label: "Medicamentos que tomas" },
+    { emoji: "🌿", label: "Alergias que padeces" },
+    { emoji: "📞", label: "Teléfono de contacto de emergencia" },
+  ];
+
+  function startVoiceWithIntro() {
+    const intro = [
+      "Hola, soy Mia, tu asistente de salud personal.",
+      "Para crear tu perfil, por favor díme en voz alta los siguientes datos:",
+      "Nombre completo, edad, género, país donde vives,",
+      "peso en kilogramos, estatura en centímetros,",
+      "tipo de sangre si lo sabes,",
+      "si tomas algún medicamento, si tienes alergias,",
+      "y el teléfono de tu contacto de emergencia.",
+      "Cuando termines de hablar, presiona el botón Enviar y yo procesaré todo.",
+    ].join(" ");
+
+    setStatus("Mia está hablando...");
+    setError("");
+    setTranscript("");
+    fullTranscriptRef.current = "";
+    // Arrancar animación de campos: un campo cada ~2.2 segundos
+    setIntroFieldCount(0);
+    if (introTimerRef.current) clearInterval(introTimerRef.current);
+    let count = 0;
+    introTimerRef.current = setInterval(() => {
+      count += 1;
+      setIntroFieldCount(count);
+      if (count >= VOICE_FIELDS.length && introTimerRef.current) {
+        clearInterval(introTimerRef.current);
+        introTimerRef.current = null;
+      }
+    }, 2200);
+
+    speakText(intro, () => {
+      startVoiceCapture();
+    });
+  }
+
   const SoundWave = () => (
     <div className="flex items-center gap-1 h-6">
       {[1, 2, 3, 4, 5].map((i) => (
@@ -976,125 +1200,6 @@ export default function CapturaDatosPage() {
         </section>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
-          <aside className="space-y-6 lg:sticky lg:top-8 lg:order-2">
-            {mode === "voz" && (
-              <article className={`rounded-3xl border transition-all duration-500 ${isListening ? "border-[#3345CC] bg-[#3345CC]/10 dark:bg-[#3345CC]/20" : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"} p-6 shadow-sm dark:shadow-none`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold">Captura por Voz</h2>
-                  {isListening && <SoundWave />}
-                </div>
-                
-                <p className="text-xs leading-relaxed text-slate-400 mb-6">
-                  Habla con naturalidad sobre tu salud. Mia extraerá los datos automáticamente usando inteligencia artificial.
-                </p>
-
-                <div className="space-y-3">
-                  {!isListening ? (
-                    <button
-                      onClick={startInterview}
-                      disabled={isInterviewing || isAnalyzing}
-                      className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-                      </svg>
-                      Iniciar Entrevista con Mia
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => void stopVoiceCapture()}
-                      className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-sm animate-pulse flex items-center justify-center gap-3 transition-all"
-                    >
-                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                      Detener y Procesar
-                    </button>
-                  )}
-                  
-                  <button
-                    onClick={replayVoiceCapture}
-                    disabled={isListening || isAnalyzing || !isEditing}
-                    className="w-full py-3 bg-white/5 border border-white/10 text-white rounded-2xl text-xs font-bold hover:bg-white/10 transition-all disabled:opacity-30"
-                  >
-                    Reiniciar Grabación
-                  </button>
-                </div>
-
-                {(transcript || isListening) && (
-                  <div className="mt-6 p-4 bg-black/40 rounded-2xl border border-white/5">
-
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Transcripción</p>
-                    <p className="text-sm text-slate-300 italic line-clamp-4">
-                      &quot;{transcript || "Escuchando..."}&quot;
-                    </p>
-                  </div>
-                )}
-              </article>
-            )}
-
-            <article className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-xl dark:shadow-none">
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#0028b3] rounded-full" />
-                Resumen Actual
-              </h2>
-              
-              {!savedProfile && !profile.nombres ? (
-                <div className="text-center py-8 space-y-3">
-                  <div className="w-12 h-12 bg-white/5 rounded-full mx-auto flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-slate-500">Sin datos registrados aún.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-[#0028b3]/10 border border-[#0028b3]/20 rounded-2xl">
-                    <p className="text-[10px] font-bold text-[#0028b3] uppercase tracking-widest">Identidad</p>
-                    <p className="text-lg font-bold truncate">
-                      {`${profile.nombres} ${profile.apellidoPaterno} ${profile.apellidoMaterno}`.trim() || "Sin nombre"}
-                    </p>
-                    <p className="text-xs text-slate-400">{profile.edad ? `${profile.edad} años` : "Edad no especificada"} • {profile.genero || "Género N/D"}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase">Peso</p>
-                      <p className="text-sm font-bold">{profile.peso ? `${profile.peso} kg` : "--"}</p>
-                    </div>
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase">Altura</p>
-                      <p className="text-sm font-bold">{profile.estatura ? `${profile.estatura} cm` : "--"}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Nacionalidad</span>
-                      <span className="text-xs font-bold">{profile.nacionalidad || "N/D"}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Sangre</span>
-                      <span className="text-xs font-bold text-red-400">{profile.tipoSangre || "N/D"}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </article>
-
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-red-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold">!</div>
-                <p className="text-xs text-red-200 leading-relaxed">{error}</p>
-              </div>
-            )}
-            {status && !error && (
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-emerald-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-900">✓</div>
-                <p className="text-xs text-emerald-100 leading-relaxed">{status}</p>
-              </div>
-            )}
-          </aside>
-
           <div className="space-y-8 lg:order-1">
             <section className="card-mia relative overflow-hidden md:p-10">
               {/* Progress Bar */}
@@ -1270,6 +1375,223 @@ export default function CapturaDatosPage() {
               </form>
             </section>
           </div>
+
+          <aside className="space-y-6 lg:sticky lg:top-8">
+            {mode === "voz" && (
+              <article className={`rounded-3xl border transition-all duration-500 ${
+                isListening
+                  ? "border-[#3345CC] bg-[#3345CC]/10 dark:bg-[#3345CC]/20"
+                  : isAnalyzing
+                  ? "border-emerald-400/40 bg-emerald-500/5"
+                  : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+              } p-6 shadow-sm dark:shadow-none`}>
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      isListening ? "bg-[#3345CC]" : isAnalyzing ? "bg-emerald-500" : "bg-slate-100 dark:bg-white/10"
+                    }`}>
+                      {isListening ? (
+                        <div className="flex gap-0.5 items-center">
+                          <div className="w-0.5 h-3 bg-white rounded-full animate-[bounce_0.5s_infinite]" />
+                          <div className="w-0.5 h-5 bg-white rounded-full animate-[bounce_0.5s_infinite_0.1s]" />
+                          <div className="w-0.5 h-3 bg-white rounded-full animate-[bounce_0.5s_infinite_0.2s]" />
+                        </div>
+                      ) : isAnalyzing ? (
+                        <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold">Captura por Voz</h2>
+                      <p className="text-[10px] text-slate-400">
+                        {isListening ? "Escuchando..." : isAnalyzing ? "Procesando con IA..." : "Lista para escuchar"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Panel animado de campos — visible durante intro y grabación */}
+                {introFieldCount > 0 && (
+                  <div className="mb-4 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+                    {/* Header del panel */}
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-[#3345CC]/10 border-b border-[#3345CC]/20">
+                      <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-500 animate-pulse" : "bg-[#3345CC]"}`} />
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#3345CC]">
+                        {isListening ? "Ahora habla estos datos" : "Datos a mencionar"}
+                      </p>
+                    </div>
+                    {/* Lista de campos */}
+                    <div className="p-3 space-y-1">
+                      {VOICE_FIELDS.map((field, idx) => {
+                        const visible = idx < introFieldCount;
+                        return (
+                          <div
+                            key={field.label}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-500 ${
+                              visible
+                                ? "opacity-100 translate-y-0 bg-white dark:bg-white/5 shadow-sm"
+                                : "opacity-0 translate-y-2 pointer-events-none h-0 overflow-hidden p-0"
+                            }`}
+                            style={{
+                              transitionDelay: visible ? `${idx * 40}ms` : "0ms",
+                            }}
+                          >
+                            <span className="text-base leading-none">{field.emoji}</span>
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                              {field.label}
+                            </span>
+                            {isListening && profile[Object.keys(EMPTY_PROFILE)[idx] as keyof PatientProfile] && (
+                              <span className="ml-auto text-emerald-500">
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Transcripción en tiempo real */}
+                {(isListening || transcript) && (
+                  <div className="mb-4 p-3 bg-black/20 dark:bg-black/40 rounded-2xl border border-white/5 min-h-[60px]">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Escuchando...</p>
+                    <p className="text-xs text-slate-300 italic leading-relaxed line-clamp-3">
+                      &quot;{transcript || "..."}&quot;
+                    </p>
+                  </div>
+                )}
+
+                {/* Texto de ayuda inicial */}
+                {introFieldCount === 0 && !isListening && !transcript && (
+                  <p className="text-xs leading-relaxed text-slate-400 mb-4">
+                    Mia te guiará con los datos a mencionar. Habla con naturalidad y cuando termines presiona <strong>Enviar</strong>.
+                  </p>
+                )}
+
+                {/* Botones */}
+                <div className="space-y-2">
+                  {!isListening && !isAnalyzing && (
+                    <button
+                      id="btn-start-voice"
+                      onClick={startVoiceWithIntro}
+                      disabled={isAnalyzing}
+                      className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3 text-sm font-bold"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                      </svg>
+                      Hablar con Mia
+                    </button>
+                  )}
+
+                  {isListening && (
+                    <button
+                      id="btn-send-voice"
+                      onClick={() => void stopVoiceCapture()}
+                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                      Enviar y Procesar
+                    </button>
+                  )}
+
+                  {isAnalyzing && (
+                    <div className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 animate-pulse">
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                      </svg>
+                      Mia está analizando...
+                    </div>
+                  )}
+
+                  {(transcript || isListening) && !isAnalyzing && (
+                    <button
+                      onClick={replayVoiceCapture}
+                      disabled={isListening || isAnalyzing}
+                      className="w-full py-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold hover:bg-white/10 transition-all disabled:opacity-30"
+                    >
+                      Reiniciar grabación
+                    </button>
+                  )}
+                </div>
+              </article>
+            )}
+
+            <article className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-xl dark:shadow-none">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-[#0028b3] rounded-full" />
+                Resumen Actual
+              </h2>
+              
+              {!savedProfile && !profile.nombres ? (
+                <div className="text-center py-8 space-y-3">
+                  <div className="w-12 h-12 bg-white/5 rounded-full mx-auto flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-slate-500">Sin datos registrados aún.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-[#0028b3]/10 border border-[#0028b3]/20 rounded-2xl">
+                    <p className="text-[10px] font-bold text-[#0028b3] uppercase tracking-widest">Identidad</p>
+                    <p className="text-lg font-bold truncate">{profile.nombres || "Sin nombre"}</p>
+                    <p className="text-xs text-slate-400">{profile.edad ? `${profile.edad} años` : "Edad no especificada"} • {profile.genero || "Género N/D"}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase">Peso</p>
+                      <p className="text-sm font-bold">{profile.peso ? `${profile.peso} kg` : "--"}</p>
+                    </div>
+                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase">Altura</p>
+                      <p className="text-sm font-bold">{profile.estatura ? `${profile.estatura} cm` : "--"}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Nacionalidad</span>
+                      <span className="text-xs font-bold">{profile.nacionalidad || "N/D"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-slate-400">Sangre</span>
+                      <span className="text-xs font-bold text-red-400">{profile.tipoSangre || "N/D"}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </article>
+
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex gap-3">
+                <div className="w-5 h-5 bg-red-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold">!</div>
+                <p className="text-xs text-red-200 leading-relaxed">{error}</p>
+              </div>
+            )}
+            {status && !error && (
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex gap-3">
+                <div className="w-5 h-5 bg-emerald-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-900">✓</div>
+                <p className="text-xs text-emerald-100 leading-relaxed">{status}</p>
+              </div>
+            )}
+          </aside>
         </div>
       </div>
 
@@ -1320,7 +1642,7 @@ export default function CapturaDatosPage() {
 
               <div className="flex gap-4 w-full">
                 <button
-                  onClick={() => activeInterviewField && askQuestion(activeInterviewField)}
+                  onClick={() => activeInterviewField && speakText(INTERVIEW_QUESTIONS[activeInterviewField], () => listenForAnswer(activeInterviewField!))}
                   disabled={isAnalyzing}
                   className="flex-1 py-4 bg-[#3345CC]/10 text-[#3345CC] hover:bg-[#3345CC]/20 text-sm font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
                 >
