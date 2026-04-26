@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   title: "Mia - Libro Mayor de Salud",
   description: "Sistema de salud bio-digital en tiempo real.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

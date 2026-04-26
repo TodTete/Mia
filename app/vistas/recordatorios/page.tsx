@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Flame } from "lucide-react";
+import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2 } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
@@ -26,8 +26,7 @@ export default function RecordatoriosPage() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [streak, setStreak] = useState(0);
-  const [lastStreakUpdate, setLastStreakUpdate] = useState(0);
+
 
   const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -71,8 +70,7 @@ export default function RecordatoriosPage() {
             } else {
               setAppointments([]);
             }
-            setStreak(data.streak || 0);
-            setLastStreakUpdate(data.lastStreakUpdate || 0);
+
           } else {
             setMedicines([]);
             setAppointments([]);
@@ -207,38 +205,7 @@ export default function RecordatoriosPage() {
     const now = Date.now();
     await update(ref(db, `users/${user.uid}/medicines/${id}`), { lastTaken: now });
 
-    // Handle Streak Logic
-    const todayStr = new Date().toDateString(); // e.g. "Mon May 14 2026"
-    const lastUpdateStr = lastStreakUpdate ? new Date(lastStreakUpdate).toDateString() : "";
-    
-    // Si no lo hemos actualizado hoy
-    if (todayStr !== lastUpdateStr) {
-      // Checar si es el día consecutivo
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      
-      const lastUpdate = new Date(lastStreakUpdate);
-      lastUpdate.setHours(0,0,0,0);
-      
-      const diffTime = Math.abs(today.getTime() - lastUpdate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      
-      let newStreak = streak;
-      if (diffDays === 1) {
-        // Consecutivo
-        newStreak += 1;
-      } else if (diffDays > 1 || lastStreakUpdate === 0) {
-        // Se rompió la racha o es la primera vez
-        newStreak = 1;
-      }
-      
-      // Si difDays === 0, ya se actualizó hoy (cubierto por el primer if todayStr !== lastUpdateStr)
-      
-      await update(ref(db, `users/${user.uid}`), { 
-        streak: newStreak, 
-        lastStreakUpdate: now 
-      });
-    }
+
   };
 
   const deleteMedicine = async (id: string) => {
@@ -288,8 +255,7 @@ export default function RecordatoriosPage() {
     <main className="min-h-screen bg-slate-50 px-6 py-10 font-sans text-slate-900 sm:px-10">
       <div className="mx-auto max-w-5xl">
         
-        {/* Header con Racha */}
-        <div className="mb-10 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mb-10 flex flex-col gap-4 sm:mb-12">
           <div>
             <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc]">
               Recordatorios
@@ -300,20 +266,6 @@ export default function RecordatoriosPage() {
             <p className="mt-2 text-slate-500">
               Revisa tus medicamentos y próximas citas médicas.
             </p>
-          </div>
-          
-          {/* Tarjeta de Racha */}
-          <div className="flex items-center gap-4 rounded-3xl bg-gradient-to-br from-orange-50 to-orange-100 p-5 shadow-sm border border-orange-200">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500 text-white shadow-inner shadow-orange-700/50">
-              <Flame className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-orange-600">Racha de tomas</p>
-              <div className="flex items-end gap-1">
-                <span className="text-2xl font-black text-slate-900 leading-none">{streak}</span>
-                <span className="text-sm font-medium text-slate-600 pb-0.5">días seguidos</span>
-              </div>
-            </div>
           </div>
         </div>
 
