@@ -40,33 +40,48 @@ export default function DiagnosticoPage() {
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      if (u) {
-        // Fetch conditions
-        const condRef = ref(db, `users/${u.uid}/conditions`);
-        onValue(condRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            const list = Object.entries(data).map(([key, val]: any) => ({ ...val, id: key }));
-            setConditions(list);
-            if (!selectedCondition && list.length > 0) setSelectedCondition(list[0]);
-          } else {
-            setConditions([]);
-          }
-        });
-
-        // Fetch medicines
-        const medRef = ref(db, `users/${u.uid}/medicines`);
-        onValue(medRef, (snapshot) => {
-          if (snapshot.exists()) {
-            setMedicines(Object.values(snapshot.val()));
-          }
-        });
-      }
       setLoading(false);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Fetch conditions
+    const condRef = ref(db, `users/${user.uid}/conditions`);
+    const unsubscribeConditions = onValue(condRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const list = Object.entries(data).map(([key, val]: any) => ({ ...val, id: key }));
+        setConditions(list);
+        
+        // Solo establecer la primera condición si no hay ninguna seleccionada actualmente
+        setSelectedCondition((current: any) => {
+          if (!current && list.length > 0) return list[0];
+          return current;
+        });
+      } else {
+        setConditions([]);
+      }
+    });
+
+    // Fetch medicines
+    const medRef = ref(db, `users/${user.uid}/medicines`);
+    const unsubscribeMedicines = onValue(medRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setMedicines(Object.values(snapshot.val()));
+      } else {
+        setMedicines([]);
+      }
+    });
+
+    return () => {
+      unsubscribeConditions();
+      unsubscribeMedicines();
+    };
   }, [user]);
 
   const addCondition = async () => {
