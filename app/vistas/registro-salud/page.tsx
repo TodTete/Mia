@@ -57,7 +57,7 @@ export default function RegistroSaludPage() {
         onValue(vitalsRef, (snapshot) => {
           const loadedVitals = snapshot.exists() ? snapshot.val() : {};
           try {
-            const profileStr = localStorage.getItem("mia-profile-v1");
+            const profileStr = localStorage.getItem("mia_patient_profile");
             if (profileStr) {
               const profile = JSON.parse(profileStr);
               if (profile.peso && !loadedVitals.peso) {
@@ -167,7 +167,7 @@ export default function RegistroSaludPage() {
     setGenerating(true);
     setAiReport(null);
     try {
-      const profileStr = localStorage.getItem("mia-profile-v1");
+      const profileStr = localStorage.getItem("mia_patient_profile");
       const res = await fetch("/api/deepseek/generate-health-state", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

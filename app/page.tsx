@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Heart
 } from "lucide-react";
+import { MiaChat } from "@/components/ui/mia-chat";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -462,6 +463,7 @@ export default function Home() {
           </div>
         </motion.section>
       </div>
+      <MiaChat />
     </main>
   );
 }

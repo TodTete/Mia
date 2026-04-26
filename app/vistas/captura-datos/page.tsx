@@ -238,6 +238,7 @@ export default function CapturaDatosPage() {
         const profileRef = ref(db, `users/${user.uid}/profile`);
         await set(profileRef, { ...profile, updatedAt: serverTimestamp() });
       }
+      localStorage.setItem("mia_patient_profile", JSON.stringify(profile));
       setSavedProfile(profile);
       setIsEditing(false);
       showToast("Perfil actualizado correctamente.", "success");

@@ -24,6 +24,8 @@ import {
   Trash2,
   X,
   ShieldAlert,
+  Download,
+  Upload,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
@@ -31,7 +33,7 @@ import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 import { motion, AnimatePresence } from "framer-motion";
 import { remove } from "firebase/database";
 
-const STORAGE_KEY = "mia-profile-v1";
+const STORAGE_KEY = "mia_patient_profile";
 
 type PatientProfile = {
   nombre: string;
@@ -99,6 +101,49 @@ export default function PerfilPage() {
     // Optionally logout too
     await signOut(auth);
     router.push("/vistas/login");
+  };
+
+  const handleExportData = () => {
+    const data: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        data[key] = localStorage.getItem(key) || "";
+      }
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mia_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string);
+        if (typeof data === "object") {
+          for (const key in data) {
+            localStorage.setItem(key, data[key]);
+          }
+          alert("Datos importados con éxito. La aplicación se recargará.");
+          window.location.reload();
+        }
+      } catch (err) {
+        alert("El archivo no es válido o está dañado.");
+      }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = '';
   };
 
   if (loading) {
@@ -281,6 +326,38 @@ export default function PerfilPage() {
             </div>
             <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
           </button>
+
+          <button
+            onClick={handleExportData}
+            className="flex w-full items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-white/5 transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                <Download className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">Exportar datos locales</span>
+            </div>
+            <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
+          </button>
+
+          <div className="relative">
+            <input 
+              type="file" 
+              accept=".json" 
+              onChange={handleImportData} 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+              title="Importar datos locales"
+            />
+            <div className="flex w-full items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-white/5 transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Importar datos locales</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

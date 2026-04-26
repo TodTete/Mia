@@ -112,24 +112,29 @@ export default function DiagnosticoPage() {
         description="Agrega y administra tus padecimientos médicos. Aquí podrás vincular tus enfermedades o condiciones de salud con los medicamentos correspondientes para que Mia te ayude a mantener el control."
       />
       {/* Header - Glassmorphism */}
-      <header className="h-20 border-b border-slate-200 dark:border-white/5 bg-white/50 dark:bg-black/50 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-50">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="p-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:scale-110 transition-all text-slate-500 hover:text-teal-600">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-black tracking-tight flex items-center gap-2">
-              <Stethoscope className="w-5 h-5 text-teal-600" />
-              BITÁCORA CLÍNICA
-            </h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
-              "Registra padecimientos y medicamentos indicados."
-            </p>
+      <header className="h-auto min-h-20 py-4 border-b border-slate-200 dark:border-white/5 bg-white/50 dark:bg-black/50 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-8 sticky top-0 z-50 gap-4 sm:gap-0">
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link href="/" className="p-2 sm:p-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:scale-110 transition-all text-slate-500 hover:text-teal-600 shrink-0">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div>
+              <h1 className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2">
+                <Stethoscope className="w-5 h-5 text-teal-600 shrink-0" />
+                BITÁCORA CLÍNICA
+              </h1>
+              <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest italic line-clamp-1 sm:line-clamp-none">
+                "Registra padecimientos y medicamentos indicados."
+              </p>
+            </div>
+          </div>
+          <div className="flex sm:hidden">
+            <ThemeToggle />
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-4">
           <ThemeToggle />
-          <div className="hidden sm:flex h-10 w-10 rounded-full bg-teal-600 items-center justify-center text-white font-black text-xs">
+          <div className="flex h-10 w-10 rounded-full bg-teal-600 items-center justify-center text-white font-black text-xs">
             {user?.displayName?.[0] || "U"}
           </div>
         </div>
