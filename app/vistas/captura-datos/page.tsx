@@ -18,7 +18,8 @@ import {
   ChevronLeftIcon,
   CheckCircleIcon,
   MicrophoneIcon,
-  CommandLineIcon
+  CommandLineIcon,
+  ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 import { auth, db } from "@/lib/firebase/firebase";
 import { ref, set, get, serverTimestamp } from "firebase/database";
@@ -33,11 +34,16 @@ interface PatientProfile {
   peso: string;
   estatura: string;
   genero: string;
+  curp: string;
+  ocupacion: string;
   localidad: string;
   tipoSangre: string;
   discapacidad: string;
   medicacion: string;
   alergias: string;
+  antecedentesHeredofamiliares: string;
+  antecedentesPatologicos: string;
+  habitosVida: string;
   contactoEmergencia: string;
   nombreContactoEmergencia: string;
 }
@@ -48,11 +54,16 @@ const EMPTY_PROFILE: PatientProfile = {
   peso: "",
   estatura: "",
   genero: "",
+  curp: "",
+  ocupacion: "",
   localidad: "",
   tipoSangre: "",
   discapacidad: "",
   medicacion: "",
   alergias: "",
+  antecedentesHeredofamiliares: "",
+  antecedentesPatologicos: "",
+  habitosVida: "",
   contactoEmergencia: "",
   nombreContactoEmergencia: "",
 };
@@ -67,20 +78,26 @@ const OPTIONAL_FIELDS: (keyof PatientProfile)[] = [
 
 const FORM_CATEGORIES = [
   {
-    title: "Datos Personales",
-    fields: ["nombres", "edad", "genero", "localidad"],
+    title: "Identificación Legal",
+    fields: ["nombres", "curp", "edad", "genero", "ocupacion", "localidad"],
     icon: UserIcon,
     color: "from-blue-500 to-indigo-600",
   },
   {
-    title: "Métricas Físicas",
-    fields: ["peso", "estatura", "tipoSangre"],
+    title: "Métricas y Alergias",
+    fields: ["peso", "estatura", "tipoSangre", "alergias", "medicacion"],
     icon: BeakerIcon,
     color: "from-emerald-500 to-teal-600",
   },
   {
-    title: "Información Médica",
-    fields: ["discapacidad", "medicacion", "alergias", "nombreContactoEmergencia", "contactoEmergencia"],
+    title: "Historial Clínico (NOM-004)",
+    fields: ["antecedentesHeredofamiliares", "antecedentesPatologicos", "habitosVida"],
+    icon: ClipboardDocumentCheckIcon,
+    color: "from-amber-500 to-orange-600",
+  },
+  {
+    title: "Contactos de Emergencia",
+    fields: ["nombreContactoEmergencia", "contactoEmergencia"],
     icon: HeartIcon,
     color: "from-rose-500 to-pink-600",
   },
@@ -90,32 +107,38 @@ const FIELD_LABELS: Record<string, string> = {
   nombres: "Nombre Completo",
   edad: "Edad",
   genero: "Género",
-  localidad: "País / Localidad",
+  curp: "CURP",
+  ocupacion: "Ocupación",
+  localidad: "Estado / Localidad",
   peso: "Peso (kg)",
   estatura: "Estatura (cm)",
   tipoSangre: "Tipo de Sangre",
   discapacidad: "Discapacidad",
   medicacion: "Medicación Actual",
   alergias: "Alergias",
-  nombreContactoEmergencia: "Nombre de Contacto",
+  antecedentesHeredofamiliares: "Herencia (Diabetes, HTA, etc.)",
+  antecedentesPatologicos: "Patologías (Cirugías, Crónicas)",
+  habitosVida: "Hábitos (Fumo, Ejercicio, etc.)",
+  nombreContactoEmergencia: "Nombre de Contacto SOS",
   contactoEmergencia: "Tel. de Emergencia",
 };
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const VOICE_FIELDS = [
-  { label: "Nombre completo", icon: UserIcon },
-  { label: "Edad", icon: InformationCircleIcon },
-  { label: "Género", icon: UserIcon },
-  { label: "Localidad", icon: MapPinIcon },
-  { label: "Peso y Estatura", icon: BeakerIcon },
-  { label: "Datos Médicos", icon: HeartIcon },
+  { label: "Identidad (Nombre, CURP, Ocupación)", icon: UserIcon },
+  { label: "Perfil Físico (Edad, Peso, Talla)", icon: InformationCircleIcon },
+  { label: "Ubicación", icon: MapPinIcon },
+  { label: "Clínicos (Sangre, Alergias)", icon: BeakerIcon },
+  { label: "Antecedentes (Herencia, Cirugías)", icon: ClipboardDocumentCheckIcon },
+  { label: "Contactos SOS", icon: HeartIcon },
 ];
 
 export default function CapturaDatosPage() {
   const [profile, setProfile] = useState<PatientProfile>(EMPTY_PROFILE);
   const [isEditing, setIsEditing] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
+  const [showQRModal, setShowQRModal] = useState(false);
   const [mode, setMode] = useState<"manual" | "voz">("manual");
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -607,13 +630,13 @@ export default function CapturaDatosPage() {
 
           {/* Sidebar / Summary Area - Mobile First: Stacks below form on mobile */}
           <aside className="w-full space-y-6 lg:sticky lg:top-24">
-            <div className="bg-slate-900 dark:bg-[#0c0c0c] rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-[50px] rounded-full" />
+            <div className="bg-white dark:bg-[#0c0c0c] rounded-[15px] p-8 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 dark:bg-blue-600/20 blur-[50px] rounded-full" />
               
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]" />
-                  <h3 className="text-sm font-black uppercase tracking-widest">Resumen Actual</h3>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Resumen Actual</h3>
                 </div>
                 {savedProfile && !isEditing && (
                   <button 
@@ -624,29 +647,28 @@ export default function CapturaDatosPage() {
                   </button>
                 )}
               </div>
-
               <div className="space-y-6">
-                <div className="p-5 rounded-3xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] font-bold text-white/40 uppercase mb-2">Paciente</p>
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-white/40 uppercase mb-2">Paciente</p>
                   <p className="text-xl font-black">{profile.nombres || "Pendiente..."}</p>
                   <div className="flex gap-2 mt-2">
-                    <span className="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 font-bold">{profile.edad || "--"} años</span>
-                    <span className="text-xs px-2 py-1 rounded-lg bg-white/5 text-white/60">{profile.genero || "--"}</span>
+                    <span className="text-xs px-2 py-1 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold">{profile.edad || "--"} años</span>
+                    <span className="text-xs px-2 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white/60">{profile.genero || "--"}</span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/5 text-center">
-                    <p className="text-[10px] text-white/40 mb-1">Peso</p>
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 text-center border border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] text-slate-400 dark:text-white/40 mb-1">Peso</p>
                     <p className="font-bold">{profile.peso || "--"} <span className="text-[10px] font-normal">kg</span></p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-white/5 text-center">
-                    <p className="text-[10px] text-white/40 mb-1">Altura</p>
+                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/5 text-center border border-slate-100 dark:border-white/5">
+                    <p className="text-[10px] text-slate-400 dark:text-white/40 mb-1">Altura</p>
                     <p className="font-bold">{profile.estatura || "--"} <span className="text-[10px] font-normal">cm</span></p>
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-white/5">
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
                   {[
                     { label: "Sangre", val: profile.tipoSangre, icon: BeakerIcon },
                     { label: "Medicación", val: profile.medicacion, icon: ClipboardDocumentCheckIcon },
@@ -654,14 +676,27 @@ export default function CapturaDatosPage() {
                     { label: "Emergencia", val: profile.contactoEmergencia, icon: PhoneIcon },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between text-xs group">
-                      <div className="flex items-center gap-2 text-white/40">
+                      <div className="flex items-center gap-2 text-slate-400 dark:text-white/40">
                         <item.icon className="w-3.5 h-3.5" />
                         <span>{item.label}</span>
                       </div>
-                      <span className="font-bold text-white/90 truncate max-w-[120px]">{item.val || "---"}</span>
+                      <span className="font-bold text-slate-700 dark:text-white/90 truncate max-w-[120px]">{item.val || "---"}</span>
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-8 space-y-4">
+                <button 
+                  onClick={() => setShowQRModal(true)}
+                  className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-3 shadow-xl shadow-red-600/20 transition-all"
+                >
+                  <ShieldCheckIcon className="w-5 h-5" />
+                  Perfil de Emergencia QR
+                </button>
+                <p className="text-[10px] text-slate-400 text-center px-4 leading-relaxed">
+                  Genera un código QR con tus datos vitales para personal médico en caso de emergencia.
+                </p>
               </div>
             </div>
 
@@ -675,6 +710,60 @@ export default function CapturaDatosPage() {
           </aside>
         </div>
       </div>
+
+      {/* Emergency QR Modal */}
+      <AnimatePresence>
+        {showQRModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+              onClick={() => setShowQRModal(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[3rem] p-8 border border-white/10 shadow-2xl text-center space-y-8"
+            >
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-red-600 uppercase tracking-tighter">Perfil de Emergencia</h3>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Escaneo Vital para Paramédicos</p>
+              </div>
+
+              <div className="p-6 bg-white rounded-[2rem] shadow-inner flex flex-col items-center justify-center">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
+                    `EMERGENCIA MIA: ${profile.nombres} | SANGRE: ${profile.tipoSangre} | ALERGIAS: ${profile.alergias} | CONTACTO SOS: ${profile.nombreContactoEmergencia} (${profile.contactoEmergencia})`
+                  )}`}
+                  alt="QR Emergencia"
+                  className="w-48 h-48"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-left">
+                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                  <p className="text-[8px] font-bold text-slate-400 uppercase">Sangre</p>
+                  <p className="text-lg font-black text-red-600">{profile.tipoSangre || '??'}</p>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                  <p className="text-[8px] font-bold text-slate-400 uppercase">Alergias</p>
+                  <p className="text-[10px] font-black line-clamp-2">{profile.alergias || 'Ninguna'}</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowQRModal(false)}
+                className="w-full py-4 bg-slate-100 dark:bg-white/10 rounded-2xl font-bold text-sm"
+              >
+                Cerrar Perfil
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Global Toast */}
       <AnimatePresence>

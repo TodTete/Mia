@@ -22,6 +22,8 @@ const navItems = [
 export function PremiumNav() {
   const pathname = usePathname();
 
+  if (pathname === "/vistas/login") return null;
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50">
       <div className="bg-white/80 dark:bg-black/80 backdrop-blur-2xl border-t border-slate-200/50 dark:border-white/5 px-4 h-20 pb-[env(safe-area-inset-bottom,0px)] flex items-center justify-around">

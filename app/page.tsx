@@ -207,7 +207,7 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-[4rem] overflow-hidden shadow-2xl shadow-black/20 group"
+          className="relative rounded-[15px] overflow-hidden shadow-2xl shadow-black/20 group"
         >
           {/* Glass Overlay with Border Light */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 dark:to-transparent z-10 pointer-events-none" />
@@ -243,14 +243,28 @@ export default function Home() {
             animate="show"
             className="relative z-20 p-14 md:p-20 w-full flex flex-col lg:flex-row items-center justify-between gap-12"
           >
-            <div className="space-y-10 max-w-2xl">
-              <div className="space-y-4">
+            <div className="space-y-10 max-w-2xl flex flex-col items-center text-center lg:items-start lg:text-left">
+              <div className="space-y-6 flex flex-col items-center lg:items-start">
+                <motion.div 
+                  variants={{
+                    hidden: { opacity: 0, scale: 0.8 },
+                    show: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeOut" } }
+                  }}
+                  className="lg:hidden relative w-16 h-16 mb-2"
+                >
+                  <Image 
+                    src="/icon.png" 
+                    alt="Mia Icon" 
+                    fill 
+                    className="object-contain drop-shadow-xl"
+                  />
+                </motion.div>
               <motion.h1 
                 variants={{
                   hidden: { opacity: 0, y: 40 },
                   show: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
                 }}
-                className="text-6xl md:text-8xl font-black tracking-[ -0.05em] leading-[0.85] font-space-grotesk italic"
+                className="text-4xl sm:text-6xl md:text-8xl font-black tracking-[-0.05em] leading-[0.9] font-space-grotesk italic"
               >
                 TU SALUD <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D92626] to-[#001970]">INTELIGENTE.</span>
@@ -303,11 +317,11 @@ export default function Home() {
 
         {/* Support & Tracking Section */}
         <motion.section 
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative rounded-[3.5rem] p-6 md:p-12 overflow-hidden bg-white/5 dark:bg-white/[0.02] border border-white/10 dark:border-white/5 will-change-transform"
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative rounded-[15px] p-6 md:p-12 overflow-hidden bg-white/5 dark:bg-white/[0.02] border border-white/10 dark:border-white/5 will-change-transform"
         >
           <div className="space-y-12 relative z-10">
             <div className="flex items-end justify-between px-4">
@@ -363,7 +377,7 @@ export default function Home() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="grid gap-gutter lg:grid-cols-[1fr_auto] will-change-transform"
         >
-          <div className="glass-surface rounded-[2rem] p-6 md:p-10 space-y-6">
+          <div className="glass-surface rounded-[15px] p-6 md:p-10 space-y-6">
             <h2 className="text-3xl font-bold font-public-sans flex items-center gap-3">
               <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary" />
               Protocolo de Uso
@@ -394,7 +408,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="glass-surface rounded-[2rem] p-6 md:p-8 bg-primary/5 border-primary/20 flex flex-col justify-center items-center text-center w-full md:max-w-xs">
+          <div className="glass-surface rounded-[15px] p-6 md:p-8 bg-primary/5 border-primary/20 flex flex-col justify-center items-center text-center w-full md:max-w-xs">
             <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
               <HeartIcon className="w-8 h-8 text-primary animate-pulse" />
             </div>

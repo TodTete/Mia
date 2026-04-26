@@ -200,10 +200,10 @@ export default function PerfilPage() {
         )}
 
         {/* Quick Actions */}
-        <div className="mb-6 rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+        <div className="mb-6 rounded-3xl border border-slate-100 dark:border-white/5 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
           <Link
             href="/vistas/captura-datos"
-            className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-slate-50"
+            className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3649cc]/10 text-[#3649cc]">
@@ -211,34 +211,34 @@ export default function PerfilPage() {
               </div>
               <span className="text-sm font-semibold">Ver mis datos</span>
             </div>
-            <ChevronRight className="h-5 w-5 text-slate-300" />
+            <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
           </Link>
 
           {!user ? (
             <Link
               href="/vistas/login"
-              className="flex items-center justify-between px-6 py-4 border-t border-slate-100 transition-colors hover:bg-slate-50"
+              className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-white/5 transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <LogIn className="h-5 w-5" />
                 </div>
                 <span className="text-sm font-semibold">Iniciar sesión</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-300" />
+              <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
             </Link>
           ) : (
             <button
               onClick={handleLogout}
-              className="flex w-full items-center justify-between px-6 py-4 border-t border-slate-100 transition-colors hover:bg-red-50"
+              className="flex w-full items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-white/5 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-500">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400">
                   <LogOut className="h-5 w-5" />
                 </div>
-                <span className="text-sm font-semibold text-red-600">Cerrar sesión</span>
+                <span className="text-sm font-semibold text-red-600 dark:text-red-400">Cerrar sesión</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-300" />
+              <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
             </button>
           )}
         </div>

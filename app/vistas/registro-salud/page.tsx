@@ -21,7 +21,8 @@ import {
   ScaleIcon,
   CheckCircleIcon,
   XMarkIcon,
-  SparklesIcon
+  SparklesIcon,
+  ExclamationTriangleIcon as AlertTriangleIcon
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -73,21 +74,74 @@ export default function RegistroSaludPage() {
   const handleUpdateStat = async () => {
     if (!user || !selectedStat || !newValue) return;
     setIsSaving(true);
+    
+    const measurement = {
+      val: newValue,
+      timestamp: Date.now(), // Local timestamp for immediate use
+      key: selectedStat.key,
+      label: selectedStat.label,
+      unit: selectedStat.unit
+    };
+
+    // 1. Save locally for Offline Mode
+    const localKey = `mia_pending_sync_${user.uid}`;
+    const pending = JSON.parse(localStorage.getItem(localKey) || "[]");
+    pending.push(measurement);
+    localStorage.setItem(localKey, JSON.stringify(pending));
+    
+    // Update UI immediately (Optimistic Update)
+    setVitals(prev => ({
+      ...prev,
+      [selectedStat.key]: { val: newValue, timestamp: measurement.timestamp }
+    }));
+
     try {
+      // 2. Sync with Firebase if online
       const statRef = ref(db, `users/${user.uid}/health/vitals/${selectedStat.key}`);
       await set(statRef, {
         val: newValue,
         timestamp: serverTimestamp()
       });
+      
+      // Clean up local queue if successful
+      const updatedPending = JSON.parse(localStorage.getItem(localKey) || "[]");
+      const filtered = updatedPending.filter((p: any) => p.timestamp !== measurement.timestamp);
+      localStorage.setItem(localKey, JSON.stringify(filtered));
+
       showToast(`${selectedStat.label} actualizado`);
       setSelectedStat(null);
       setNewValue("");
     } catch (e) {
-      showToast("Error al guardar", "error");
+      showToast("Guardado localmente (Sin conexión)", "info");
+      setSelectedStat(null);
+      setNewValue("");
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Sync effect when coming back online
+  useEffect(() => {
+    const handleOnline = async () => {
+      if (!user) return;
+      const localKey = `mia_pending_sync_${user.uid}`;
+      const pending = JSON.parse(localStorage.getItem(localKey) || "[]");
+      if (pending.length > 0) {
+        showToast("Sincronizando datos pendientes...", "info");
+        for (const item of pending) {
+          try {
+            const statRef = ref(db, `users/${user.uid}/health/vitals/${item.key}`);
+            await set(statRef, { val: item.val, timestamp: serverTimestamp() });
+          } catch (e) { break; }
+        }
+        localStorage.setItem(localKey, "[]");
+        showToast("Datos sincronizados con éxito");
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [user]);
 
   const vitalStats: VitalStat[] = [
     { 
