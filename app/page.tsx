@@ -338,6 +338,9 @@ export default function Home() {
                 className="relative"
               >
                 <div
+                  // --- ESTO SE DESCOMENTARÁ MÁS ADELANTE PARA ACTIVAR LAS RUTAS ---
+                  // onClick={() => router.push(view.href)}
+                  // Nota: al descomentar lo de arriba, cambia 'cursor-default' por 'cursor-pointer' en la clase de abajo
                   className="group block bg-white/5 dark:bg-white/[0.02] backdrop-blur-2xl rounded-[2.5rem] p-10 h-full border border-white/10 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/20 cursor-default"
                 >
                   <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-on-surface/10 to-transparent flex items-center justify-center mb-10 group-hover:rotate-[15deg] group-hover:scale-125 transition-all duration-500 ${view.color}`}>
@@ -384,9 +387,9 @@ export default function Home() {
                   viewport={{ once: true, amount: 0.1 }}
                   transition={{ delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  <Link
-                    href={view.href}
-                    className="group block glass-surface rounded-3xl p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-sky-400 relative"
+                  <div
+                    onClick={() => router.push(view.href)}
+                    className="cursor-pointer group block glass-surface rounded-3xl p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-sky-400 relative"
                   >
                     <div className="flex items-start justify-between mb-6">
                       <div className={`w-12 h-12 rounded-xl bg-on-surface/5 flex items-center justify-center transition-all group-hover:bg-sky-400/20 group-hover:!text-white ${view.color}`}>
@@ -407,7 +410,7 @@ export default function Home() {
                         <ArrowRightIcon className="w-4 h-4 stroke-[3]" />
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </motion.div>
               ))}
             </div>
