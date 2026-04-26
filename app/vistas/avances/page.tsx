@@ -35,8 +35,10 @@ export default function AvancesPage() {
 
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [medicines, setMedicines] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // Load profile
     const savedProfile = localStorage.getItem("mia_patient_profile");
     if (savedProfile) {
@@ -413,8 +415,9 @@ export default function AvancesPage() {
 
           {moodHistory.length > 0 ? (
             <div className="h-[350px] w-full mt-6 bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={moodHistory} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+              {isMounted ? (
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                  <AreaChart data={moodHistory} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorIntensidad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
@@ -460,8 +463,15 @@ export default function AvancesPage() {
                     fill="url(#colorIntensidad)" 
                     activeDot={{ r: 8, strokeWidth: 0, fill: '#f43f5e', stroke: 'white' }}
                   />
-                </AreaChart>
-              </ResponsiveContainer>
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="animate-pulse flex space-x-4">
+                    <div className="rounded-full bg-slate-200 dark:bg-white/10 h-10 w-10"></div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center bg-slate-50 dark:bg-black/20 rounded-3xl border border-dashed border-slate-300 dark:border-white/10">

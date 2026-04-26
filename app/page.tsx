@@ -146,6 +146,7 @@ export default function Home() {
                 src="/mia-black.png" 
                 alt="Mia Logo" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 96px"
                 className="object-contain dark:hidden group-hover:scale-105 transition-transform" 
                 priority
               />
@@ -153,6 +154,7 @@ export default function Home() {
                 src="/mia-white.png" 
                 alt="Mia Logo" 
                 fill 
+                sizes="(max-width: 768px) 100vw, 96px"
                 className="object-contain hidden dark:block group-hover:scale-105 transition-transform" 
                 priority
               />
@@ -256,6 +258,7 @@ export default function Home() {
                     src="/icon.png" 
                     alt="Mia Icon" 
                     fill 
+                    sizes="64px"
                     className="object-contain drop-shadow-xl"
                   />
                 </motion.div>
@@ -303,6 +306,7 @@ export default function Home() {
                 src="/icon.png" 
                 alt="Mia Icon" 
                 fill 
+                sizes="(max-width: 768px) 280px, 350px"
                 className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-10"
                 priority
               />
