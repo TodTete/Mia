@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile, HelpCircle, Info } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile, HelpCircle, Info, Sparkles, Send } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
@@ -58,10 +58,15 @@ export default function RecordatoriosPage() {
   const [medSideEffects, setMedSideEffects] = useState<Record<string, string>>({});
   const [loadingSideEffects, setLoadingSideEffects] = useState<Record<string, boolean>>({});
 
-  // Info Modal states
   const [infoModalMed, setInfoModalMed] = useState<Medicine | null>(null);
   const [medInfoData, setMedInfoData] = useState<string>("");
   const [loadingInfo, setLoadingInfo] = useState(false);
+
+  // Magic Voice states
+  const [isAnalyzingMed, setIsAnalyzingMed] = useState(false);
+  const [medVoiceTranscript, setMedVoiceTranscript] = useState("");
+  const [isListeningMed, setIsListeningMed] = useState(false);
+  const medFullTranscriptRef = useRef("");
 
   // Firebase auth & real-time sync
   useEffect(() => {
@@ -137,6 +142,140 @@ export default function RecordatoriosPage() {
     };
 
     recognition.start();
+  };
+
+  const handleMagicVoiceMed = () => {
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Tu navegador no soporta entrada de voz.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-MX";
+    recognition.interimResults = false; // Desactivar para reducir tráfico de red y evitar error 'network'
+    recognition.continuous = false; 
+
+    recognition.onstart = () => {
+      setIsListeningMed(true);
+      setMedVoiceTranscript("");
+      medFullTranscriptRef.current = "";
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          medFullTranscriptRef.current += " " + chunk;
+        } else {
+          interimTranscript = chunk;
+        }
+      }
+      setMedVoiceTranscript((medFullTranscriptRef.current + " " + interimTranscript).trim());
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      alert("Error en el micrófono: " + event.error);
+      setIsListeningMed(false);
+    };
+
+    recognition.onend = async () => {
+      setIsListeningMed(false);
+      // If we have transcript, send to AI
+    };
+
+    // @ts-ignore
+    window._medRecognition = recognition;
+    recognition.start();
+  };
+
+  const processMedVoiceWithAI = async () => {
+    // @ts-ignore
+    if (window._medRecognition) {
+      // @ts-ignore
+      window._medRecognition.stop();
+    }
+    setIsListeningMed(false);
+
+    const finalTranscript = medFullTranscriptRef.current.trim() || medVoiceTranscript.trim();
+    if (!finalTranscript) return;
+
+    setIsAnalyzingMed(true);
+    try {
+      const res = await fetch("/api/deepseek/extract-med", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: finalTranscript }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert("Error de la IA: " + data.error);
+        return;
+      }
+      
+      if (data.extracted) {
+        const { name, dosage, route, frequencyHours, durationDays } = data.extracted;
+        if (name) setMedName(name);
+        if (dosage) setMedDose(dosage);
+        if (route) setMedRoute(route);
+        if (frequencyHours) setMedFreq(frequencyHours);
+        if (durationDays) setMedDays(durationDays);
+      } else {
+        alert("No se pudo extraer información. Prueba a hablar más claro.");
+      }
+    } catch (error) {
+      console.error("Error processing medicine voice:", error);
+      alert("Error al procesar con IA. Revisa tu conexión.");
+    } finally {
+      setIsAnalyzingMed(false);
+      setMedVoiceTranscript("");
+    }
+  };
+
+  const processApptVoiceWithAI = async () => {
+    // @ts-ignore
+    if (window._medRecognition) {
+      // @ts-ignore
+      window._medRecognition.stop();
+    }
+    setIsListeningMed(false);
+
+    const finalTranscript = medFullTranscriptRef.current.trim() || medVoiceTranscript.trim();
+    if (!finalTranscript) return;
+
+    setIsAnalyzingMed(true);
+    try {
+      const res = await fetch("/api/deepseek/extract-med", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: finalTranscript, type: 'appointment' }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert("Error de la IA: " + data.error);
+        return;
+      }
+
+      if (data.extracted) {
+        const { title, date, time } = data.extracted;
+        if (title) setApptTitle(title);
+        if (date) setApptDate(date);
+        if (time) setApptTime(time);
+      } else {
+        alert("No se pudo extraer información de la cita.");
+      }
+    } catch (error) {
+      console.error("Error processing appointment voice:", error);
+      alert("Error al procesar cita con IA.");
+    } finally {
+      setIsAnalyzingMed(false);
+      setMedVoiceTranscript("");
+    }
   };
 
   const handleAddMedicine = async (e: React.FormEvent) => {
@@ -378,10 +517,112 @@ export default function RecordatoriosPage() {
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-bold">Nuevo Medicamento</h3>
-                  <button onClick={() => setShowMedForm(false)} className="text-slate-400 hover:text-slate-600">
-                    <X className="h-5 w-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!isListeningMed && !isAnalyzingMed && !medVoiceTranscript ? (
+                      <button 
+                        type="button"
+                        onClick={handleMagicVoiceMed}
+                        className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#3649cc] to-[#5063eb] px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95"
+                        title="Llenado rápido por voz"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" /> Llenado con MIA
+                      </button>
+                    ) : isAnalyzingMed ? (
+                      <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">
+                        <div className="h-2 w-2 animate-ping rounded-full bg-[#3649cc]"></div> IA Analizando...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button 
+                          type="button"
+                          onClick={processMedVoiceWithAI}
+                          className="flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:scale-105"
+                        >
+                          <Send className="h-3.5 w-3.5" /> Procesar
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            // @ts-ignore
+                            if (window._medRecognition) window._medRecognition.stop();
+                            setIsListeningMed(false);
+                            setMedVoiceTranscript("");
+                            medFullTranscriptRef.current = "";
+                          }}
+                          className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200"
+                        >
+                          <X className="h-3.5 w-3.5" /> Cancelar
+                        </button>
+                      </div>
+                    )}
+                    <button onClick={() => setShowMedForm(false)} className="ml-2 text-slate-400 hover:text-slate-600">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
+                
+                {isListeningMed && (
+                  <div className="mb-4 rounded-2xl bg-[#3649cc]/5 border border-[#3649cc]/20 p-4 animate-in fade-in zoom-in-95">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#3649cc] mb-1">Mia te escucha...</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-2 w-2 items-center justify-center">
+                        <div className="h-2 w-2 animate-ping rounded-full bg-red-500"></div>
+                      </div>
+                      <p className="text-sm text-slate-600 italic">"Habla ahora..."</p>
+                    </div>
+                    <p className="mt-2 text-[9px] text-slate-400 font-medium">Ej: "Toma Paracetamol de 500mg cada 8 horas por 5 días"</p>
+                  </div>
+                )}
+
+                {/* Text Fallback if Voice Fails */}
+                {!isListeningMed && !isAnalyzingMed && !medVoiceTranscript && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-slate-100"></div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">O escribe la frase</span>
+                      <div className="h-px flex-1 bg-slate-100"></div>
+                    </div>
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        placeholder="Ej: Paracetamol 500mg cada 8h por 5 días"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs outline-none focus:border-[#3649cc]"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            setMedVoiceTranscript(e.currentTarget.value);
+                            // We need to wait for state update or use value directly
+                            const val = e.currentTarget.value;
+                            setTimeout(() => {
+                              // Hack to trigger processing with value
+                              medFullTranscriptRef.current = val;
+                              processMedVoiceWithAI();
+                            }, 10);
+                          }
+                        }}
+                      />
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          const input = e.currentTarget.previousSibling as HTMLInputElement;
+                          setMedVoiceTranscript(input.value);
+                          medFullTranscriptRef.current = input.value;
+                          processMedVoiceWithAI();
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#3649cc] hover:text-[#2b3aa3]"
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {(medVoiceTranscript || isAnalyzingMed) && !isListeningMed && (
+                  <div className="mb-4 rounded-2xl bg-[#3649cc]/5 border border-[#3649cc]/20 p-4 animate-in fade-in zoom-in-95">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#3649cc] mb-1">{isAnalyzingMed ? "Analizando..." : "Texto capturado:"}</p>
+                    <p className="text-sm text-slate-600 italic">"{medVoiceTranscript}"</p>
+                  </div>
+                )}
                 {medError && <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">{medError}</div>}
                 <form onSubmit={handleAddMedicine} className="flex flex-col gap-4">
                   <div>
@@ -392,15 +633,8 @@ export default function RecordatoriosPage() {
                         value={medName}
                         onChange={(e) => setMedName(e.target.value)}
                         placeholder="Ej. Paracetamol" 
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                       />
-                      <button 
-                        type="button"
-                        onClick={() => handleVoiceInput(setMedName)}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                      >
-                        <Mic className="h-5 w-5" />
-                      </button>
                     </div>
                   </div>
 
@@ -413,15 +647,8 @@ export default function RecordatoriosPage() {
                           value={medDose}
                           onChange={(e) => setMedDose(e.target.value)}
                           placeholder="Ej. 500mg / 1 tableta" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                         />
-                        <button 
-                          type="button"
-                          onClick={() => handleVoiceInput(setMedDose)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                     <div>
@@ -432,15 +659,8 @@ export default function RecordatoriosPage() {
                           value={medRoute}
                           onChange={(e) => setMedRoute(e.target.value)}
                           placeholder="Ej. Oral" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                         />
-                        <button 
-                          type="button"
-                          onClick={() => handleVoiceInput(setMedRoute)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -453,15 +673,8 @@ export default function RecordatoriosPage() {
                           value={medFreq}
                           onChange={(e) => setMedFreq(e.target.value)}
                           placeholder="Ej. 8" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                         />
-                        <button 
-                          type="button"
-                          onClick={() => handleVoiceInput(setMedFreq)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                     <div>
@@ -472,15 +685,8 @@ export default function RecordatoriosPage() {
                           value={medDays}
                           onChange={(e) => setMedDays(e.target.value)}
                           placeholder="Ej. 5" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                         />
-                        <button 
-                          type="button"
-                          onClick={() => handleVoiceInput(setMedDays)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -602,10 +808,56 @@ export default function RecordatoriosPage() {
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-bold">{editingApptId ? "Editar Cita" : "Nueva Cita Médica"}</h3>
-                  <button onClick={() => { setShowApptForm(false); setEditingApptId(null); }} className="text-slate-400 hover:text-slate-600">
-                    <X className="h-5 w-5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!isListeningMed && !isAnalyzingMed && !medVoiceTranscript ? (
+                      <button 
+                        type="button"
+                        onClick={handleMagicVoiceMed}
+                        className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:scale-105 active:scale-95"
+                        title="Llenado rápido por voz"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" /> Llenado con MIA
+                      </button>
+                    ) : isAnalyzingMed ? (
+                      <div className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">
+                        <div className="h-2 w-2 animate-ping rounded-full bg-slate-400"></div> IA Analizando...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button 
+                          type="button"
+                          onClick={processApptVoiceWithAI}
+                          className="flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-md transition-all hover:scale-105"
+                        >
+                          <Send className="h-3.5 w-3.5" /> Procesar
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            // @ts-ignore
+                            if (window._medRecognition) window._medRecognition.stop();
+                            setIsListeningMed(false);
+                            setMedVoiceTranscript("");
+                            medFullTranscriptRef.current = "";
+                          }}
+                          className="flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-200"
+                        >
+                          <X className="h-3.5 w-3.5" /> Cancelar
+                        </button>
+                      </div>
+                    )}
+                    <button onClick={() => { setShowApptForm(false); setEditingApptId(null); }} className="ml-2 text-slate-400 hover:text-slate-600">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
+                {isListeningMed && (
+                  <div className="mb-4 rounded-2xl bg-slate-50 border border-slate-200 p-4 animate-in fade-in zoom-in-95">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Mia te escucha...</p>
+                    <p className="text-sm text-slate-600 italic">"{medVoiceTranscript || "Dime el motivo, fecha y hora..."}"</p>
+                    <p className="mt-2 text-[9px] text-slate-400 font-medium">Ej: "Cita con el cardiólogo el 15 de mayo a las 4 de la tarde"</p>
+                  </div>
+                )}
                 {apptError && <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">{apptError}</div>}
                 <form onSubmit={handleAddAppointment} className="flex flex-col gap-4">
                   <div>
@@ -616,15 +868,8 @@ export default function RecordatoriosPage() {
                         value={apptTitle}
                         onChange={(e) => setApptTitle(e.target.value)}
                         placeholder="Ej. Dra. Elena - Cardiología" 
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                       />
-                      <button 
-                        type="button"
-                        onClick={() => handleVoiceInput(setApptTitle)}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                      >
-                        <Mic className="h-5 w-5" />
-                      </button>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -644,16 +889,9 @@ export default function RecordatoriosPage() {
                           type="date" 
                           value={apptDate}
                           onChange={(e) => setApptDate(e.target.value)}
-                          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                         />
                         <Calendar className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#3649cc]" />
-                        <button 
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); handleVoiceInput(setApptDate); }}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                     <div>
@@ -672,16 +910,9 @@ export default function RecordatoriosPage() {
                           type="time" 
                           value={apptTime}
                           onChange={(e) => setApptTime(e.target.value)}
-                          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
                         />
                         <Clock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#3649cc]" />
-                        <button 
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); handleVoiceInput(setApptTime); }}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
-                        >
-                          <Mic className="h-4 w-4" />
-                        </button>
                       </div>
                     </div>
                   </div>
