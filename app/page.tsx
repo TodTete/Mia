@@ -19,7 +19,8 @@ import {
   BookOpenIcon, 
   BeakerIcon 
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -246,15 +247,13 @@ export default function Home() {
             </div>
 
             <div className="flex flex-wrap gap-6 pt-6">
-              <Button asChild size="lg" className="rounded-2xl px-10 h-16 bg-[#001970] hover:bg-[#000d4d] text-white font-black text-lg shadow-2xl shadow-[#001970]/30 transition-all hover:scale-105 active:scale-95 group border-0">
-                <Link href="/vistas/captura-datos" className="flex items-center gap-3">
-                  INICIAR ESCANEO
-                  <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 font-black text-lg transition-all backdrop-blur-xl">
-                <Link href="/vistas/avances">HISTORIAL BIO</Link>
-              </Button>
+              <Link href="/vistas/captura-datos" className={cn(buttonVariants({ size: "lg" }), "flex items-center gap-3 rounded-2xl px-10 h-16 bg-[#001970] hover:bg-[#000d4d] text-white font-black text-lg shadow-2xl shadow-[#001970]/30 transition-all hover:scale-105 active:scale-95 group border-0")}>
+                INICIAR ESCANEO
+                <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
+              </Link>
+              <Link href="/vistas/avances" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 font-black text-lg transition-all backdrop-blur-xl")}>
+                HISTORIAL BIO
+              </Link>
             </div>
           </div>
         </motion.section>
