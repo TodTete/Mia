@@ -489,7 +489,6 @@ export default function RecordatoriosPage() {
   }
 
   return (
-<<<<<<< HEAD
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
@@ -505,10 +504,6 @@ export default function RecordatoriosPage() {
       </header>
 
       <div className="mx-auto max-w-5xl px-6">
-=======
-    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
-      <div className="mx-auto max-w-5xl">
->>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
         
         <div className="mb-10 flex flex-col gap-4 sm:mb-12">
           <div>
@@ -847,7 +842,7 @@ export default function RecordatoriosPage() {
                         <button 
                           onClick={handleMagicVoiceMed} // Reuse recognition start
                           disabled={isAnalyzingMed}
-                          className="flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-4 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all hover:bg-emerald-200 dark:hover:bg-emerald-900/50 disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-4 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all hover:bg-emerald-200 dark:hover:bg-indigo-900/50 disabled:opacity-50"
                         >
                           {isAnalyzingMed ? "Procesando..." : "Comenzar a hablar"}
                         </button>

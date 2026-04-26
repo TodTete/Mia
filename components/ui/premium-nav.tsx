@@ -6,18 +6,16 @@ import { usePathname } from "next/navigation";
 import { 
   HomeIcon, 
   HeartIcon, 
-  LifebuoyIcon, 
   UserIcon,
-  SparklesIcon
+  ChartBarIcon
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 const navItems = [
-  { icon: HomeIcon, href: "/vistas/inicio", label: "Inicio" },
+  { icon: HomeIcon, href: "/", label: "Inicio" },
+  { icon: ChartBarIcon, href: "/vistas/avances", label: "Avances" },
   { icon: HeartIcon, href: "/vistas/registro-salud", label: "Salud" },
-  { icon: SparklesIcon, href: "/vistas/registro-emocional", label: "Emoción" },
-  { icon: LifebuoyIcon, href: "/vistas/emergencias", label: "Ayuda" },
   { icon: UserIcon, href: "/vistas/perfil", label: "Perfil" },
 ];
 

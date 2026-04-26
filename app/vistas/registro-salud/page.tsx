@@ -1,192 +1,318 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth } from "../../../lib/firebase/firebase";
+import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { ref, onValue, set, serverTimestamp, get } from "firebase/database";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { 
-  ArrowLeft, 
-  Heart, 
-  Moon, 
-  Utensils, 
-  Zap, 
-  Activity, 
-  Plus, 
-  Calendar, 
-  ChevronRight,
-  ClipboardList,
-  Droplet,
-  Thermometer,
-  Scale
-} from "lucide-react";
+  ArrowLeftIcon, 
+  HeartIcon, 
+  MoonIcon, 
+  CakeIcon, 
+  BoltIcon, 
+  ChartBarIcon, 
+  PlusIcon, 
+  CalendarIcon, 
+  ChevronRightIcon,
+  ClipboardDocumentListIcon,
+  BeakerIcon,
+  ScaleIcon,
+  CheckCircleIcon,
+  XMarkIcon,
+  SparklesIcon
+} from "@heroicons/react/24/outline";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface VitalStat {
+  label: string;
+  key: string;
+  icon: any;
+  val: string | number;
+  unit: string;
+  color: string;
+  bg: string;
+  borderColor: string;
+}
 
 export default function RegistroSaludPage() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [vitals, setVitals] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
+  const [selectedStat, setSelectedStat] = useState<VitalStat | null>(null);
+  const [newValue, setNewValue] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsubscribe();
+    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      if (u) {
+        const vitalsRef = ref(db, `users/${u.uid}/health/vitals`);
+        onValue(vitalsRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setVitals(snapshot.val());
+          }
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
-  const initials = user?.displayName
-    ?.split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("") || "US";
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleUpdateStat = async () => {
+    if (!user || !selectedStat || !newValue) return;
+    setIsSaving(true);
+    try {
+      const statRef = ref(db, `users/${user.uid}/health/vitals/${selectedStat.key}`);
+      await set(statRef, {
+        val: newValue,
+        timestamp: serverTimestamp()
+      });
+      showToast(`${selectedStat.label} actualizado`);
+      setSelectedStat(null);
+      setNewValue("");
+    } catch (e) {
+      showToast("Error al guardar", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const vitalStats: VitalStat[] = [
+    { 
+      label: "Presión Art.", 
+      key: "presion", 
+      icon: ChartBarIcon, 
+      val: vitals.presion?.val || "--", 
+      unit: "mmHg", 
+      color: "text-rose-500", 
+      bg: "bg-rose-50 dark:bg-rose-500/10",
+      borderColor: "border-rose-100 dark:border-rose-500/20"
+    },
+    { 
+      label: "Oxigenación", 
+      key: "oxigeno", 
+      icon: BeakerIcon, 
+      val: vitals.oxigeno?.val || "--", 
+      unit: "%", 
+      color: "text-blue-500", 
+      bg: "bg-blue-50 dark:bg-blue-500/10",
+      borderColor: "border-blue-100 dark:border-blue-500/20"
+    },
+    { 
+      label: "Temperatura", 
+      key: "temperatura", 
+      icon: BeakerIcon, 
+      val: vitals.temperatura?.val || "--", 
+      unit: "°C", 
+      color: "text-orange-500", 
+      bg: "bg-orange-50 dark:bg-orange-500/10",
+      borderColor: "border-orange-100 dark:border-orange-500/20"
+    },
+    { 
+      label: "Peso", 
+      key: "peso", 
+      icon: ScaleIcon, 
+      val: vitals.peso?.val || "--", 
+      unit: "kg", 
+      color: "text-emerald-500", 
+      bg: "bg-emerald-50 dark:bg-emerald-500/10",
+      borderColor: "border-emerald-100 dark:border-emerald-500/20"
+    },
+    { 
+      label: "Frec. Cardíaca", 
+      key: "ritmo", 
+      icon: HeartIcon, 
+      val: vitals.ritmo?.val || "--", 
+      unit: "bpm", 
+      color: "text-red-500", 
+      bg: "bg-red-50 dark:bg-red-500/10",
+      borderColor: "border-red-100 dark:border-red-500/20"
+    },
+    { 
+      label: "Glucosa", 
+      key: "glucosa", 
+      icon: BeakerIcon, 
+      val: vitals.glucosa?.val || "--", 
+      unit: "mg/dL", 
+      color: "text-violet-500", 
+      bg: "bg-violet-50 dark:bg-violet-500/10",
+      borderColor: "border-violet-100 dark:border-violet-500/20"
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white transition-colors duration-300 pb-32 font-public-sans">
-      {/* Premium Header */}
-      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Volver al Inicio
-          </Link>
-        </div>
+    <main className="min-h-screen bg-[#fcfcfd] dark:bg-[#050505] text-slate-900 dark:text-white pb-32 overflow-x-hidden font-manrope">
+      {/* Background Decorative */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-rose-500/5 blur-[120px] rounded-full animate-pulse" style={{animationDelay: '2s'}} />
+      </div>
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 h-16 flex items-center justify-between px-6">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 group-hover:bg-blue-500/10 transition-colors">
+            <ArrowLeftIcon className="w-5 h-5 text-slate-500 group-hover:text-blue-500 transition-colors" />
+          </div>
+          <span className="text-sm font-bold text-slate-500">Inicio</span>
+        </Link>
         <ThemeToggle />
       </header>
 
-      <div className="mx-auto mt-24 w-full max-w-6xl px-6">
-        {/* Intro Card */}
-        <section className="mb-12 rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 bg-white dark:bg-zinc-900/50 p-10 shadow-sm backdrop-blur-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-12 opacity-5">
-            <Activity className="w-40 h-40" />
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-12">
+        {/* Intro Section */}
+        <section className="mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3345CC]/10 text-[#3345CC] text-[10px] font-black uppercase tracking-widest mb-6">
+            <ChartBarIcon className="w-3.5 h-3.5" />
+            Salud Preventiva
           </div>
-          <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[2rem] bg-[#3345CC]/10 text-[#3345CC] shadow-inner">
-              <ClipboardList className="h-8 w-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 rounded-full bg-[#3345CC]/10 text-[#3345CC] text-[10px] font-black uppercase tracking-widest">Módulo de Seguimiento</span>
-              </div>
-              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-4">Registro de Salud</h1>
-              <p className="text-lg leading-relaxed text-slate-500 dark:text-slate-400 max-w-2xl font-manrope">
-                Lleva un control detallado de tus constantes vitales, hábitos alimenticios y nivel de actividad diaria para optimizar tu bienestar.
-              </p>
-            </div>
-          </div>
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-4">Registro de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Bienestar</span></h1>
+          <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl leading-relaxed">
+            Monitorea tus signos vitales y hábitos diarios para que <span className="text-blue-600 font-bold">Mia</span> pueda darte mejores recomendaciones.
+          </p>
         </section>
 
-        <div className="grid gap-10 lg:grid-cols-[1fr_350px]">
-          <div className="space-y-12">
-            {/* Vital Signs Quick Log */}
+        <div className="flex justify-center">
+          <div className="w-full max-w-4xl space-y-16">
+            
+            {/* Vital Signs Grid */}
             <section>
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-3">
-                  <div className="w-2 h-6 bg-red-500 rounded-full" />
+                <h2 className="text-2xl font-bold flex items-center gap-3">
+                  <div className="w-2 h-6 bg-rose-500 rounded-full" />
                   Signos Vitales
                 </h2>
-                <span className="text-xs font-bold text-slate-400">Hoy, {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</span>
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <CalendarIcon className="w-3 h-3" />
+                  Hoy, {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
+                </div>
               </div>
-              
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {[
-                  { label: "Presión Art.", icon: Activity, val: "120/80", unit: "mmHg", color: "text-red-500", bg: "bg-red-50" },
-                  { label: "Oxigenación", icon: Droplet, val: "98", unit: "%", color: "text-blue-500", bg: "bg-blue-50" },
-                  { label: "Temperatura", icon: Thermometer, val: "36.5", unit: "°C", color: "text-orange-500", bg: "bg-orange-50" },
-                  { label: "Peso", icon: Scale, val: "72.4", unit: "kg", color: "text-emerald-500", bg: "bg-emerald-50" },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-white dark:bg-zinc-900/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer group">
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                {vitalStats.map((stat) => (
+                  <motion.div 
+                    key={stat.key}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    onClick={() => setSelectedStat(stat)}
+                    className={cn(
+                      "p-6 rounded-[2.5rem] bg-white dark:bg-white/5 border shadow-sm transition-all cursor-pointer group relative overflow-hidden",
+                      stat.borderColor
+                    )}
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <div className={`p-3 rounded-2xl ${stat.bg} dark:bg-opacity-10 ${stat.color}`}>
+                      <div className={cn("p-3 rounded-2xl", stat.bg, stat.color)}>
                         <stat.icon className="w-5 h-5" />
                       </div>
-                      <Plus className="w-4 h-4 text-slate-300 group-hover:text-[#3345CC]" />
+                      <PlusIcon className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors" />
                     </div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{stat.label}</p>
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-black">{stat.val}</span>
                       <span className="text-xs font-bold text-slate-400">{stat.unit}</span>
                     </div>
-                  </div>
+                    
+                    {/* Progress spark line simulation */}
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </motion.div>
                 ))}
               </div>
             </section>
 
-            {/* Daily Habits */}
-            <section>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-3">
-                  <div className="w-2 h-6 bg-[#3345CC] rounded-full" />
-                  Hábitos Diarios
-                </h2>
-              </div>
-              
-              <div className="grid gap-6">
-                {[
-                  { icon: Moon, title: "Horas de Sueño", desc: "Registraste 7.5h anoche", color: "text-blue-500", bg: "bg-blue-50", link: "/vistas/horario-sueno" },
-                  { icon: Utensils, title: "Alimentación", desc: "3 comidas registradas hoy", color: "text-emerald-500", bg: "bg-emerald-50", link: "#" },
-                  { icon: Zap, title: "Actividad Física", desc: "4,520 pasos completados", color: "text-amber-500", bg: "bg-amber-50", link: "#" },
-                ].map((item, i) => (
-                  <Link key={i} href={item.link} className="flex items-center justify-between p-6 bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-[2.5rem] shadow-sm hover:shadow-xl hover:scale-[1.01] transition-all group">
-                    <div className="flex items-center gap-6">
-                      <div className={`flex h-16 w-16 items-center justify-center rounded-[1.8rem] ${item.bg} dark:bg-opacity-10 ${item.color} shadow-inner`}>
-                        <item.icon className="h-8 w-8" />
-                      </div>
-                      <div>
-                        <h3 className="font-black text-xl mb-1">{item.title}</h3>
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{item.desc}</p>
-                      </div>
-                    </div>
-                    <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-white/5 group-hover:bg-[#3345CC] group-hover:text-white transition-all">
-                      <ChevronRight className="h-5 w-5" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
           </div>
 
-          {/* Sidebar / Insights */}
-          <aside className="space-y-8">
-            <section className="rounded-[2.5rem] bg-slate-900 dark:bg-zinc-900 p-8 text-white shadow-2xl relative overflow-hidden">
-              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#3345CC]/20 rounded-full blur-3xl" />
-              <h3 className="text-xl font-black mb-8 flex items-center gap-2 relative z-10">
-                <Activity className="h-6 w-6 text-blue-400" />
-                Tu Energía
-              </h3>
-              
-              <div className="space-y-8 relative z-10">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[10px] text-blue-300 uppercase font-black tracking-widest">Nivel de Energía</span>
-                    <span className="text-3xl font-black">Alta</span>
-                  </div>
-                  <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 w-[85%]" />
-                  </div>
-                </div>
-
-                <div className="p-6 rounded-3xl bg-white/5 border border-white/10">
-                  <p className="text-xs font-bold text-blue-200 mb-2 italic">Análisis de Mía:</p>
-                  <p className="text-xs text-white/70 leading-relaxed font-manrope">
-                    Tu regularidad en el sueño ha mejorado tu vitalidad matutina en un 15%.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="p-10 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center group hover:border-[#3345CC]/30 transition-colors">
-              <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-[1.5rem] flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform">
-                <Calendar className="h-8 w-8 text-slate-400" />
-              </div>
-              <h4 className="font-black mb-3">Historial Completo</h4>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                Consulta tus tendencias de salud a lo largo del tiempo.
-              </p>
-              <button className="px-6 py-3 bg-slate-100 dark:bg-white/5 hover:bg-[#3345CC] hover:text-white rounded-2xl text-xs font-black transition-all">
-                Ver Reportes
-              </button>
-            </section>
-          </aside>
         </div>
       </div>
+
+      {/* Update Stat Modal */}
+      <AnimatePresence>
+        {selectedStat && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedStat(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className={cn("p-4 rounded-2xl", selectedStat.bg, selectedStat.color)}>
+                      <selectedStat.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">{selectedStat.label}</h3>
+                      <p className="text-xs text-slate-400">Actualizar medición diaria</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedStat(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors">
+                    <XMarkIcon className="w-6 h-6 text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nuevo Valor ({selectedStat.unit})</label>
+                    <input 
+                      autoFocus
+                      type="text" 
+                      value={newValue}
+                      onChange={(e) => setNewValue(e.target.value)}
+                      placeholder={`Ej: ${selectedStat.val !== "--" ? selectedStat.val : '...'}`}
+                      className="w-full h-14 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-xl font-black outline-none focus:border-blue-600 transition-colors"
+                    />
+                  </div>
+
+                  <button 
+                    onClick={handleUpdateStat}
+                    disabled={isSaving || !newValue}
+                    className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {isSaving ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>Guardar Medición <CheckCircleIcon className="w-5 h-5" /></>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Global Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl bg-slate-900 text-white text-sm font-bold shadow-2xl flex items-center gap-3"
+          >
+            <div className={cn("w-2 h-2 rounded-full animate-pulse", toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500')} />
+            {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

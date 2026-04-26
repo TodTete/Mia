@@ -13,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
-import { Smile, Meh, Frown, Moon, ArrowLeft, Clock, User, Edit, Check, TrendingUp, BarChart2, Sparkles } from "lucide-react";
+import { Smile, Meh, Frown, Moon, ArrowLeft, Clock, User, Edit, Check, TrendingUp, BarChart2, Sparkles, Pill } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, get } from "firebase/database";
@@ -34,6 +34,7 @@ export default function AvancesPage() {
   const [latestSleep, setLatestSleep] = useState<any>(null);
 
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [medicines, setMedicines] = useState<any[]>([]);
 
   useEffect(() => {
     // Load profile
@@ -99,8 +100,28 @@ export default function AvancesPage() {
         }
       });
     };
-    getSleepData();
 
+    // Load medicines from Firebase
+    const getMedicinesData = () => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        unsubscribe();
+        if (user) {
+          try {
+            const medRef = ref(db, `users/${user.uid}/medicines`);
+            const snapshot = await get(medRef);
+            const data = snapshot.val();
+            if (data) {
+              setMedicines(Object.values(data));
+            }
+          } catch (e) {
+            console.error("Error fetching medicines", e);
+          }
+        }
+      });
+    };
+
+    getSleepData();
+    getMedicinesData();
   }, []);
 
   const saveBio = () => {
@@ -356,6 +377,42 @@ export default function AvancesPage() {
               )}
             </div>
           </section>
+
+          {/* Medicines Section */}
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <div className="w-2 h-6 bg-purple-500 rounded-full" />
+                Medicamentos
+              </h2>
+              <Link href="/vistas/recordatorios" className="text-sm font-bold text-purple-500 hover:underline">
+                Ver Horarios
+              </Link>
+            </div>
+
+            <div className="space-y-4">
+              {medicines.length > 0 ? (
+                medicines.map((med, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-xl bg-white dark:bg-zinc-800 flex items-center justify-center shadow-sm">
+                        <Pill className="h-5 w-5 text-purple-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">{med.name}</p>
+                        <p className="text-xs text-slate-500">{med.dosage} • {med.frequency}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center bg-slate-50 dark:bg-black/20 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                  <Pill className="h-8 w-8 text-slate-300 mb-2" />
+                  <p className="text-xs text-slate-500">No hay medicamentos registrados</p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
 
         {/* Mood Progress Section */}
@@ -435,10 +492,6 @@ export default function AvancesPage() {
               </Link>
             </div>
           )}
-<<<<<<< HEAD
-
-=======
->>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
         </section>
       </div>
     </main>

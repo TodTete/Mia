@@ -1,0 +1,42 @@
+# MIA: Asistente Médico Inteligente (OmniDoc Puebla)
+
+## Descripción General
+MIA (Medical Intelligent Assistant) es una Progressive Web App (PWA) de vanguardia diseñada para transformar la gestión de la salud personal. El proyecto, nacido bajo la visión de "OmniDoc Puebla", busca democratizar el acceso a la monitorización médica, reducir la saturación hospitalaria y proporcionar a los ciudadanos una herramienta de autogestión de salud basada en Inteligencia Artificial.
+
+## Funciones Principales
+
+1. **Expediente Médico Digital Inteligente**:
+   - Captura de datos personales y antecedentes médicos de forma manual o mediante **Voz con IA**.
+   - Procesamiento de lenguaje natural para extraer datos de salud automáticamente a partir de conversaciones.
+   - Seguridad y privacidad de datos integradas.
+
+2. **Registro de Salud en Tiempo Real**:
+   - Monitoreo de signos vitales críticos: Presión Arterial, Oxigenación, Temperatura, Peso, Frecuencia Cardíaca y Glucosa.
+   - Interfaz intuitiva y táctil para registrar mediciones diarias.
+   - Almacenamiento persistente en la nube mediante Firebase para acceso desde cualquier dispositivo.
+
+3. **Seguimiento y Apoyo (Ver mis Avances)**:
+   - Panel unificado que muestra la evolución del paciente.
+   - Listado inteligente de medicamentos y recordatorios.
+   - Análisis de tendencias (Sueño, Diagnóstico, etc.).
+
+4. **Interfaz Premium Mobile-First**:
+   - Diseño optimizado para smartphones con una estética "SaaS Premium".
+   - Navegación fluida y adaptativa con temas claro/oscuro.
+   - Micro-animaciones y feedback visual constante para una experiencia de usuario superior.
+
+5. **Infraestructura Tecnológica**:
+   - Desarrollado con Next.js (Turbopack) para máxima velocidad.
+   - Base de datos en tiempo real (Firebase Realtime Database) y autenticación segura.
+   - Integración con modelos de IA para análisis predictivo y diagnóstico.
+
+## Público Objetivo
+
+- **Ciudadanos General**: Personas que desean llevar un control preventivo de su salud sin depender constantemente de visitas físicas al médico.
+- **Pacientes con Enfermedades Crónicas**: Usuarios que requieren un seguimiento diario de métricas como glucosa o presión arterial.
+- **Sistemas de Salud Públicos**: Como solución para mitigar la saturación de hospitales mediante el pre-diagnóstico y monitoreo remoto.
+- **Personas en Emergencias**: El expediente digital permite compartir información vital de forma instantánea con servicios de emergencia.
+
+---
+© 2026 OmniDoc Puebla - Por Amor a Puebla.
+Diseñado para innovar, construido para cuidar.

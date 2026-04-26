@@ -36,7 +36,7 @@ const supportViews = [
   },
   {
     name: "Diagnóstico",
-    href: "/vistas/diagnostico",
+    href: "/vistas/avances",
     focus: "Registra padecimientos y medicamentos indicados.",
     icon: ClipboardDocumentCheckIcon,
     color: "text-orange-500 dark:text-orange-400"
@@ -160,24 +160,6 @@ export default function Home() {
           </Link>
           
           <nav className="hidden lg:flex items-center gap-1">
-            {[
-              { name: "Expediente", href: "/vistas/captura-datos" },
-              { name: "Salud", href: "/vistas/registro-salud" },
-              { name: "Emergencias", href: "/vistas/emergencias" },
-            ].map((item) => (
-              <Link 
-                key={item.name} 
-                href={item.href}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                  item.active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface"
-                }`}
-              >
-                {item.name}
-              </Link>
-            ))}
-
             <div className="relative group">
               <button className="px-4 py-2 rounded-full text-sm font-bold text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface transition-all flex items-center gap-1">
                 Seguimiento y Apoyo
@@ -189,7 +171,7 @@ export default function Home() {
                 <div className="w-64 bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden p-2 flex flex-col gap-1">
                   {supportViews.map((view) => (
                     <Link
-                      key={view.href}
+                      key={view.name}
                       href={view.href}
                       className="px-4 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors flex items-center gap-3"
                     >
@@ -225,7 +207,7 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-[4rem] overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl shadow-black/20 group"
+          className="relative rounded-[4rem] overflow-hidden shadow-2xl shadow-black/20 group"
         >
           {/* Glass Overlay with Border Light */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 dark:to-transparent z-10 pointer-events-none" />
@@ -259,7 +241,7 @@ export default function Home() {
             }}
             initial="hidden"
             animate="show"
-            className="relative z-20 p-10 md:p-20 w-full flex flex-col lg:flex-row items-center justify-between gap-12"
+            className="relative z-20 p-14 md:p-20 w-full flex flex-col lg:flex-row items-center justify-between gap-12"
           >
             <div className="space-y-10 max-w-2xl">
               <div className="space-y-4">
@@ -291,11 +273,7 @@ export default function Home() {
               }}
               className="flex flex-wrap gap-6 pt-6"
             >
-              <Link href="/vistas/avances" className={cn(buttonVariants({ size: "lg" }), "flex items-center gap-3 rounded-2xl px-10 h-16 bg-[#3649cc] hover:bg-[#2b3aa3] text-white font-black text-lg shadow-2xl shadow-[#3649cc]/30 transition-all hover:scale-105 active:scale-95 group border-0")}>
-                <ChartBarIcon className="w-6 h-6" />
-                VER MIS AVANCES
-                <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              {/* Button removed as requested */}
             </motion.div>
             </div>
 
@@ -329,7 +307,7 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative rounded-[3.5rem] p-1 md:p-12 overflow-hidden bg-white/5 dark:bg-white/[0.02] border border-white/10 dark:border-white/5 will-change-transform"
+          className="relative rounded-[3.5rem] p-6 md:p-12 overflow-hidden bg-white/5 dark:bg-white/[0.02] border border-white/10 dark:border-white/5 will-change-transform"
         >
           <div className="space-y-12 relative z-10">
             <div className="flex items-end justify-between px-4">
@@ -341,7 +319,7 @@ export default function Home() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {supportViews.map((view, i) => (
                 <motion.div
-                  key={view.href}
+                  key={view.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.1 }}
@@ -349,7 +327,7 @@ export default function Home() {
                 >
                   <div
                     onClick={() => router.push(view.href)}
-                    className="cursor-pointer group block glass-surface rounded-3xl p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-sky-400 relative"
+                    className="cursor-pointer group block glass-surface rounded-3xl p-6 md:p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-sky-400 relative"
                   >
                     <div className="flex items-start justify-between mb-6">
                       <div className={`w-12 h-12 rounded-xl bg-on-surface/5 flex items-center justify-center transition-all group-hover:bg-sky-400/20 group-hover:!text-white ${view.color}`}>
@@ -385,7 +363,7 @@ export default function Home() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="grid gap-gutter lg:grid-cols-[1fr_auto] will-change-transform"
         >
-          <div className="glass-surface rounded-[2rem] p-8 md:p-10 space-y-6">
+          <div className="glass-surface rounded-[2rem] p-6 md:p-10 space-y-6">
             <h2 className="text-3xl font-bold font-public-sans flex items-center gap-3">
               <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary" />
               Protocolo de Uso
@@ -416,7 +394,7 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="glass-surface rounded-[2rem] p-8 bg-primary/5 border-primary/20 flex flex-col justify-center items-center text-center max-w-xs">
+          <div className="glass-surface rounded-[2rem] p-6 md:p-8 bg-primary/5 border-primary/20 flex flex-col justify-center items-center text-center w-full md:max-w-xs">
             <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
               <HeartIcon className="w-8 h-8 text-primary animate-pulse" />
             </div>
