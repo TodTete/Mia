@@ -29,6 +29,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 export default function DiagnosticoPage() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -105,6 +106,11 @@ export default function DiagnosticoPage() {
 
   return (
     <main className="min-h-[100dvh] bg-[#fdfdfe] dark:bg-[#02040a] text-slate-900 dark:text-slate-100 font-sans selection:bg-teal-500/30 overflow-hidden">
+      <ViewTutorialModal 
+        viewId="diagnostico"
+        title="Bitácora Clínica"
+        description="Agrega y administra tus padecimientos médicos. Aquí podrás vincular tus enfermedades o condiciones de salud con los medicamentos correspondientes para que Mia te ayude a mantener el control."
+      />
       {/* Header - Glassmorphism */}
       <header className="h-20 border-b border-slate-200 dark:border-white/5 bg-white/50 dark:bg-black/50 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-50">
         <div className="flex items-center gap-6">
@@ -131,7 +137,10 @@ export default function DiagnosticoPage() {
 
       <div className="flex h-[calc(100dvh-80px)] overflow-hidden">
         {/* Sidebar - Padecimientos */}
-        <aside className="w-full md:w-[400px] border-r border-slate-200 dark:border-white/5 flex flex-col bg-white dark:bg-black/20 overflow-hidden">
+        <aside className={cn(
+          "w-full md:w-[400px] border-r border-slate-200 dark:border-white/5 flex flex-col bg-white dark:bg-black/20 overflow-hidden shrink-0",
+          selectedCondition ? "hidden md:flex" : "flex"
+        )}>
           <div className="p-6 border-b border-slate-100 dark:border-white/5">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Padecimientos</h2>
@@ -219,7 +228,10 @@ export default function DiagnosticoPage() {
         </aside>
 
         {/* Main Area - Medicamentos / Detalles */}
-        <section className="flex-1 bg-slate-50/50 dark:bg-black/40 overflow-y-auto p-8 md:p-12 scrollbar-hide hidden md:block">
+        <section className={cn(
+          "flex-1 bg-slate-50/50 dark:bg-black/40 overflow-y-auto p-6 md:p-12 scrollbar-hide",
+          !selectedCondition ? "hidden md:block" : "block"
+        )}>
           <AnimatePresence mode="wait">
             {selectedCondition ? (
               <motion.div 
@@ -229,7 +241,14 @@ export default function DiagnosticoPage() {
                 exit={{ opacity: 0, x: -20 }}
                 className="max-w-4xl"
               >
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <button 
+                    onClick={() => setSelectedCondition(null)}
+                    className="md:hidden flex items-center gap-2 px-3 py-1 bg-slate-200 dark:bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-colors"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Volver
+                  </button>
                   <div className="px-3 py-1 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-teal-500/20">
                     Padecimiento Activo
                   </div>

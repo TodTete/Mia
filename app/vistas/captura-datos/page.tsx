@@ -26,6 +26,7 @@ import { ref, set, get, serverTimestamp } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 // Tipos
 interface PatientProfile {
@@ -153,6 +154,24 @@ export default function CapturaDatosPage() {
   const [showNationalityList, setShowNationalityList] = useState(false);
   const fullTranscriptRef = useRef("");
   const shouldListenRef = useRef(false);
+
+  // Mostrar todos los campos para que los dicte de un jalón
+  const voiceLabels = [
+    "Nombre Completo",
+    "Edad",
+    "Género",
+    "CURP",
+    "Estado / Localidad",
+    "Peso (kg)",
+    "Estatura (cm)",
+    "Tipo de Sangre",
+    "Alergias",
+    "Discapacidad",
+    "Medicación Actual",
+    "Patologías (Cirugías, Crónicas)",
+    "Hábitos (Fumo, Ejercicio, etc.)",
+    "Tel. de Emergencia"
+  ];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -434,11 +453,16 @@ export default function CapturaDatosPage() {
     setTranscript("");
     fullTranscriptRef.current = "";
     setTimeout(() => {
-      startVoiceCapture();
+      startVoiceWithIntro();
     }, 400);
   };
   return (
     <main className="min-h-screen bg-[#fcfcfd] dark:bg-[#050505] text-slate-900 dark:text-white pb-32 overflow-x-hidden">
+      <ViewTutorialModal 
+        viewId="captura-datos"
+        title="Expediente Médico"
+        description="Aquí podrás crear o actualizar tu perfil de salud. Puedes llenar los campos manualmente o dejar que Mia te escuche y complete todo automáticamente. Mantener tu perfil al día ayuda a Mia a darte mejores diagnósticos."
+      />
       {/* Dynamic Background Elements */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 dark:bg-blue-500/5 blur-[120px] rounded-full animate-pulse" />
@@ -748,9 +772,34 @@ export default function CapturaDatosPage() {
                   {isListening && <div className="px-3 py-1 rounded-full bg-red-500 text-[10px] font-bold animate-pulse">EN VIVO</div>}
                 </div>
 
+                <AnimatePresence>
+                  {isMiaSpeaking && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden mb-6"
+                    >
+                      <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-inner">
+                        <div className="flex items-center gap-2 mb-3 text-white font-bold text-sm">
+                          <InformationCircleIcon className="w-5 h-5 text-blue-200" />
+                          Por favor, indícame lo siguiente:
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {voiceLabels.map(label => (
+                            <span key={label} className="text-[10px] font-black uppercase tracking-widest bg-white/20 text-white px-2.5 py-1.5 rounded-lg shadow-sm border border-white/10">
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="bg-black/10 rounded-2xl p-5 border border-white/10 min-h-[100px] mb-8">
                   <p className="text-sm italic text-white/90 leading-relaxed">
-                    {isMiaSpeaking ? "Escuchando a Mia..." : transcript || "Comienza a hablar..."}
+                    {isMiaSpeaking ? "Escucha atentamente las instrucciones..." : transcript || "Comienza a hablar..."}
                   </p>
                 </div>
 
@@ -767,10 +816,16 @@ export default function CapturaDatosPage() {
                     )}
                   </button>
                   <button 
-                    onClick={startVoiceCapture}
+                    onClick={replayVoiceCapture}
                     className="px-6 h-12 rounded-xl bg-white/10 hover:bg-white/20 font-bold text-sm transition-all"
                   >
                     Reiniciar
+                  </button>
+                  <button 
+                    onClick={stopVoiceCapture}
+                    className="px-6 h-12 rounded-xl bg-red-500/20 hover:bg-red-500/40 text-red-200 font-bold text-sm transition-all"
+                  >
+                    Detener
                   </button>
                 </div>
               </motion.div>

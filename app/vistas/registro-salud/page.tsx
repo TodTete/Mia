@@ -26,6 +26,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 interface VitalStat {
   label: string;
@@ -45,6 +46,8 @@ export default function RegistroSaludPage() {
   const [selectedStat, setSelectedStat] = useState<VitalStat | null>(null);
   const [newValue, setNewValue] = useState("");
   const [statHistory, setStatHistory] = useState<any[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [aiReport, setAiReport] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
@@ -52,9 +55,17 @@ export default function RegistroSaludPage() {
       if (u) {
         const vitalsRef = ref(db, `users/${u.uid}/health/vitals`);
         onValue(vitalsRef, (snapshot) => {
-          if (snapshot.exists()) {
-            setVitals(snapshot.val());
-          }
+          const loadedVitals = snapshot.exists() ? snapshot.val() : {};
+          try {
+            const profileStr = localStorage.getItem("mia-profile-v1");
+            if (profileStr) {
+              const profile = JSON.parse(profileStr);
+              if (profile.peso && !loadedVitals.peso) {
+                loadedVitals.peso = { val: profile.peso, timestamp: Date.now() };
+              }
+            }
+          } catch {}
+          setVitals(loadedVitals);
           setLoading(false);
         });
       } else {
@@ -151,6 +162,30 @@ export default function RegistroSaludPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
 
+  const handleGenerateState = async () => {
+    if (!user) return;
+    setGenerating(true);
+    setAiReport(null);
+    try {
+      const profileStr = localStorage.getItem("mia-profile-v1");
+      const res = await fetch("/api/deepseek/generate-health-state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vitals, profile: profileStr ? JSON.parse(profileStr) : {} })
+      });
+      const data = await res.json();
+      if (data.report) {
+        setAiReport(data.report);
+      } else {
+        showToast("No se pudo generar el informe.", "error");
+      }
+    } catch (e) {
+      showToast("Error de conexión con la IA.", "error");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const vitalStats: VitalStat[] = [
     { 
       label: "Presión Art.", 
@@ -214,8 +249,15 @@ export default function RegistroSaludPage() {
     },
   ];
 
+  const isAllFilled = vitalStats.every(s => s.val !== "--");
+
   return (
     <main className="min-h-screen bg-[#fcfcfd] dark:bg-[#050505] text-slate-900 dark:text-white pb-32 overflow-x-hidden font-manrope">
+      <ViewTutorialModal 
+        viewId="registro-salud"
+        title="Registro de Signos Vitales"
+        description="Lleva un registro diario de tu salud (presión, glucosa, peso, etc.). Mia utilizará estos datos para detectar anomalías y brindarte alertas tempranas si algo se sale de rango."
+      />
       {/* Background Decorative */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full animate-pulse" />
@@ -292,6 +334,55 @@ export default function RegistroSaludPage() {
                   </motion.div>
                 ))}
               </div>
+            </section>
+
+            {/* Generar Estado Section */}
+            <section className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-sm border border-slate-100 dark:border-white/5 space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h3 className="text-xl font-bold font-manrope flex items-center gap-2 text-slate-900 dark:text-white">
+                    <SparklesIcon className="w-6 h-6 text-blue-500" />
+                    Estado de Salud Inteligente
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1">Llena todos tus signos vitales para que Mia analice tu estado general de hoy.</p>
+                </div>
+                <button
+                  disabled={!isAllFilled || generating}
+                  onClick={handleGenerateState}
+                  className="px-6 py-3 bg-[#3345CC] hover:bg-[#2b3aa3] text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {generating ? (
+                    <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Analizando...</>
+                  ) : (
+                    <><SparklesIcon className="w-5 h-5" /> Generar estado</>
+                  )}
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {aiReport && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-6 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white dark:bg-black flex items-center justify-center shrink-0 shadow-sm">
+                          <img src="/icon.png" alt="Mia" className="w-6 h-6 object-contain" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2">Análisis de Mia</h4>
+                          <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed whitespace-pre-wrap">
+                            {aiReport}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </section>
 
           </div>

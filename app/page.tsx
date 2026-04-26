@@ -7,87 +7,86 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { 
-  UserCircleIcon, 
-  ChatBubbleLeftRightIcon, 
-  ClipboardDocumentCheckIcon, 
-  HomeIcon, 
-  SparklesIcon, 
-  BellIcon, 
-  ChartBarIcon, 
-  ExclamationTriangleIcon, 
-  HeartIcon, 
-  BookOpenIcon, 
-  BeakerIcon,
-  MoonIcon,
-  ArrowRightIcon
-} from "@heroicons/react/24/outline";
+  UserCircle,
+  FileAudio,
+  Stethoscope,
+  Sparkles,
+  BellRing,
+  TrendingUp,
+  AlertTriangle,
+  HeartPulse,
+  BookHeart,
+  MoonStar,
+  ArrowRight,
+  Heart
+} from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 const supportViews = [
   {
     name: "Expediente",
     href: "/vistas/captura-datos",
     focus: "Registro manual o por voz con validación humana.",
-    icon: ChatBubbleLeftRightIcon,
+    icon: FileAudio,
     color: "text-purple-500 dark:text-purple-400"
   },
   {
     name: "Diagnóstico",
     href: "/vistas/diagnostico",
     focus: "Registra padecimientos y medicamentos indicados.",
-    icon: ClipboardDocumentCheckIcon,
+    icon: Stethoscope,
     color: "text-orange-500 dark:text-orange-400"
   },
   {
     name: "Recomendaciones",
     href: "/vistas/recomendaciones",
     focus: "Ejercicios, comida y buenos hábitos personalizados.",
-    icon: SparklesIcon,
+    icon: Sparkles,
     color: "text-amber-500 dark:text-amber-400"
   },
   {
     name: "Recordatorios",
     href: "/vistas/recordatorios",
     focus: "Medicamentos, horarios, consulta y seguimiento.",
-    icon: BellIcon,
+    icon: BellRing,
     color: "text-sky-500 dark:text-sky-400"
   },
   {
     name: "Avances",
     href: "/vistas/avances",
     focus: "Evolución de peso, salud y gráfica de progreso.",
-    icon: ChartBarIcon,
+    icon: TrendingUp,
     color: "text-emerald-500 dark:text-emerald-400"
   },
   {
     name: "Emergencias",
     href: "/vistas/emergencias",
     focus: "Números locales y aviso visible para síntomas graves.",
-    icon: ExclamationTriangleIcon,
+    icon: AlertTriangle,
     color: "text-secondary"
   },
   {
     name: "Salud emocional",
     href: "/vistas/registro-emocional",
     focus: "Estado de ánimo, estrés y señales de alerta.",
-    icon: HeartIcon,
+    icon: HeartPulse,
     color: "text-rose-500 dark:text-rose-400"
   },
   {
     name: "Registro de salud",
     href: "/vistas/registro-salud",
     focus: "Sueño, hábitos y retroalimentación general.",
-    icon: BookOpenIcon,
+    icon: BookHeart,
     color: "text-indigo-500 dark:text-indigo-400"
   },
   {
     name: "Horario de sueño",
     href: "/vistas/horario-sueno",
     focus: "Monitoreo de descanso y patrones nocturnos.",
-    icon: MoonIcon,
+    icon: MoonStar,
     color: "text-indigo-500 dark:text-indigo-400"
   },
 ];
@@ -96,6 +95,30 @@ export default function Home() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [user, setUser] = useState<any>(null);
+
+  // Mouse tracking for 3D logo effect
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 150 };
+  const smoothMouseX = useSpring(mouseX, springConfig);
+  const smoothMouseY = useSpring(mouseY, springConfig);
+
+  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [25, -25]);
+  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-25, 25]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -197,7 +220,7 @@ export default function Home() {
                 src={user.photoURL}
               />
             ) : (
-              <UserCircleIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              <UserCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
             )}
           </Link>
         </div>
@@ -217,19 +240,8 @@ export default function Home() {
           <div className="absolute inset-0 z-0">
             <div className="relative w-full h-full group">
 
-              {/* Holographic Scan Line Effect */}
-              <motion.div 
-                animate={{ 
-                  top: ["0%", "100%", "0%"]
-                }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Infinity, 
-                  ease: "linear" 
-                }}
-                className="absolute left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent z-10 opacity-40"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent dark:from-[#020205] dark:via-[#020205]/40 dark:to-transparent z-[5]" />
+              {/* Soft Ambient Light Effect */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#3649cc]/10 via-transparent to-emerald-500/10 z-[5]" />
             </div>
           </div>
 
@@ -267,7 +279,7 @@ export default function Home() {
                   hidden: { opacity: 0, y: 40 },
                   show: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
                 }}
-                className="text-4xl sm:text-6xl md:text-8xl font-black tracking-[-0.05em] leading-[0.9] font-space-grotesk italic"
+                className="text-4xl sm:text-6xl md:text-8xl font-black tracking-[-0.05em] leading-[0.9] italic"
               >
                 TU SALUD <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D92626] to-[#001970]">INTELIGENTE.</span>
@@ -277,7 +289,7 @@ export default function Home() {
                   hidden: { opacity: 0, y: 30 },
                   show: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
                 }}
-                className="text-xl md:text-2xl text-on-surface-variant leading-relaxed font-manrope max-w-2xl font-medium opacity-80"
+                className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl font-medium"
               >
                 La evolución del bienestar digital. Mia fusiona biometría avanzada con IA predictiva para transformar tu vida hoy.
               </motion.p>
@@ -296,20 +308,35 @@ export default function Home() {
 
             <motion.div 
               variants={{
-                hidden: { opacity: 0, scale: 0.8, rotate: -5 },
-                show: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
+                hidden: { opacity: 0, scale: 0.8 },
+                show: { opacity: 1, scale: 1, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
               }}
-              className="hidden lg:flex relative w-[280px] h-[280px] xl:w-[350px] xl:h-[350px] flex-shrink-0"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{
+                rotateX,
+                rotateY,
+                transformStyle: "preserve-3d"
+              }}
+              className="hidden lg:flex relative w-[280px] h-[280px] xl:w-[350px] xl:h-[350px] flex-shrink-0 perspective-[1000px] cursor-pointer"
             >
-              <div className="absolute inset-0 bg-[#3649cc]/20 blur-[60px] rounded-full" />
-              <Image 
-                src="/icon.png" 
-                alt="Mia Icon" 
-                fill 
-                sizes="(max-width: 768px) 280px, 350px"
-                className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-10"
-                priority
+              <div 
+                className="absolute inset-0 bg-[#3649cc]/20 blur-[60px] rounded-full" 
+                style={{ transform: "translateZ(-50px)" }}
               />
+              <motion.div 
+                className="w-full h-full relative"
+                style={{ transform: "translateZ(50px)" }}
+              >
+                <Image 
+                  src="/icon.png" 
+                  alt="Mia Icon" 
+                  fill 
+                  sizes="(max-width: 768px) 280px, 350px"
+                  className="object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.6)] z-10 pointer-events-none"
+                  priority
+                />
+              </motion.div>
             </motion.div>
           </motion.div>
         </motion.section>
@@ -330,8 +357,8 @@ export default function Home() {
           <div className="space-y-12 relative z-10">
             <div className="flex items-end justify-between px-4">
               <div className="space-y-1">
-                <h2 className="text-3xl font-black font-space-grotesk tracking-tight">Seguimiento y Apoyo</h2>
-                <p className="text-on-surface-variant text-sm font-medium">Herramientas inteligentes para tu día a día.</p>
+                <h2 className="text-3xl font-black font-space-grotesk tracking-tight">Cuidando de ti</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Herramientas diseñadas para tu tranquilidad diaria.</p>
               </div>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -345,25 +372,31 @@ export default function Home() {
                 >
                   <div
                     onClick={() => router.push(view.href)}
-                    className="cursor-pointer group block glass-surface rounded-3xl p-6 md:p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-sky-400 relative"
+                    className="cursor-pointer group block bg-white dark:bg-zinc-900/50 rounded-3xl p-6 md:p-8 transition-all duration-300 hover:shadow-xl hover:shadow-[#3649cc]/10 hover:-translate-y-2 border border-slate-100 dark:border-white/5 relative overflow-hidden"
                   >
-                    <div className="flex items-start justify-between mb-6">
-                      <div className={`w-12 h-12 rounded-xl bg-on-surface/5 flex items-center justify-center transition-all group-hover:bg-sky-400/20 group-hover:!text-white ${view.color}`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-slate-50/50 dark:to-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    <div className="flex items-start justify-between mb-6 relative z-10">
+                      <motion.div 
+                        whileHover={{ scale: 1.15, rotate: 10 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                        className={`w-14 h-14 rounded-2xl bg-slate-50 dark:bg-black flex items-center justify-center transition-colors group-hover:bg-[#3649cc] group-hover:!text-white shadow-sm border border-slate-100 dark:border-white/5 ${view.color}`}
+                      >
                         <view.icon className="w-7 h-7" />
-                      </div>
-                      <div className="text-[10px] font-black tracking-[0.3em] uppercase text-on-surface-variant/40 group-hover:text-sky-400 transition-colors">
-                        {view.href.split('/').pop()?.replace('-', ' ')}
+                      </motion.div>
+                      <div className="text-[10px] font-black tracking-widest uppercase text-slate-300 dark:text-slate-600 group-hover:text-[#3649cc] dark:group-hover:text-sky-400 transition-colors">
+                        Módulo
                       </div>
                     </div>
-                    <h3 className="text-xl font-bold font-space-grotesk mb-3 tracking-tight group-hover:text-sky-400 transition-colors">
+                    <h3 className="text-xl font-bold font-manrope mb-3 text-slate-900 dark:text-white group-hover:text-[#3649cc] dark:group-hover:text-sky-400 transition-colors relative z-10">
                       {view.name}
                     </h3>
-                    <p className="text-sm text-on-surface-variant leading-relaxed font-medium line-clamp-2">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium line-clamp-2 relative z-10">
                       {view.focus}
                     </p>
-                    <div className="absolute bottom-4 right-8 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-0 group-hover:scale-100">
-                      <div className="w-8 h-8 rounded-full bg-sky-400 flex items-center justify-center text-white">
-                        <ArrowRightIcon className="w-4 h-4 stroke-[3]" />
+                    <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                      <div className="w-8 h-8 rounded-full bg-[#3649cc] flex items-center justify-center text-white shadow-lg">
+                        <ArrowRight className="w-4 h-4 stroke-[3]" />
                       </div>
                     </div>
                   </div>
@@ -381,29 +414,29 @@ export default function Home() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="grid gap-gutter lg:grid-cols-[1fr_auto] will-change-transform"
         >
-          <div className="glass-surface rounded-[15px] p-6 md:p-10 space-y-6">
-            <h2 className="text-3xl font-bold font-public-sans flex items-center gap-3">
-              <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary" />
-              Protocolo de Uso
+          <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100 dark:border-white/5 space-y-8">
+            <h2 className="text-3xl font-black font-manrope flex items-center gap-3">
+              <Heart className="w-8 h-8 text-rose-500" />
+              Nuestra Promesa de Cuidado
             </h2>
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-10">
               <div className="space-y-4">
-                <h4 className="text-primary font-bold text-sm uppercase tracking-wider">Misión</h4>
-                <p className="text-on-surface-variant leading-relaxed">
-                  No se debe prometer precisión médica total ni sustituir al médico. La interfaz debe pedir consentimiento claro para datos sensibles, limitarse al mínimo necesario y mostrar valor inmediato.
+                <h4 className="text-[#3649cc] font-bold text-sm uppercase tracking-widest">Para tu tranquilidad</h4>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                  Mia está diseñada para ser tu apoyo diario. Tus datos son privados y seguros. Recuerda que Mia ofrece sugerencias amigables, pero siempre debes consultar a tu médico para decisiones importantes.
                 </p>
               </div>
               <div className="space-y-4">
-                <h4 className="text-tertiary font-bold text-sm uppercase tracking-wider">Avisos Clave</h4>
-                <ul className="space-y-3">
+                <h4 className="text-emerald-600 font-bold text-sm uppercase tracking-widest">Principios</h4>
+                <ul className="space-y-4">
                   {[
-                    "No diagnosticar: orientar o sugerir.",
-                    "Aviso de emergencia para síntomas graves.",
-                    "Priorizar salud mental y hábitos.",
-                    "Permitir carga manual si la voz falla."
+                    "Orientación y apoyo constante.",
+                    "Alertas claras en caso de emergencias.",
+                    "Enfoque en tus hábitos saludables.",
+                    "Fácil de usar, sin complicaciones."
                   ].map((rule, i) => (
-                    <li key={i} className="flex items-center gap-3 text-sm text-on-surface-variant">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <li key={i} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400 font-medium">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
                       {rule}
                     </li>
                   ))}
@@ -412,21 +445,18 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="glass-surface rounded-[15px] p-6 md:p-8 bg-primary/5 border-primary/20 flex flex-col justify-center items-center text-center w-full md:max-w-xs">
-            <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
-              <HeartIcon className="w-8 h-8 text-primary animate-pulse" />
-            </div>
-            <h3 className="text-xl font-bold font-public-sans mb-4">Estado del Paciente</h3>
+          <div className="bg-gradient-to-br from-[#3649cc]/10 to-purple-500/10 rounded-[2.5rem] p-8 md:p-10 border border-[#3649cc]/20 flex flex-col justify-center items-center text-center w-full md:max-w-xs shadow-inner">
+            <motion.div 
+              animate={{ scale: [1, 1.1, 1] }} 
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-16 h-16 rounded-3xl bg-white dark:bg-black flex items-center justify-center mb-6 shadow-md"
+            >
+              <Heart className="w-8 h-8 text-rose-500 fill-rose-500/20" />
+            </motion.div>
+            <h3 className="text-xl font-bold font-manrope mb-4 text-slate-900 dark:text-white">Siempre Contigo</h3>
             <div className="space-y-2 w-full">
-              <div className="flex justify-between text-xs">
-                <span>Precisión de Datos</span>
-                <span className="text-primary font-bold">98.2%</span>
-              </div>
-              <div className="h-1.5 w-full bg-on-surface/5 rounded-full overflow-hidden">
-                <div className="h-full bg-primary w-[98.2%]" />
-              </div>
-              <p className="text-[10px] text-on-surface-variant mt-4">
-                Monitoreo activo de signos vitales y respuestas emocionales en tiempo real.
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4">
+                Tu bienestar es nuestra prioridad número uno en cada paso que das.
               </p>
             </div>
           </div>

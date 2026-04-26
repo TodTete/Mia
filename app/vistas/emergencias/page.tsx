@@ -5,6 +5,7 @@ import { ArrowLeft, Phone, Copy, Check, ShieldAlert, Heart, User, MapPin, Drople
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 type EmergencyData = Record<string, Record<string, Record<string, string>>>;
 
@@ -144,6 +145,11 @@ export default function EmergenciasPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <ViewTutorialModal 
+        viewId="emergencias"
+        title="Contactos de Emergencia"
+        description="Ten siempre a la mano los números de ayuda y rescate de tu país y estado. Desde aquí puedes copiar rápidamente los números de emergencia y consultar tu propia información crítica en caso de incidentes."
+      />
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link

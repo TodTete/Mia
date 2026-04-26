@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 type Medicine = {
   id: string;
@@ -489,6 +490,11 @@ export default function RecordatoriosPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <ViewTutorialModal 
+        viewId="recordatorios"
+        title="Alertas Médicas"
+        description="Lleva el control de todos tus medicamentos y citas. Mia te recordará cuándo tomar tus pastillas y te alertará de posibles interacciones usando IA avanzada."
+      />
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link

@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/chart";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PremiumNav } from "@/components/ui/premium-nav";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 import { auth, db } from "@/lib/firebase/firebase";
 import { ref, push, set, serverTimestamp, onValue, query, limitToLast, orderByChild } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
@@ -208,6 +209,11 @@ export default function RegistroEmocionalPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020205] text-slate-900 dark:text-white font-manrope selection:bg-[#3345CC]/30 pb-32 transition-colors duration-300 overflow-x-hidden">
+      <ViewTutorialModal 
+        viewId="registro-emocional"
+        title="Bitácora Emocional"
+        description="Aquí puedes documentar tu estado de ánimo diario y la intensidad de la emoción. Esta información le sirve a Mia para identificar patrones que relacionen tu salud física con tu salud mental."
+      />
       <style jsx global>{`
         .intensity-slider {
           -webkit-appearance: none;

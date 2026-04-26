@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Public_Sans, Manrope, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Public_Sans, Manrope, Space_Grotesk, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -12,6 +12,7 @@ const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 const publicSans = Public_Sans({subsets:['latin'],variable:'--font-public-sans'});
 const manrope = Manrope({subsets:['latin'],variable:'--font-manrope'});
 const spaceGrotesk = Space_Grotesk({subsets:['latin'],variable:'--font-space-grotesk'});
+const jakarta = Plus_Jakarta_Sans({subsets:['latin'],variable:'--font-jakarta'});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,7 +65,7 @@ export default function RootLayout({
         spaceGrotesk.variable
       )}
     >
-      <body className="min-h-screen flex flex-col font-manrope bg-slate-50 dark:bg-black text-black dark:text-white transition-colors duration-300">
+      <body className={cn("min-h-screen flex flex-col font-jakarta bg-slate-50 dark:bg-black text-black dark:text-white transition-colors duration-300", jakarta.variable)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

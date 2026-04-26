@@ -7,10 +7,10 @@ import { Brain, Moon, ShieldCheck, Dumbbell, Utensils, HeartPulse, RefreshCw } f
 import { ThemeToggle } from "@/components/theme-toggle";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, get } from "firebase/database";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 type PatientProfile = {
   nombres: string;
@@ -198,6 +198,11 @@ export default function RecomendacionesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 font-manrope selection:bg-[#3345CC]/30 pb-24 transition-colors duration-500">
+      <ViewTutorialModal 
+        viewId="recomendaciones"
+        title="Recomendaciones"
+        description="Recibe sugerencias personalizadas de alimentación, ejercicio y hábitos diarios. Mia analiza todo tu expediente médico para darte consejos seguros y adecuados a tu condición."
+      />
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link

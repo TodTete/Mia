@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 const STORAGE_KEY = "mia-profile-v1";
 
@@ -111,6 +112,11 @@ export default function PerfilPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <ViewTutorialModal 
+        viewId="perfil"
+        title="Tu Perfil Médico"
+        description="Aquí puedes ver un resumen de tu información de salud, gestionar tu sesión y acceder rápidamente a la edición de tus datos."
+      />
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link

@@ -9,6 +9,7 @@
   --font-public-sans: var(--font-public-sans);
   --font-manrope: var(--font-manrope);
   --font-space-grotesk: var(--font-space-grotesk);
+  --font-jakarta: var(--font-jakarta);
 
   /* Colors mapped to CSS variables */
   --color-surface: var(--surface);
@@ -154,10 +155,10 @@
     @apply border-outline/20;
   }
   body {
-    @apply bg-background text-foreground font-manrope;
+    @apply bg-background text-foreground font-jakarta;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-public-sans;
+    @apply font-jakarta;
   }
 }
 

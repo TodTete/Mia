@@ -9,6 +9,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set } from "firebase/database";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 export default function HorarioSuenoPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function HorarioSuenoPage() {
   };
   const [sleepHistory, setSleepHistory] = useState<SleepRecord[]>([]);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
   const [logHours, setLogHours] = useState(8);
   const [logQuality, setLogQuality] = useState<'excellent'|'good'|'poor'>('excellent');
 
@@ -133,16 +135,18 @@ export default function HorarioSuenoPage() {
     e.preventDefault();
     if (!user) return;
     
-    const newId = Date.now().toString();
-    const today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' });
+    // Create a date object taking timezone into account
+    const selectedDateObj = new Date(logDate + 'T12:00:00');
+    const newId = selectedDateObj.getTime().toString();
+    const displayDate = selectedDateObj.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' });
     
     try {
       await set(ref(db, `users/${user.uid}/sleepHistory/${newId}`), {
         id: newId,
-        date: today,
+        date: displayDate,
         hours: logHours,
         quality: logQuality,
-        timestamp: Date.now()
+        timestamp: selectedDateObj.getTime()
       });
       setShowRegisterForm(false);
     } catch (error) {
@@ -186,6 +190,11 @@ export default function HorarioSuenoPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pb-20 overflow-x-hidden">
+      <ViewTutorialModal 
+        viewId="horario-sueno"
+        title="Control de Sueño"
+        description="Establece tus horas de dormir y despertar para que Mia calcule la calidad de tu descanso. Recibirás alertas suaves para recordarte tu hora de dormir."
+      />
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link
@@ -371,16 +380,28 @@ export default function HorarioSuenoPage() {
               onClick={() => setShowRegisterForm(!showRegisterForm)}
               className="flex items-center gap-1 rounded-lg bg-[#3649cc]/10 dark:bg-indigo-500/20 px-3 py-1.5 text-sm font-semibold text-[#3649cc] dark:text-indigo-400 transition-colors hover:bg-[#3649cc]/20 dark:hover:bg-indigo-500/30"
             >
-              <Plus className="h-4 w-4" /> Registrar Hoy
+              <Plus className="h-4 w-4" /> Registrar por día
             </button>
           </div>
 
           {/* Formulario de registro */}
           {showRegisterForm && (
             <div className="mb-8 rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 sm:p-8 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">¿Cómo dormiste anoche?</h3>
-              <form onSubmit={handleRegisterSleep} className="flex flex-col sm:flex-row items-end gap-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">¿Cuánto dormiste?</h3>
+              <form onSubmit={handleRegisterSleep} className="flex flex-col sm:flex-row flex-wrap items-end gap-6">
                 
+                <div className="w-full sm:w-auto">
+                  <label className="mb-2 block text-sm font-bold text-slate-500 dark:text-slate-400">Fecha del registro</label>
+                  <input 
+                    type="date" 
+                    max={new Date().toISOString().split('T')[0]}
+                    value={logDate}
+                    onChange={(e) => setLogDate(e.target.value)}
+                    className="w-full rounded-2xl bg-slate-100 dark:bg-white/10 px-4 py-3 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-[#3649cc]/20"
+                    required
+                  />
+                </div>
+
                 <div className="w-full sm:w-1/3">
                   <label className="mb-2 block text-sm font-bold text-slate-500 dark:text-slate-400">Horas dormidas</label>
                   <div className="flex items-center gap-4">

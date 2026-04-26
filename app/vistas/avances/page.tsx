@@ -17,6 +17,7 @@ import { Smile, Meh, Frown, Moon, ArrowLeft, Clock, User, Edit, Check, TrendingU
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, get } from "firebase/database";
+import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
 
 export default function AvancesPage() {
   const router = useRouter();
@@ -206,6 +207,11 @@ export default function AvancesPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <ViewTutorialModal 
+        viewId="avances"
+        title="Historia Bio-Digital"
+        description="Visualiza tu progreso a lo largo del tiempo. Aquí encontrarás gráficas con tu historial emocional, calidad de sueño, resumen de medicamentos e insights de tu diagnóstico."
+      />
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link
