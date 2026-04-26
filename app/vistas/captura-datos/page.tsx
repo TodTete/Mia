@@ -333,7 +333,7 @@ export default function CapturaDatosPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-12 pb-20">
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header de Sección */}
         <section className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -345,19 +345,28 @@ export default function CapturaDatosPage() {
           </div>
           <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
             <button 
-              onClick={() => {
-                setMode("manual");
-                setIsInterviewing(false);
-              }}
-              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${mode === "manual" && !isInterviewing ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              onClick={() => setMode("manual")}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${mode === "manual" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
               Teclado
             </button>
             <button 
-              onClick={startInterview}
-              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${isInterviewing ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              onClick={() => {
+                setMode("voz");
+                startVoiceWithIntro();
+              }}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${mode === "voz" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
-              <div className={`w-2 h-2 rounded-full ${isInterviewing ? "bg-white" : "bg-emerald-500"} animate-pulse`} />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+              </svg>
+              Voz
+            </button>
+            <button 
+              onClick={startInterview}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-emerald-500 hover:bg-emerald-500/5`}
+            >
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               Entrevista IA
             </button>
           </div>
@@ -388,7 +397,107 @@ export default function CapturaDatosPage() {
           <div className="grid gap-8 lg:grid-cols-[380px_1fr] items-start">
             {/* Sidebar con Resumen y Voz (Ahora a la izquierda en desktop) */}
             <aside className="space-y-6 lg:sticky lg:top-8 lg:order-1 order-1">
+              {mode === "voz" && (
+                <article className={`rounded-3xl border transition-all duration-500 ${
+                  isListening
+                    ? "border-[#3345CC] bg-[#3345CC]/10 dark:bg-[#3345CC]/20"
+                    : isAnalyzing
+                    ? "border-emerald-400/40 bg-emerald-500/5"
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+                } p-6 shadow-sm dark:shadow-none`}>
 
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                        isListening ? "bg-[#3345CC]" : isAnalyzing ? "bg-emerald-500" : "bg-slate-100 dark:bg-white/10"
+                      }`}>
+                        {isListening ? (
+                          <div className="flex gap-0.5 items-center">
+                            <div className="w-0.5 h-3 bg-white rounded-full animate-[bounce_0.5s_infinite]" />
+                            <div className="w-0.5 h-5 bg-white rounded-full animate-[bounce_0.5s_infinite_0.1s]" />
+                            <div className="w-0.5 h-3 bg-white rounded-full animate-[bounce_0.5s_infinite_0.2s]" />
+                          </div>
+                        ) : isAnalyzing ? (
+                          <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold">Captura por Voz</h2>
+                        <p className="text-[10px] text-slate-400">
+                          {isListening ? "Escuchando..." : isAnalyzing ? "Procesando con IA..." : "Lista para escuchar"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Panel animado de campos */}
+                  {introFieldCount > 0 && (
+                    <div className="mb-4 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#3345CC]/10 border-b border-[#3345CC]/20">
+                        <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-500 animate-pulse" : "bg-[#3345CC]"}`} />
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#3345CC]">
+                          {isListening ? "Ahora habla estos datos" : "Datos a mencionar"}
+                        </p>
+                      </div>
+                      <div className="p-3 space-y-1">
+                        {VOICE_FIELDS.map((field, idx) => {
+                          const visible = idx < introFieldCount;
+                          return (
+                            <div
+                              key={field.label}
+                              className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-500 ${
+                                visible ? "opacity-100 translate-y-0 bg-white dark:bg-white/5 shadow-sm" : "opacity-0 translate-y-2 pointer-events-none h-0 overflow-hidden p-0"
+                              }`}
+                              style={{ transitionDelay: visible ? `${idx * 40}ms` : "0ms" }}
+                            >
+                              <span className="text-base leading-none">{field.emoji}</span>
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{field.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transcripción */}
+                  {(isListening || transcript) && (
+                    <div className="mb-4 p-3 bg-black/20 dark:bg-black/40 rounded-2xl border border-white/5 min-h-[60px]">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Escuchando...</p>
+                      <p className="text-xs text-slate-300 italic leading-relaxed line-clamp-3">&quot;{transcript || "..."}&quot;</p>
+                    </div>
+                  )}
+
+                  {/* Botones */}
+                  <div className="space-y-2">
+                    {!isListening && !isAnalyzing && (
+                      <button id="btn-start-voice" onClick={startVoiceWithIntro} className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3 text-sm font-bold">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                        </svg>
+                        Hablar con Mia
+                      </button>
+                    )}
+                    {isListening && (
+                      <button onClick={stopVoiceCapture} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all">
+                        Enviar y Procesar
+                      </button>
+                    )}
+                    {isAnalyzing && (
+                      <div className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 animate-pulse">
+                        Mia está analizando...
+                      </div>
+                    )}
+                  </div>
+                </article>
+              )}
 
               <article className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-xl dark:shadow-none">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
