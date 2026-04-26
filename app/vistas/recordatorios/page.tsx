@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2 } from "lucide-react";
+import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
@@ -48,6 +48,11 @@ export default function RecordatoriosPage() {
 
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+
+  // New state for rescheduling and side effects
+  const [editingApptId, setEditingApptId] = useState<string | null>(null);
+  const [medSideEffects, setMedSideEffects] = useState<Record<string, string>>({});
+  const [loadingSideEffects, setLoadingSideEffects] = useState<Record<string, boolean>>({});
 
   // Firebase auth & real-time sync
   useEffect(() => {
@@ -179,23 +184,62 @@ export default function RecordatoriosPage() {
       return;
     }
 
-    const newApptId = Date.now().toString();
+    const apptId = editingApptId || Date.now().toString();
     const newAppt: Appointment = {
-      id: newApptId,
+      id: apptId,
       title: apptTitle,
       date: apptDate,
       time: apptTime,
     };
 
     try {
-      await set(ref(db, `users/${user.uid}/appointments/${newApptId}`), newAppt);
+      await set(ref(db, `users/${user.uid}/appointments/${apptId}`), newAppt);
       setApptTitle("");
       setApptDate("");
       setApptTime("");
+      setEditingApptId(null);
       setShowApptForm(false);
     } catch (err) {
       setApptError("Error al guardar la cita.");
     }
+  };
+
+  const fetchSideEffects = async (med: Medicine) => {
+    if (medSideEffects[med.id]) {
+      const newEffects = { ...medSideEffects };
+      delete newEffects[med.id];
+      setMedSideEffects(newEffects);
+      return;
+    }
+
+    setLoadingSideEffects(prev => ({ ...prev, [med.id]: true }));
+    try {
+      const res = await fetch("/api/deepseek/side-effects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ medicineName: med.name }),
+      });
+      const data = await res.json();
+      if (data.sideEffects) {
+        setMedSideEffects(prev => ({ ...prev, [med.id]: data.sideEffects }));
+      } else if (data.error) {
+        setMedSideEffects(prev => ({ ...prev, [med.id]: `Error: ${data.error}` }));
+      }
+    } catch (error) {
+      console.error("Error fetching side effects:", error);
+    } finally {
+      setLoadingSideEffects(prev => ({ ...prev, [med.id]: false }));
+    }
+  };
+
+  const startReschedule = (appt: Appointment) => {
+    setApptTitle(appt.title);
+    setApptDate(appt.date);
+    setApptTime(appt.time);
+    setEditingApptId(appt.id);
+    setShowApptForm(true);
   };
 
   const takeMedicine = async (id: string) => {
@@ -411,6 +455,29 @@ export default function RecordatoriosPage() {
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
+
+                      {/* Side Effects info */}
+                      <div className="mt-4 flex flex-col gap-2 w-full border-t border-slate-50 pt-4">
+                        <button 
+                          onClick={() => fetchSideEffects(med)}
+                          disabled={loadingSideEffects[med.id]}
+                          className="flex w-fit items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#3649cc] hover:underline disabled:opacity-50"
+                        >
+                          {loadingSideEffects[med.id] ? (
+                            <>Cargando...</>
+                          ) : (
+                            <>{medSideEffects[med.id] ? "Ocultar efectos" : "Ver efectos secundarios"}</>
+                          )}
+                        </button>
+                        {medSideEffects[med.id] && (
+                          <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 animate-in fade-in slide-in-from-top-2">
+                            <p className="font-semibold mb-1 flex items-center gap-2">
+                              <Smile className="h-4 w-4" /> Información de IA:
+                            </p>
+                            {medSideEffects[med.id]}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })
@@ -439,8 +506,8 @@ export default function RecordatoriosPage() {
             {showApptForm && (
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Nueva Cita Médica</h3>
-                  <button onClick={() => setShowApptForm(false)} className="text-slate-400 hover:text-slate-600">
+                  <h3 className="text-lg font-bold">{editingApptId ? "Editar Cita" : "Nueva Cita Médica"}</h3>
+                  <button onClick={() => { setShowApptForm(false); setEditingApptId(null); }} className="text-slate-400 hover:text-slate-600">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
@@ -524,7 +591,7 @@ export default function RecordatoriosPage() {
                     </div>
                   </div>
                   <button type="submit" className="mt-2 w-full rounded-xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-slate-700">
-                    Guardar Cita
+                    {editingApptId ? "Actualizar Cita" : "Guardar Cita"}
                   </button>
                 </form>
               </div>
@@ -570,12 +637,12 @@ export default function RecordatoriosPage() {
                         </div>
                       </div>
 
-                      <div className="mt-auto grid grid-cols-2 gap-3">
-                        <button className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900">
+                      <div className="mt-auto">
+                        <button 
+                          onClick={() => startReschedule(appt)}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900"
+                        >
                           Reprogramar
-                        </button>
-                        <button className="rounded-xl bg-[#3649cc] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#3649cc]/20 transition-all hover:bg-[#2b3aa3] hover:shadow-lg hover:shadow-[#3649cc]/30">
-                          Ver Detalles
                         </button>
                       </div>
                     </div>
