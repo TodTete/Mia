@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -20,6 +21,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { motion, AnimatePresence } from "framer-motion";
 
 const teamViews = [
   {
@@ -121,118 +123,259 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-surface-container-lowest text-on-surface font-manrope selection:bg-primary/30 pb-24 transition-colors duration-300">
-      {/* Background decoration */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
-        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] bg-tertiary/10 blur-[100px] rounded-full" />
+    <main className="min-h-screen bg-white dark:bg-[#020205] text-on-surface font-manrope selection:bg-primary/30 pb-32 transition-colors duration-500 overflow-x-hidden">
+      {/* Cinematic Background Layer */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Futuristic Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        
+        {/* Subtle Static Background Gradient */}
+        <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+        
+        {/* Single Lightweight Floating Light */}
+        <motion.div 
+          animate={{ 
+            opacity: [0.1, 0.2, 0.1]
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+          className="absolute top-[10%] right-[10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" 
+        />
       </div>
 
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-margin h-16 bg-surface/80 backdrop-blur-xl border-b border-on-surface/10">
-        <div className="flex items-center gap-sm">
-          <img src="/mia-black.png" alt="Logo" className="h-10 dark:hidden" />
-          <img src="/mia-white.png" alt="Logo" className="h-10 hidden dark:block" />
+      {/* Header / Navbar */}
+      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 md:px-12 h-20 bg-white/40 dark:bg-black/40 backdrop-blur-3xl border-b border-white/10 dark:border-white/5 transition-all duration-300">
+        <div className="flex items-center gap-10">
+          <Link href="/" className="flex items-center gap-3 group relative">
+            <div className="relative h-10 w-24">
+              <Image 
+                src="/mia-black.png" 
+                alt="Mia Logo" 
+                fill 
+                className="object-contain dark:hidden group-hover:scale-105 transition-transform" 
+                priority
+              />
+              <Image 
+                src="/mia-white.png" 
+                alt="Mia Logo" 
+                fill 
+                className="object-contain hidden dark:block group-hover:scale-105 transition-transform" 
+                priority
+              />
+            </div>
+          </Link>
+          
+          <nav className="hidden lg:flex items-center gap-1">
+            {[
+              { name: "Inicio", href: "/", active: true },
+              { name: "Captura", href: "/vistas/captura-datos" },
+              { name: "Salud", href: "/vistas/registro-salud" },
+              { name: "Emergencias", href: "/vistas/emergencias" },
+            ].map((item) => (
+              <Link 
+                key={item.name} 
+                href={item.href}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                  item.active 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface"
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </nav>
         </div>
+
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <div className="w-10 h-10 rounded-full overflow-hidden border border-on-surface/20">
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 p-0.5 group cursor-pointer">
             <img 
               alt="User Profile" 
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" 
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3FgT76GhbbDoWRP0F8il11ONiIEm2MoGYJNpm7wnmgLDt_JqX2S8wZFIX8207kquAI53RWOZiBkG_5d1aS15i5nvWYC0Jc7CzXRk2ZZs1_EDwwHesxoX7_JEs5ZXlUiyapRvggYeq3v29Rdsv6Xd8x5RTKzCGUOaedSKwo8VMovojlcsy7J3IXgqr72gW1Wpmfdre_EfrAIXI6cXRiK7omzH-UxWLk-mtDGBxUZeKT4Eg_4Ybuo7SsNK0OOJzz-WhIbDoOiHfo_w"
             />
           </div>
         </div>
       </header>
 
-      <div className="relative pt-32 px-margin max-w-7xl mx-auto space-y-xl">
+      <div className="relative pt-32 px-6 md:px-12 max-w-7xl mx-auto space-y-24">
         {/* Hero Section */}
-        <section className="glass-surface rounded-[2.5rem] p-8 md:p-12 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
-          <div className="relative z-10 max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-widest uppercase">
-              <SparklesIcon className="w-4 h-4" />
-              Libro Mayor de Salud en Tiempo Real
+        <motion.section 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="relative rounded-[4rem] overflow-hidden border border-white/20 dark:border-white/10 shadow-2xl shadow-black/20 group"
+        >
+          {/* Glass Overlay with Border Light */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 dark:to-transparent z-10 pointer-events-none" />
+          
+          <div className="absolute inset-0 z-0">
+            <div className="relative w-full h-full group">
+              <Image 
+                src="/mia_ai_medical_assistant_1777163443521.png" 
+                alt="Futuristic Medical AI" 
+                fill
+                className="object-cover opacity-80 dark:opacity-50 transition-opacity duration-1000 will-change-transform"
+                priority
+              />
+              {/* Holographic Scan Line Effect */}
+              <motion.div 
+                animate={{ 
+                  top: ["0%", "100%", "0%"]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: "linear" 
+                }}
+                className="absolute left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent z-10 opacity-40"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent dark:from-[#020205] dark:via-[#020205]/40 dark:to-transparent z-[5]" />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface font-public-sans leading-[1.1]">
-              Tu salud, bajo control <span className="text-primary">con inteligencia.</span>
-            </h1>
-            <p className="text-lg md:text-xl text-on-surface-variant leading-relaxed font-manrope max-w-2xl">
-              Mia recopila, acompaña y sigue cada aspecto de tu bienestar. Una interfaz clínica futurista diseñada para la claridad y la acción inmediata.
-            </p>
           </div>
-        </section>
+
+          <div className="relative z-20 p-10 md:p-20 max-w-4xl space-y-10">
+            <div className="space-y-4">
+              <h1 className="text-6xl md:text-8xl font-black tracking-[ -0.05em] leading-[0.85] font-space-grotesk italic">
+                TU SALUD. <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D92626] to-[#001970]">INTELIGENTE.</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-on-surface-variant leading-relaxed font-manrope max-w-2xl font-medium opacity-80">
+                La evolución del bienestar digital. Mia fusiona biometría avanzada con IA predictiva para transformar tu vida hoy.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-6 pt-6">
+              <Button asChild size="lg" className="rounded-2xl px-10 h-16 bg-[#001970] hover:bg-[#000d4d] text-white font-black text-lg shadow-2xl shadow-[#001970]/30 transition-all hover:scale-105 active:scale-95 group border-0">
+                <Link href="/vistas/captura-datos" className="flex items-center gap-3">
+                  INICIAR ESCANEO
+                  <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 font-black text-lg transition-all backdrop-blur-xl">
+                <Link href="/vistas/avances">HISTORIAL BIO</Link>
+              </Button>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Simplified Background Layer */}
+        <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden opacity-30">
+          <div className="absolute top-[30%] -right-[10%] w-[50%] h-[50%] bg-primary/5 blur-[100px] rounded-full" />
+        </div>
 
         {/* Core Functions */}
-        <section className="space-y-md">
-          <div className="flex items-end justify-between px-2">
-            <div>
-              <h2 className="text-2xl font-bold font-public-sans">Funciones Principales</h2>
-              <p className="text-on-surface-variant text-sm">Acceso y recopilación de datos fundamentales</p>
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="space-y-12 will-change-transform"
+        >
+          <div className="flex items-end justify-between px-6 border-l-8 border-primary py-2">
+            <div className="space-y-1">
+              <h2 className="text-4xl font-black font-space-grotesk tracking-tighter uppercase italic">Módulos Core</h2>
+              <p className="text-on-surface-variant text-sm font-bold tracking-widest uppercase opacity-60">Arquitectura de captura y acceso</p>
             </div>
           </div>
-          <div className="grid gap-gutter md:grid-cols-2 lg:grid-cols-4">
-            {teamViews.map((view) => (
-              <Link
+          
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {teamViews.map((view, i) => (
+              <motion.div
                 key={view.href}
-                href={view.href}
-                className="group glass-surface rounded-3xl p-6 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.6 }}
+                whileHover={{ y: -15, scale: 1.02 }}
+                className="relative"
               >
-                <div className={`w-12 h-12 rounded-2xl bg-on-surface/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${view.color}`}>
-                  <view.icon className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold font-public-sans mb-2 group-hover:text-primary transition-colors">
-                  {view.name}
-                </h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
-                  {view.focus}
-                </p>
-                <div className="mt-8 flex items-center gap-2 text-primary text-sm font-bold opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
-                  Explorar módulo
-                  <span className="text-lg">→</span>
-                </div>
-              </Link>
+                <Link
+                  href={view.href}
+                  className="group block bg-white/5 dark:bg-white/[0.02] backdrop-blur-2xl rounded-[2.5rem] p-10 h-full border border-white/10 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/20"
+                >
+                  <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-on-surface/10 to-transparent flex items-center justify-center mb-10 group-hover:rotate-[15deg] group-hover:scale-125 transition-all duration-500 ${view.color}`}>
+                    <view.icon className="w-9 h-9" />
+                  </div>
+                  <h3 className="text-2xl font-black font-space-grotesk mb-4 group-hover:text-primary transition-colors tracking-tighter leading-none">
+                    {view.name.toUpperCase()}
+                  </h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed font-bold opacity-70 group-hover:opacity-100 transition-opacity">
+                    {view.focus}
+                  </p>
+                  
+                  {/* Decorative number */}
+                  <div className="absolute top-8 right-10 text-6xl font-black text-white/10 italic group-hover:text-white/30 transition-colors">
+                    0{i + 1}
+                  </div>
+                </Link>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        {/* Support & Tracking */}
-        <section className="space-y-md">
-          <div className="flex items-end justify-between px-2">
-            <div>
-              <h2 className="text-2xl font-bold font-public-sans">Seguimiento y Apoyo</h2>
-              <p className="text-on-surface-variant text-sm">Herramientas de monitoreo continuo</p>
+        {/* Support & Tracking Section */}
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="relative rounded-[3.5rem] p-1 md:p-12 overflow-hidden bg-white/5 dark:bg-white/[0.02] border border-white/10 dark:border-white/5 will-change-transform"
+        >
+          <div className="space-y-12 relative z-10">
+            <div className="flex items-end justify-between px-4">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-black font-space-grotesk tracking-tight">Seguimiento y Apoyo</h2>
+                <p className="text-on-surface-variant text-sm font-medium">Herramientas inteligentes para tu día a día.</p>
+              </div>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {supportViews.map((view, i) => (
+                <motion.div
+                  key={view.href}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Link
+                    href={view.href}
+                    className="group block glass-surface rounded-3xl p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-primary relative"
+                  >
+                    <div className="flex items-start justify-between mb-6">
+                      <div className={`w-12 h-12 rounded-xl bg-on-surface/5 flex items-center justify-center transition-all group-hover:bg-primary/10 ${view.color}`}>
+                        <view.icon className="w-7 h-7" />
+                      </div>
+                      <div className="text-[10px] font-black tracking-[0.3em] uppercase text-on-surface-variant/40 group-hover:text-primary transition-colors">
+                        MÓDULO: {view.href.split('/').pop()}
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-bold font-space-grotesk mb-3 tracking-tight group-hover:text-primary transition-colors">
+                      {view.name}
+                    </h3>
+                    <p className="text-sm text-on-surface-variant leading-relaxed font-medium line-clamp-2">
+                      {view.focus}
+                    </p>
+                    <div className="absolute bottom-4 right-8 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-0 group-hover:scale-100">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                        <span className="text-lg">→</span>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
             </div>
           </div>
-          <div className="grid gap-gutter md:grid-cols-2 lg:grid-cols-3">
-            {supportViews.map((view) => (
-              <Link
-                key={view.href}
-                href={view.href}
-                className="group glass-surface rounded-3xl p-6 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-primary"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-10 h-10 rounded-xl bg-on-surface/5 flex items-center justify-center ${view.color}`}>
-                    <view.icon className="w-6 h-6" />
-                  </div>
-                  <div className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant/40 group-hover:text-primary/60 transition-colors">
-                    ID: {view.href.split('/').pop()}
-                  </div>
-                </div>
-                <h3 className="text-lg font-bold font-public-sans mb-2">
-                  {view.name}
-                </h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-2">
-                  {view.focus}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
+        </motion.section>
 
         {/* Rules and Ethics */}
-        <section className="grid gap-gutter lg:grid-cols-[1fr_auto]">
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="grid gap-gutter lg:grid-cols-[1fr_auto] will-change-transform"
+        >
           <div className="glass-surface rounded-[2rem] p-8 md:p-10 space-y-6">
             <h2 className="text-3xl font-bold font-public-sans flex items-center gap-3">
               <ClipboardDocumentCheckIcon className="w-8 h-8 text-primary" />
@@ -282,7 +425,7 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </section>
+        </motion.section>
       </div>
     </main>
   );
