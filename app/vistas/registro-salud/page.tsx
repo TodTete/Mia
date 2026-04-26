@@ -44,8 +44,7 @@ export default function RegistroSaludPage() {
   const [loading, setLoading] = useState(true);
   const [selectedStat, setSelectedStat] = useState<VitalStat | null>(null);
   const [newValue, setNewValue] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
+  const [statHistory, setStatHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
@@ -66,6 +65,23 @@ export default function RegistroSaludPage() {
     return () => unsubscribeAuth();
   }, []);
 
+  // Fetch history when a stat is selected
+  useEffect(() => {
+    if (user && selectedStat) {
+      const historyRef = ref(db, `users/${user.uid}/health/history/${selectedStat.key}`);
+      const unsubscribe = onValue(historyRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const list = Object.values(data).reverse().slice(0, 5); // Last 5
+          setStatHistory(list);
+        } else {
+          setStatHistory([]);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [user, selectedStat]);
+
   const showToast = (msg: string, type: "success" | "error" | "info" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -77,44 +93,33 @@ export default function RegistroSaludPage() {
     
     const measurement = {
       val: newValue,
-      timestamp: Date.now(), // Local timestamp for immediate use
+      timestamp: Date.now(),
       key: selectedStat.key,
       label: selectedStat.label,
       unit: selectedStat.unit
     };
 
-    // 1. Save locally for Offline Mode
-    const localKey = `mia_pending_sync_${user.uid}`;
-    const pending = JSON.parse(localStorage.getItem(localKey) || "[]");
-    pending.push(measurement);
-    localStorage.setItem(localKey, JSON.stringify(pending));
-    
-    // Update UI immediately (Optimistic Update)
-    setVitals(prev => ({
-      ...prev,
-      [selectedStat.key]: { val: newValue, timestamp: measurement.timestamp }
-    }));
-
     try {
-      // 2. Sync with Firebase if online
+      // 1. Update Latest Value
       const statRef = ref(db, `users/${user.uid}/health/vitals/${selectedStat.key}`);
       await set(statRef, {
         val: newValue,
         timestamp: serverTimestamp()
       });
-      
-      // Clean up local queue if successful
-      const updatedPending = JSON.parse(localStorage.getItem(localKey) || "[]");
-      const filtered = updatedPending.filter((p: any) => p.timestamp !== measurement.timestamp);
-      localStorage.setItem(localKey, JSON.stringify(filtered));
 
+      // 2. Push to History
+      const { push: firebasePush } = await import("firebase/database");
+      const historyRef = ref(db, `users/${user.uid}/health/history/${selectedStat.key}`);
+      await firebasePush(historyRef, {
+        val: newValue,
+        timestamp: serverTimestamp()
+      });
+      
       showToast(`${selectedStat.label} actualizado`);
       setSelectedStat(null);
       setNewValue("");
-    } catch (e) {
-      showToast("Guardado localmente (Sin conexión)", "info");
-      setSelectedStat(null);
-      setNewValue("");
+    } catch (e: any) {
+      showToast("Error al guardar: " + e.message, "error");
     } finally {
       setIsSaving(false);
     }
@@ -142,6 +147,9 @@ export default function RegistroSaludPage() {
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, [user]);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
 
   const vitalStats: VitalStat[] = [
     { 
@@ -348,6 +356,25 @@ export default function RegistroSaludPage() {
                       <>Guardar Medición <CheckCircleIcon className="w-5 h-5" /></>
                     )}
                   </button>
+
+                  {/* History Section */}
+                  <div className="pt-6 border-t border-slate-100 dark:border-white/5">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Historial Reciente</h4>
+                    <div className="space-y-3">
+                      {statHistory.length > 0 ? (
+                        statHistory.map((h, i) => (
+                          <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                            <span className="text-sm font-black">{h.val} <span className="text-[10px] text-slate-400 font-bold">{selectedStat.unit}</span></span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              {h.timestamp ? new Date(h.timestamp).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Reciente'}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center py-4 text-xs text-slate-400 italic">No hay registros previos.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>

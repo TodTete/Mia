@@ -13,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
-import { Smile, Meh, Frown, Moon, ArrowLeft, Clock, User, Edit, Check, TrendingUp, BarChart2, Sparkles, Pill } from "lucide-react";
+import { Smile, Meh, Frown, Moon, ArrowLeft, Clock, User, Edit, Check, TrendingUp, BarChart2, Sparkles, Pill, Stethoscope, ArrowRight } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, get } from "firebase/database";
@@ -333,48 +333,32 @@ export default function AvancesPage() {
             </div>
           </section>
 
-          {/* Diagnosis Section */}
-          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
+          {/* Clinical Insights Link Section */}
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+            <div className="absolute -bottom-6 -right-6 p-8 opacity-5 group-hover:opacity-10 transition-all duration-500">
+              <Stethoscope className="w-24 h-24 text-blue-600" />
+            </div>
+            
+            <div className="flex items-center justify-between mb-6 relative z-10">
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <div className="w-2 h-6 bg-[#3649cc] dark:bg-indigo-500 rounded-full" />
-                Diagnóstico Actual
+                <div className="w-2 h-6 bg-blue-600 rounded-full" />
+                Análisis Clínico
               </h2>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={generateDiagnosisWithAI} 
-                  disabled={isGeneratingDiag}
-                  className="px-4 py-2 text-white bg-[#3649cc] hover:bg-[#2b3aa3] transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-50"
-                >
-                  <Sparkles className={isGeneratingDiag ? "w-5 h-5 animate-pulse" : "w-5 h-5"} />
-                  {isGeneratingDiag ? "Generando..." : "Generar con IA"}
-                </button>
-                {!isEditingDiag ? (
-                  <button onClick={() => setIsEditingDiag(true)} className="p-2 text-slate-400 hover:text-[#3649cc] transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
-                    <Edit className="w-5 h-5" />
-                  </button>
-                ) : (
-                  <button onClick={saveDiag} className="px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-emerald-500/20">
-                    <Check className="w-5 h-5" />
-                    Guardar
-                  </button>
-                )}
-              </div>
+              <Link href="/vistas/diagnostico" className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-500/10 rounded-xl hover:scale-110 transition-transform">
+                <ArrowRight className="w-5 h-5" />
+              </Link>
             </div>
 
-            <div className="flex-1 bg-indigo-50 dark:bg-indigo-500/5 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-500/10">
-              {isEditingDiag ? (
-                <textarea
-                  value={editDiag}
-                  onChange={(e) => setEditDiag(e.target.value)}
-                  className="w-full h-full min-h-[180px] bg-white dark:bg-black/50 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-4 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-shadow"
-                  placeholder="Describe o actualiza tu diagnóstico médico actual..."
-                />
-              ) : (
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                  {diagnostico}
-                </p>
-              )}
+            <div className="flex-1 bg-blue-50/50 dark:bg-blue-500/5 rounded-2xl p-6 border border-blue-100 dark:border-blue-500/10 relative z-10">
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium mb-4">
+                {diagnostico.length > 100 ? `${diagnostico.substring(0, 100)}...` : diagnostico}
+              </p>
+              <Link 
+                href="/vistas/diagnostico"
+                className="text-xs font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 hover:gap-3 transition-all"
+              >
+                Ver Diagnóstico Completo y Análisis de IA <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
           </section>
 

@@ -36,7 +36,7 @@ const supportViews = [
   },
   {
     name: "Diagnóstico",
-    href: "/vistas/avances",
+    href: "/vistas/diagnostico",
     focus: "Registra padecimientos y medicamentos indicados.",
     icon: ClipboardDocumentCheckIcon,
     color: "text-orange-500 dark:text-orange-400"
