@@ -16,6 +16,7 @@ import {
   Phone,
   ChevronRight,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const sections = [
   {
@@ -103,7 +104,7 @@ export default function InicioPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 font-sans text-slate-900 sm:px-10">
+    <main className="min-h-screen bg-slate-50 dark:bg-black px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10 transition-colors duration-500">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
         <div className="mb-10 flex flex-col gap-6 sm:mb-14 sm:flex-row sm:items-center sm:justify-between">
@@ -126,11 +127,13 @@ export default function InicioPage() {
                   ¿Qué te gustaría hacer hoy?
                 </p>
               </div>
-              <Link
-                href="/vistas/perfil"
-                className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-[#3649cc] hover:text-[#3649cc] hover:shadow-md overflow-hidden"
-                aria-label="Mi cuenta"
-              >
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Link
+                  href="/vistas/perfil"
+                  className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 text-slate-500 shadow-sm transition-all hover:border-[#3649cc] hover:text-[#3649cc] hover:shadow-md overflow-hidden"
+                  aria-label="Mi cuenta"
+                >
                 {user?.photoURL ? (
                   <Image
                     src={user.photoURL}
@@ -144,7 +147,8 @@ export default function InicioPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                   </svg>
                 )}
-              </Link>
+                </Link>
+              </div>
             </div>
         </div>
 
@@ -156,7 +160,7 @@ export default function InicioPage() {
               <Link
                 key={section.href}
                 href={section.href}
-                className="group flex flex-col rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-1"
+                className="group flex flex-col rounded-3xl border border-slate-100 dark:border-white/5 bg-white dark:bg-zinc-900 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-1"
               >
                 <div className="mb-5 flex items-center justify-between">
                   <div
@@ -167,10 +171,10 @@ export default function InicioPage() {
                   </div>
                   <ChevronRight className="h-5 w-5 text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-[#3649cc]" />
                 </div>
-                <h2 className="mb-2 text-lg font-bold text-slate-900">
+                <h2 className="mb-2 text-lg font-bold text-slate-900 dark:text-white">
                   {section.title}
                 </h2>
-                <p className="text-sm leading-relaxed text-slate-500">
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                   {section.description}
                 </p>
               </Link>
