@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile } from "lucide-react";
+import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile, HelpCircle, Info } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
@@ -53,6 +53,11 @@ export default function RecordatoriosPage() {
   const [editingApptId, setEditingApptId] = useState<string | null>(null);
   const [medSideEffects, setMedSideEffects] = useState<Record<string, string>>({});
   const [loadingSideEffects, setLoadingSideEffects] = useState<Record<string, boolean>>({});
+
+  // Info Modal states
+  const [infoModalMed, setInfoModalMed] = useState<Medicine | null>(null);
+  const [medInfoData, setMedInfoData] = useState<string>("");
+  const [loadingInfo, setLoadingInfo] = useState(false);
 
   // Firebase auth & real-time sync
   useEffect(() => {
@@ -233,6 +238,31 @@ export default function RecordatoriosPage() {
       setLoadingSideEffects(prev => ({ ...prev, [med.id]: false }));
     }
   };
+  const fetchMedInfo = async (med: Medicine) => {
+    setInfoModalMed(med);
+    setLoadingInfo(true);
+    setMedInfoData("");
+    try {
+      const res = await fetch("/api/deepseek/med-info", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ medicineName: med.name }),
+      });
+      const data = await res.json();
+      if (data.info) {
+        setMedInfoData(data.info);
+      } else if (data.error) {
+        setMedInfoData(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error fetching med info:", error);
+      setMedInfoData("Error al obtener la información.");
+    } finally {
+      setLoadingInfo(false);
+    }
+  };
 
   const startReschedule = (appt: Appointment) => {
     setApptTitle(appt.title);
@@ -290,7 +320,10 @@ export default function RecordatoriosPage() {
   if (loadingData) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-slate-500 font-medium">Cargando recordatorios...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#3649cc] border-t-transparent"></div>
+          <p className="text-slate-500 font-medium animate-pulse">Cargando Mía...</p>
+        </div>
       </div>
     );
   }
@@ -419,65 +452,76 @@ export default function RecordatoriosPage() {
                   const doseInfo = getNextDoseInfo(med);
                   
                   return (
-                    <div key={med.id} className={`relative overflow-hidden flex items-center justify-between rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${doseInfo.isUrgent ? 'border-[#3649cc]' : 'border-slate-100'}`}>
+                    <div key={med.id} className={`relative overflow-hidden flex flex-col rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${doseInfo.isUrgent ? 'border-[#3649cc]/30 ring-1 ring-[#3649cc]/10' : 'border-slate-100'}`}>
                       {doseInfo.isUrgent && (
                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#3649cc]"></div>
                       )}
                       
-                      <div className="flex flex-1 items-center gap-4 sm:gap-5 pl-2">
-                        <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl font-medium ${doseInfo.isUrgent ? 'bg-[#3649cc]/10 text-[#3649cc]' : 'bg-slate-50 text-slate-500'}`}>
-                          <span className="text-sm font-bold uppercase">{doseInfo.dateText.split(' ')[0] || doseInfo.dateText}</span>
-                          <span className="text-xs">{doseInfo.dateText.split(' ')[1] || ''}</span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 line-clamp-1">
-                            {med.name}
-                          </h3>
-                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
-                            <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Cada {med.frequencyHours}h</span>
-                            <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Por {med.durationDays} días</span>
+                      <div className="flex items-center justify-between p-6 pb-4">
+                        <div className="flex items-center gap-4 sm:gap-5">
+                          <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl font-medium ${doseInfo.isUrgent ? 'bg-[#3649cc]/10 text-[#3649cc]' : 'bg-slate-50 text-slate-500'}`}>
+                            <span className="text-sm font-bold uppercase">{doseInfo.dateText.split(' ')[0] || doseInfo.dateText}</span>
+                            <span className="text-xs">{doseInfo.dateText.split(' ')[1] || ''}</span>
                           </div>
-                          <p className={`mt-1.5 text-sm font-medium ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-400'}`}>
-                            {doseInfo.text}
-                          </p>
+                          <div>
+                            <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 line-clamp-1">
+                              {med.name}
+                              <button 
+                                onClick={() => fetchMedInfo(med)}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3649cc]/10 text-[#3649cc] transition-all hover:bg-[#3649cc] hover:text-white shadow-sm"
+                                title="Información del medicamento"
+                              >
+                                <HelpCircle className="h-5 w-5" />
+                              </button>
+                            </h3>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
+                              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Cada {med.frequencyHours}h</span>
+                              <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Por {med.durationDays} días</span>
+                            </div>
+                            <p className={`mt-1.5 text-sm font-semibold ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-400'}`}>
+                              {doseInfo.text}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex shrink-0 flex-col items-center gap-2">
+
                         <button 
                           onClick={() => takeMedicine(med.id)}
-                          className={`transition-transform hover:scale-110 ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-300 hover:text-[#3649cc]'}`}
+                          className={`transition-all hover:scale-110 active:scale-95 ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-300 hover:text-[#3649cc]'}`}
                           title="Marcar como tomado"
                         >
-                          {doseInfo.isUrgent ? <Circle className="h-8 w-8" strokeWidth={2} /> : <CheckCircle2 className="h-8 w-8" strokeWidth={2} />}
-                        </button>
-                        <button onClick={() => deleteMedicine(med.id)} className="text-slate-300 hover:text-red-500" title="Eliminar">
-                          <Trash2 className="h-4 w-4" />
+                          {doseInfo.isUrgent ? <Circle className="h-10 w-10" strokeWidth={2.5} /> : <CheckCircle2 className="h-10 w-10" strokeWidth={2.5} />}
                         </button>
                       </div>
 
-                      {/* Side Effects info */}
-                      <div className="mt-4 flex flex-col gap-2 w-full border-t border-slate-50 pt-4">
+                      <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/30 px-6 py-3">
                         <button 
                           onClick={() => fetchSideEffects(med)}
                           disabled={loadingSideEffects[med.id]}
-                          className="flex w-fit items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#3649cc] hover:underline disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#3649cc] transition-colors hover:bg-[#3649cc]/5 disabled:opacity-50"
                         >
-                          {loadingSideEffects[med.id] ? (
-                            <>Cargando...</>
-                          ) : (
-                            <>{medSideEffects[med.id] ? "Ocultar efectos" : "Ver efectos secundarios"}</>
-                          )}
+                          {loadingSideEffects[med.id] ? "Cargando..." : (medSideEffects[med.id] ? "Ocultar efectos" : "Efectos secundarios")}
                         </button>
-                        {medSideEffects[med.id] && (
-                          <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 animate-in fade-in slide-in-from-top-2">
-                            <p className="font-semibold mb-1 flex items-center gap-2">
-                              <Smile className="h-4 w-4" /> Información de IA:
-                            </p>
-                            {medSideEffects[med.id]}
-                          </div>
-                        )}
+                        
+                        <button 
+                          onClick={() => deleteMedicine(med.id)} 
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                        </button>
                       </div>
+
+                      {medSideEffects[med.id] && (
+                        <div className="px-6 pb-6">
+                          <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900 shadow-inner">
+                            <p className="mb-2 flex items-center gap-2 font-bold">
+                              <Smile className="h-4 w-4 text-amber-600" /> Información de IA:
+                            </p>
+                            <div className="leading-relaxed whitespace-pre-line opacity-90">
+                              {medSideEffects[med.id]}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -654,6 +698,60 @@ export default function RecordatoriosPage() {
 
         </div>
       </div>
+
+      {/* Medicine Info Modal */}
+      {infoModalMed && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setInfoModalMed(null)}
+        >
+          <div 
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[32px] bg-white shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative h-28 sm:h-32 bg-[#3649cc] p-6 sm:p-8">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-white/20 text-white backdrop-blur-md">
+                <Info className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              <button 
+                onClick={() => setInfoModalMed(null)}
+                className="absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full bg-black/10 p-2 text-white hover:bg-black/20 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="absolute -bottom-5 left-6 sm:left-8 rounded-xl bg-white px-3 py-1.5 shadow-lg border border-slate-50">
+                <h4 className="text-[10px] sm:text-xs font-bold text-[#3649cc] uppercase tracking-wider">Información Médica</h4>
+              </div>
+            </div>
+            
+            <div className="p-6 sm:p-8 pt-8 sm:pt-10">
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">{infoModalMed.name}</h3>
+              
+              <div className="min-h-[100px] text-slate-600 leading-relaxed text-sm sm:text-base">
+                {loadingInfo ? (
+                  <div className="flex flex-col items-center justify-center py-10 gap-3">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#3649cc] border-t-transparent"></div>
+                    <p className="text-xs font-medium text-slate-400">Consultando a Mía...</p>
+                  </div>
+                ) : (
+                  <div className="prose prose-slate max-w-none whitespace-pre-line">
+                    {medInfoData}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8">
+                <button 
+                  onClick={() => setInfoModalMed(null)}
+                  className="w-full rounded-2xl bg-[#3649cc] py-3 sm:py-4 font-bold text-white shadow-lg shadow-[#3649cc]/30 transition-all hover:bg-[#2b3aa3] hover:shadow-xl active:scale-[0.98]"
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
