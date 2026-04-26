@@ -3,7 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserIcon } from "@heroicons/react/24/outline";
+import { UserIcon, ClipboardDocumentCheckIcon, BeakerIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { auth, db } from "@/lib/firebase/firebase";
+import { ref, set, get, serverTimestamp } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 // Tipos
 interface PatientProfile {
@@ -48,14 +53,17 @@ const FORM_CATEGORIES = [
   {
     title: "Datos Personales",
     fields: ["nombres", "edad", "genero", "localidad"],
+    icon: UserIcon,
   },
   {
     title: "Métricas Físicas",
     fields: ["peso", "estatura", "tipoSangre"],
+    icon: BeakerIcon,
   },
   {
     title: "Información Médica",
     fields: ["discapacidad", "medicacion", "alergias", "contactoEmergencia"],
+    icon: HeartIcon,
   },
 ];
 
@@ -135,12 +143,14 @@ export default function CapturaDatosPage() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [savedProfile, setSavedProfile] = useState<PatientProfile | null>(null);
   const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
 
   // Sistema de toast (alertas auto-desaparecibles)
   const [toast, setToast] = useState<{ msg: string; type: "error" | "success" | "info" } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   const showToast = (msg: string, type: "error" | "success" | "info" = "info", ms = 4000) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -155,6 +165,34 @@ export default function CapturaDatosPage() {
   const [showNationalityList, setShowNationalityList] = useState(false);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (u) {
+        // Intentar cargar desde Firebase primero
+        try {
+          const profileRef = ref(db, `users/${u.uid}/profile`);
+          const snapshot = await get(profileRef);
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            setProfile(data);
+            setSavedProfile(data);
+            setIsEditing(false);
+          } else {
+            // Si no hay en Firebase, ver localstorage
+            const saved = localStorage.getItem("mia_patient_profile");
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              setSavedProfile(parsed);
+              setProfile(parsed);
+              setIsEditing(false);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching profile from Firebase:", error);
+        }
+      }
+    });
+
     async function fetchNationalities() {
       try {
         const res = await fetch("https://restcountries.com/v3.1/all?fields=name,translations,cca2");
@@ -171,13 +209,7 @@ export default function CapturaDatosPage() {
     }
     fetchNationalities();
 
-    const saved = localStorage.getItem("mia_patient_profile");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setSavedProfile(parsed);
-      setProfile(parsed);
-      setIsEditing(false);
-    }
+    return () => unsubscribe();
   }, []);
 
   const updateField = (field: string, value: string) => {
@@ -197,7 +229,7 @@ export default function CapturaDatosPage() {
     }, 2000);
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     // Normalizar campos opcionales: si quedan vacíos → N/A
     const normalized: PatientProfile = { ...profile };
     for (const field of OPTIONAL_FIELDS) {
@@ -211,11 +243,27 @@ export default function CapturaDatosPage() {
       return;
     }
 
-    localStorage.setItem("mia_patient_profile", JSON.stringify(normalized));
-    setProfile(normalized);
-    setSavedProfile(normalized);
-    setIsEditing(false);
-    showToast("✅ Perfil médico guardado correctamente.", "success");
+    setLoading(true);
+    try {
+      if (user) {
+        const profileRef = ref(db, `users/${user.uid}/profile`);
+        await set(profileRef, {
+          ...normalized,
+          updatedAt: serverTimestamp(),
+        });
+      }
+      
+      localStorage.setItem("mia_patient_profile", JSON.stringify(normalized));
+      setProfile(normalized);
+      setSavedProfile(normalized);
+      setIsEditing(false);
+      showToast("✅ Perfil médico guardado en Firebase.", "success");
+    } catch (error: any) {
+      console.error("Error saving profile:", error);
+      showToast("Error al guardar: " + error.message, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const clearAllData = () => {
@@ -656,22 +704,56 @@ export default function CapturaDatosPage() {
                 </div>
 
                 <div className="flex items-center justify-between mb-12">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-[#3345CC] uppercase tracking-widest bg-[#3345CC]/10 px-3 py-1 rounded-full">Paso {currentStep + 1} de {FORM_CATEGORIES.length}</span>
-                    <h2 className="text-4xl font-extrabold tracking-tight mt-3">{FORM_CATEGORIES[currentStep].title}</h2>
-                  </div>
-                  {isAnalyzing && (
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#3345CC] animate-pulse bg-[#3345CC]/10 px-4 py-2 rounded-xl">
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                      </svg>
-                      IA ANALIZANDO...
+                  <div className="space-y-4 w-full">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                      {FORM_CATEGORIES.map((cat, idx) => {
+                        const Icon = cat.icon;
+                        const isActive = currentStep === idx;
+                        return (
+                          <button
+                            key={cat.title}
+                            type="button"
+                            onClick={() => setCurrentStep(idx)}
+                            className={cn(
+                              "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm transition-all duration-300 whitespace-nowrap",
+                              isActive 
+                                ? "bg-[#3345CC] text-white shadow-lg shadow-[#3345CC]/20 scale-105" 
+                                : "bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-slate-200 dark:hover:bg-white/10"
+                            )}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {cat.title}
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-[#3345CC] uppercase tracking-widest bg-[#3345CC]/10 px-3 py-1 rounded-full">Paso {currentStep + 1} de {FORM_CATEGORIES.length}</span>
+                        <h2 className="text-4xl font-extrabold tracking-tight mt-3">{FORM_CATEGORIES[currentStep].title}</h2>
+                      </div>
+                      {isAnalyzing && (
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#3345CC] animate-pulse bg-[#3345CC]/10 px-4 py-2 rounded-xl">
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          </svg>
+                          IA ANALIZANDO...
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-2 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-white/5">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentStep}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid gap-8 md:grid-cols-2 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-white/5"
+                  >
                   {FORM_CATEGORIES[currentStep].fields.map((field) => {
                     const isOptional = OPTIONAL_FIELDS.includes(field as keyof PatientProfile);
                     const isUpdated = lastUpdatedFields.has(field);
@@ -740,12 +822,13 @@ export default function CapturaDatosPage() {
                         )}
                       </div>
                     </div>
-                    );
-                  })}
-                </div>
-              </section>
-            </div>
-          </div>
+                  );
+                })}
+              </motion.div>
+            </AnimatePresence>
+          </section>
+        </div>
+      </div>
           <div className="pt-8 border-t border-slate-100 dark:border-white/5">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex gap-3 w-full sm:w-auto">
@@ -756,10 +839,20 @@ export default function CapturaDatosPage() {
                 )}
                 <button
                   type="submit"
-                  disabled={FORM_CATEGORIES[currentStep].fields.some(f => !OPTIONAL_FIELDS.includes(f as keyof PatientProfile) && !profile[f as keyof PatientProfile])}
-                  className="btn-mia-primary flex-1 sm:px-10 py-4 disabled:opacity-30 text-center"
+                  disabled={loading || FORM_CATEGORIES[currentStep].fields.some(f => !OPTIONAL_FIELDS.includes(f as keyof PatientProfile) && !profile[f as keyof PatientProfile])}
+                  className="btn-mia-primary flex-1 sm:px-10 py-4 disabled:opacity-30 text-center flex items-center justify-center gap-2"
                 >
-                  {currentStep === FORM_CATEGORIES.length - 1 ? "Finalizar y Guardar" : "Siguiente Paso"}
+                  {loading ? (
+                    <>
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                      </svg>
+                      Guardando...
+                    </>
+                  ) : (
+                    currentStep === FORM_CATEGORIES.length - 1 ? "Finalizar y Guardar" : "Siguiente Paso"
+                  )}
                 </button>
               </div>
               <div className="flex gap-6 items-center justify-center w-full sm:w-auto">
