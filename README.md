@@ -1,54 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mia - Medical Intelligent Assistant 🩺✨
 
-## Getting Started
+**Mia** es una aplicación web progresiva (PWA) de vanguardia diseñada para empoderar a los usuarios en el control, monitoreo y gestión de su salud física y emocional. Utilizando Inteligencia Artificial avanzada (DeepSeek), Mia actúa como una asistente personal y analista clínica que te acompaña en tu día a día de manera empática y segura.
 
-First, run the development server:
+---
 
+## 🚀 Características Principales
+
+### 🤖 Asistente Virtual Inteligente (IA)
+- **Chat Flotante Integrado:** Habla con Mia en cualquier momento. La IA tiene contexto total de tus datos físicos, alergias, padecimientos y medicamentos para brindarte respuestas precisas y personalizadas sobre tu bienestar.
+- **Análisis Clínico y Diagnósticos:** A través de la pestaña de *Avances*, Mia analiza tu historial de sueño, estado de ánimo y bitácora clínica para generar resúmenes profesionales ("Insights") sobre tu salud general.
+- **Captura de Datos por Voz:** No necesitas llenar formularios largos. Simplemente háblale a Mia y ella se encargará de extraer tus datos (peso, edad, alergias, etc.) de manera natural y llenar el perfil por ti.
+
+### 📊 Monitoreo Biométrico y Evolutivo
+- **Historia Bio-Digital:** Visualiza gráficas interactivas detalladas de tu progreso.
+- **Registro Emocional:** Lleva un trackeo diario de tus estados de ánimo (0-10) con una gráfica visual atractiva en color rojo/coral para detectar patrones.
+- **Historial de Sueño:** Monitoriza tus horas de descanso con un gráfico dinámico en color índigo, donde Mia podrá evaluar tu calidad de descanso.
+
+### 💊 Gestión Médica
+- **Bitácora Clínica:** Añade tus padecimientos activos.
+- **Control de Medicamentos:** Organiza tus medicamentos con dosis y horarios.
+- **Contactos de Emergencia:** Mantén accesible a tus seres queridos en caso de crisis.
+
+### 💾 Privacidad y Portabilidad Total
+- **Sincronización Inteligente:** Todos tus datos médicos se guardan de forma segura usando **Firebase**.
+- **First-Local (Modo Offline-ready):** Los perfiles se sincronizan en el `localStorage` de tu navegador para que los módulos de la IA y gráficas funcionen a la velocidad del rayo, mitigando latencias.
+- **Exportación e Importación:** Genera respaldos de tus datos médicos locales para portabilidad entre dispositivos con solo un clic en la vista de Perfil.
+
+### 🎨 Experiencia de Usuario (UI/UX)
+- **Glassmorphism y Animaciones:** Diseño hiper-moderno con desenfoque de fondo y animaciones fluidas impulsadas por *Framer Motion*.
+- **Modo Oscuro/Claro:** Soporte nativo para `next-themes`.
+- **Responsive PWA:** Adaptación perfecta para pantallas de celular. Instalable en el inicio de tu teléfono como una app nativa.
+
+---
+
+## 💻 Stack Tecnológico
+
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
+- **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
+- **Animaciones e Interacciones:** [Framer Motion](https://www.framer.com/motion/)
+- **Iconografía:** [Lucide React](https://lucide.dev/)
+- **Base de Datos & Auth:** [Firebase](https://firebase.google.com/) (Realtime Database y Authentication)
+- **IA Engine:** [DeepSeek API](https://www.deepseek.com/) (Modelos de lenguaje avanzados y extracción de entidades)
+- **Visualización de Datos:** [Recharts](https://recharts.org/)
+
+---
+
+## 🛠️ Instalación y Configuración Local
+
+Sigue estos pasos para correr el entorno de desarrollo en tu computadora.
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/TodTete/Mia.git
+cd mia
+```
+
+### 2. Instalar dependencias
+```bash
+npm install
+```
+
+### 3. Configurar Variables de Entorno
+Crea un archivo llamado `.env.local` en la raíz del proyecto. Deberás añadir las credenciales de tu proyecto de Firebase y tu clave de DeepSeek:
+
+```env
+# Configuración DeepSeek AI
+DEEPSEEK_API_KEY="tu_api_key_aqui"
+DEEPSEEK_MODEL="deepseek-chat"
+
+# Configuración Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY="tu_firebase_api_key"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="tu_auth_domain"
+NEXT_PUBLIC_FIREBASE_DATABASE_URL="tu_database_url"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="tu_project_id"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="tu_storage_bucket"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="tu_sender_id"
+NEXT_PUBLIC_FIREBASE_APP_ID="tu_app_id"
+```
+*(Nota: Sustituye los valores entre comillas por las credenciales correspondientes a tus proyectos).*
+
+### 4. Iniciar el Servidor de Desarrollo
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación funcionando.
 
-## Configuracion DeepSeek (captura por voz de Mia)
+---
 
-La vista de captura de datos usa una API interna en `app/api/deepseek/extract-profile/route.ts` para extraer campos desde conversacion de voz.
+## 📂 Estructura Principal del Proyecto
 
-1. Crea un archivo `.env.local` en la raiz del proyecto.
-2. Agrega estas variables:
+- `/app/api`: Rutas de la API Backend, incluye la lógica de DeepSeek para chat, diagnóstico y captura por voz.
+- `/app/vistas`: Módulos principales de la aplicación (`avances`, `captura-datos`, `diagnostico`, `horario-sueno`, `perfil`, etc.)
+- `/components/ui`: Componentes de interfaz reutilizables (Botones flotantes, Modales, Tarjetas, ChatBot de Mia, etc.)
+- `/lib/firebase`: Configuración e inicialización del cliente de Firebase.
 
-```bash
-DEEPSEEK_API_KEY=tu_api_key
-DEEPSEEK_MODEL=deepseek-v4-flash
-```
+---
 
-3. Reinicia el servidor (`npm run dev`) despues de guardar `.env.local`.
+## ⚠️ Aviso Legal y Descargo de Responsabilidad
 
-Notas:
-- La API key se usa solo en servidor, no se expone al cliente.
-- `deepseek-chat` sera deprecado, por eso se recomienda `deepseek-v4-flash`.
+**Mia NO es un médico, ni un profesional de la salud certificado.**
+Toda la información proporcionada por la IA de Mia, incluyendo el análisis de diagnósticos, recomendaciones de sueño y gestión emocional, es de **carácter estrictamente informativo y de apoyo**. 
+- No debes utilizar a Mia como sustituto de un diagnóstico médico, orientación clínica, o tratamiento profesional. 
+- En caso de una emergencia médica física o psicológica, ponte en contacto de inmediato con las líneas de emergencia de tu país (ej. 911) o acude a urgencias.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Hecho con ❤️ para revolucionar el bienestar personal impulsado por IA.*
