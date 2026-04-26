@@ -23,8 +23,8 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="pt-6 flex flex-col items-center gap-2">
-          <p className="text-[9px] font-bold text-slate-300 dark:text-white/20 uppercase tracking-[0.4em]">
+        <div className="pt-6 flex flex-col items-center gap-2 text-center">
+          <p className="text-[9px] font-bold text-slate-300 dark:text-white/20 uppercase tracking-[0.4em] text-center">
             © 2026 MIA - Medical Intelligent Assistant
           </p>
           <div className="flex gap-4">
