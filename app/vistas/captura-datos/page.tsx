@@ -143,6 +143,7 @@ export default function CapturaDatosPage() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isMiaSpeaking, setIsMiaSpeaking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [savedProfile, setSavedProfile] = useState<PatientProfile | null>(null);
   const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
@@ -151,6 +152,7 @@ export default function CapturaDatosPage() {
   const [apiNationalities, setApiNationalities] = useState<{name: string, code: string}[]>([]);
   const [showNationalityList, setShowNationalityList] = useState(false);
   const fullTranscriptRef = useRef("");
+  const shouldListenRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -249,20 +251,51 @@ export default function CapturaDatosPage() {
       const voice = voices.find(v => v.lang.startsWith("es") && v.name.toLowerCase().includes("google"))
         ?? voices.find(v => v.lang.startsWith("es"));
       if (voice) utterance.voice = voice;
-      utterance.onend = () => onEnd?.();
-      utterance.onerror = () => onEnd?.();
+      
+      utterance.onend = () => {
+        (window as any)._miaUtterance = null;
+        onEnd?.();
+      };
+      utterance.onerror = () => {
+        (window as any)._miaUtterance = null;
+        onEnd?.();
+      };
+      
+      (window as any)._miaUtterance = utterance;
       window.speechSynthesis.speak(utterance);
     };
     if (window.speechSynthesis.getVoices().length > 0) trySpeak();
     else { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; trySpeak(); }; }
   };
 
-  const startVoiceWithIntro = () => {
+  const startVoiceWithIntro = async () => {
     setMode("voz");
     setTranscript("");
     fullTranscriptRef.current = "";
-    // Lógica simplificada para el rediseño
-    startVoiceCapture();
+    shouldListenRef.current = false;
+    
+    setIsMiaSpeaking(true);
+    try {
+      const res = await fetch("/api/deepseek/generate-voice-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentProfile: profile }),
+      });
+      const data = await res.json();
+      if (data.message) {
+        speakText(data.message, () => {
+          setIsMiaSpeaking(false);
+          startVoiceCapture();
+        });
+      } else {
+        setIsMiaSpeaking(false);
+        startVoiceCapture();
+      }
+    } catch (err) {
+      console.error(err);
+      setIsMiaSpeaking(false);
+      startVoiceCapture();
+    }
   };
 
   const startVoiceCapture = () => {
@@ -273,33 +306,73 @@ export default function CapturaDatosPage() {
       showToast("Navegador no compatible con voz.", "error");
       return;
     }
+    
+    if (win._miaRecognition) {
+      try { win._miaRecognition.onend = null; win._miaRecognition.stop(); } catch (_) {}
+    }
+
     const rec = new SpeechCtor();
     rec.lang = "es-MX";
     rec.continuous = true;
     rec.interimResults = true;
+    
+    let currentInterim = "";
+
     rec.onstart = () => setIsListening(true);
     rec.onresult = (event: any) => {
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const chunk = event.results[i][0].transcript;
-        if (event.results[i].isFinal) fullTranscriptRef.current += " " + chunk;
-        else interim = chunk;
+        if (event.results[i].isFinal) {
+          fullTranscriptRef.current += " " + chunk;
+          currentInterim = "";
+        } else {
+          interim += chunk;
+        }
       }
-      setTranscript((fullTranscriptRef.current + " " + interim).trim());
+      currentInterim = interim;
+      setTranscript((fullTranscriptRef.current + " " + currentInterim).trim());
     };
-    rec.onend = () => setIsListening(false);
+    
+    rec.onend = () => {
+      setIsListening(false);
+      if (currentInterim) {
+        fullTranscriptRef.current += " " + currentInterim;
+        currentInterim = "";
+        setTranscript(fullTranscriptRef.current.trim());
+      }
+      if (shouldListenRef.current) {
+        setTimeout(() => {
+          if (shouldListenRef.current) startVoiceCapture();
+        }, 200);
+      }
+    };
+    
+    rec.onerror = (e: any) => {
+      if (e.error === 'not-allowed') shouldListenRef.current = false;
+    };
+
     win._miaRecognition = rec;
-    rec.start();
+    shouldListenRef.current = true;
+    try { rec.start(); } catch(e) { console.error(e); }
   };
 
   const stopAndSendToAI = async () => {
+    shouldListenRef.current = false;
     if (typeof window !== "undefined") {
       const win = window as any;
-      if (win._miaRecognition) { try { win._miaRecognition.stop(); } catch (_) {} }
+      if (win._miaRecognition) { 
+        try { win._miaRecognition.onend = null; win._miaRecognition.stop(); } catch (_) {} 
+      }
+      window.speechSynthesis.cancel();
     }
     setIsListening(false);
+    setIsMiaSpeaking(false);
     const fullText = transcript.trim();
-    if (!fullText) return;
+    if (!fullText) {
+      showToast("No se detectó audio.", "info");
+      return;
+    }
 
     setIsAnalyzing(true);
     try {
@@ -309,7 +382,16 @@ export default function CapturaDatosPage() {
         body: JSON.stringify({ transcript: fullText, currentProfile: profile }),
       });
       const { extracted } = await res.json();
-      setProfile(prev => ({ ...prev, ...extracted }));
+      
+      setProfile(prev => {
+        const next = { ...prev };
+        for (const key in extracted) {
+          if (extracted[key as keyof PatientProfile]) {
+            next[key as keyof PatientProfile] = extracted[key as keyof PatientProfile];
+          }
+        }
+        return next;
+      });
       showToast("Datos extraídos por la IA.", "success");
       setMode("manual");
     } catch (err) {
@@ -320,19 +402,33 @@ export default function CapturaDatosPage() {
   };
 
   const stopVoiceCapture = () => {
+    shouldListenRef.current = false;
     if (typeof window !== "undefined") {
       const win = window as any;
       if (win._miaRecognition) {
-        try { win._miaRecognition.stop(); } catch (_) {}
+        try { win._miaRecognition.onend = null; win._miaRecognition.stop(); } catch (_) {}
       }
+      window.speechSynthesis.cancel();
     }
     setIsListening(false);
+    setIsMiaSpeaking(false);
   };
 
   const replayVoiceCapture = () => {
+    shouldListenRef.current = false;
+    setIsMiaSpeaking(false);
+    if (typeof window !== "undefined") {
+      const win = window as any;
+      if (win._miaRecognition) {
+        try { win._miaRecognition.onend = null; win._miaRecognition.stop(); } catch (_) {}
+      }
+      window.speechSynthesis.cancel();
+    }
     setTranscript("");
     fullTranscriptRef.current = "";
-    startVoiceCapture();
+    setTimeout(() => {
+      startVoiceCapture();
+    }, 400);
   };
   return (
     <main className="min-h-screen bg-[#fcfcfd] dark:bg-[#050505] text-slate-900 dark:text-white pb-32 overflow-x-hidden">
@@ -638,12 +734,13 @@ export default function CapturaDatosPage() {
                       <p className="text-xs text-white/70">Habla con libertad, yo extraigo los datos.</p>
                     </div>
                   </div>
+                  {isMiaSpeaking && <div className="px-3 py-1 rounded-full bg-blue-500/50 text-[10px] font-bold animate-pulse">MIA HABLANDO</div>}
                   {isListening && <div className="px-3 py-1 rounded-full bg-red-500 text-[10px] font-bold animate-pulse">EN VIVO</div>}
                 </div>
 
                 <div className="bg-black/10 rounded-2xl p-5 border border-white/10 min-h-[100px] mb-8">
                   <p className="text-sm italic text-white/90 leading-relaxed">
-                    {transcript || "Comienza a hablar..."}
+                    {isMiaSpeaking ? "Escuchando a Mia..." : transcript || "Comienza a hablar..."}
                   </p>
                 </div>
 
@@ -656,7 +753,7 @@ export default function CapturaDatosPage() {
                     {isAnalyzing ? (
                       <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <>Procesar con IA <CheckCircleIcon className="w-5 h-5" /></>
+                      <>Enviar y Procesar <CheckCircleIcon className="w-5 h-5" /></>
                     )}
                   </button>
                   <button 

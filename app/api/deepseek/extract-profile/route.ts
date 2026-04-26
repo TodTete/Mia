@@ -2,34 +2,42 @@ import { NextResponse } from "next/server";
 
 type PatientProfile = {
   nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
   edad: string;
   peso: string;
   estatura: string;
   genero: string;
+  curp: string;
+  ocupacion: string;
   localidad: string;
   tipoSangre: string;
   discapacidad: string;
   medicacion: string;
   alergias: string;
+  antecedentesHeredofamiliares: string;
+  antecedentesPatologicos: string;
+  habitosVida: string;
   contactoEmergencia: string;
+  nombreContactoEmergencia: string;
 };
 
 const EMPTY_PROFILE: PatientProfile = {
   nombres: "",
-  apellidoPaterno: "",
-  apellidoMaterno: "",
   edad: "",
   peso: "",
   estatura: "",
   genero: "",
+  curp: "",
+  ocupacion: "",
   localidad: "",
   tipoSangre: "",
   discapacidad: "",
   medicacion: "",
   alergias: "",
+  antecedentesHeredofamiliares: "",
+  antecedentesPatologicos: "",
+  habitosVida: "",
   contactoEmergencia: "",
+  nombreContactoEmergencia: "",
 };
 
 function extractJsonObject(content: string) {
@@ -99,8 +107,8 @@ export async function POST(req: Request) {
     const prompt = [
       "Extrae datos de paciente desde una conversación en español.",
       "Devuelve SOLO JSON.",
-      "Campos: nombres, apellidoPaterno, apellidoMaterno, edad, peso, estatura, genero (hombre, mujer, otro, prefiero no decir), nacionalidad, tipoSangre, discapacidad, medicacion, alergias, contactoEmergencia.",
-      "Importante: 'nombres' puede incluir dos nombres separados por espacio.",
+      "Campos: nombres, edad, peso, estatura, genero (hombre, mujer, otro), curp, ocupacion, localidad, tipoSangre, discapacidad, medicacion, alergias, antecedentesHeredofamiliares, antecedentesPatologicos, habitosVida, contactoEmergencia, nombreContactoEmergencia.",
+      "Importante: 'nombres' debe ser el nombre completo del paciente.",
       "Si no hay dato, usa cadena vacía.",
       `Contexto actual: ${JSON.stringify(currentProfile)}`,
       `Texto: ${transcript}`,
