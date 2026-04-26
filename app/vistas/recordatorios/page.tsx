@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile, HelpCircle, Info } from "lucide-react";
+import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile, HelpCircle, Info, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue, set, remove, update } from "firebase/database";
@@ -25,6 +26,7 @@ type Appointment = {
 };
 
 export default function RecordatoriosPage() {
+  const router = useRouter();
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -337,18 +339,24 @@ export default function RecordatoriosPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 font-sans text-slate-900 sm:px-10">
+    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
       <div className="mx-auto max-w-5xl">
         
         <div className="mb-10 flex flex-col gap-4 sm:mb-12">
           <div>
-            <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc]">
+            <button 
+              onClick={() => router.push('/')} 
+              className="mb-6 flex w-fit items-center gap-2 rounded-xl bg-white dark:bg-white/5 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-[#3649cc] dark:hover:text-indigo-400 active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" /> Volver al Inicio
+            </button>
+            <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc] dark:text-indigo-400">
               Recordatorios
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
               Tu salud al día
             </h1>
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-slate-500 dark:text-slate-400">
               Revisa tus medicamentos y próximas citas médicas.
             </p>
           </div>
@@ -360,14 +368,14 @@ export default function RecordatoriosPage() {
           <section className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3649cc]/10 text-[#3649cc]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3649cc]/10 dark:bg-indigo-500/20 text-[#3649cc] dark:text-indigo-400">
                   <Pill className="h-5 w-5" />
                 </div>
-                <h2 className="text-xl font-semibold text-slate-900">Medicinas Activas</h2>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Medicinas Activas</h2>
               </div>
               <button 
                 onClick={() => setShowMedForm(!showMedForm)}
-                className="flex items-center gap-1 rounded-lg bg-[#3649cc]/10 px-3 py-1.5 text-sm font-semibold text-[#3649cc] transition-colors hover:bg-[#3649cc]/20"
+                className="flex items-center gap-1 rounded-lg bg-[#3649cc]/10 dark:bg-indigo-500/20 px-3 py-1.5 text-sm font-semibold text-[#3649cc] dark:text-indigo-400 transition-colors hover:bg-[#3649cc]/20 dark:hover:bg-indigo-500/30"
               >
                 <Plus className="h-4 w-4" /> Agregar
               </button>
@@ -375,29 +383,29 @@ export default function RecordatoriosPage() {
 
             {/* Medicine Form */}
             {showMedForm && (
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Nuevo Medicamento</h3>
-                  <button onClick={() => setShowMedForm(false)} className="text-slate-400 hover:text-slate-600">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nuevo Medicamento</h3>
+                  <button onClick={() => setShowMedForm(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
-                {medError && <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">{medError}</div>}
+                {medError && <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 p-3 text-sm font-medium text-red-600 dark:text-red-400">{medError}</div>}
                 <form onSubmit={handleAddMedicine} className="flex flex-col gap-4">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Nombre del medicamento</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre del medicamento</label>
                     <div className="relative">
                       <input 
                         type="text" 
                         value={medName}
                         onChange={(e) => setMedName(e.target.value)}
                         placeholder="Ej. Paracetamol" 
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 pr-12 text-sm outline-none focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                       />
                       <button 
                         type="button"
                         onClick={() => handleVoiceInput(setMedName)}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                       >
                         <Mic className="h-5 w-5" />
                       </button>
@@ -406,38 +414,38 @@ export default function RecordatoriosPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">Dosis</label>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dosis</label>
                       <div className="relative">
                         <input 
                           type="text" 
                           value={medDose}
                           onChange={(e) => setMedDose(e.target.value)}
-                          placeholder="Ej. 500mg / 1 tableta" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          placeholder="Ej. 500mg" 
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                         />
                         <button 
                           type="button"
                           onClick={() => handleVoiceInput(setMedDose)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
                           <Mic className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">Vía</label>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Vía</label>
                       <div className="relative">
                         <input 
                           type="text" 
                           value={medRoute}
                           onChange={(e) => setMedRoute(e.target.value)}
                           placeholder="Ej. Oral" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                         />
                         <button 
                           type="button"
                           onClick={() => handleVoiceInput(setMedRoute)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
                           <Mic className="h-4 w-4" />
                         </button>
@@ -446,45 +454,45 @@ export default function RecordatoriosPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">Cada (horas)</label>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cada (horas)</label>
                       <div className="relative">
                         <input 
                           type="text" 
                           value={medFreq}
                           onChange={(e) => setMedFreq(e.target.value)}
                           placeholder="Ej. 8" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                         />
                         <button 
                           type="button"
                           onClick={() => handleVoiceInput(setMedFreq)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
                           <Mic className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">Por (días)</label>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Por (días)</label>
                       <div className="relative">
                         <input 
                           type="text" 
                           value={medDays}
                           onChange={(e) => setMedDays(e.target.value)}
                           placeholder="Ej. 5" 
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                         />
                         <button 
                           type="button"
                           onClick={() => handleVoiceInput(setMedDays)}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
                           <Mic className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                   </div>
-                  <button type="submit" className="mt-2 w-full rounded-xl bg-[#3649cc] px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#2b3aa3]">
+                  <button type="submit" className="mt-2 w-full rounded-xl bg-[#3649cc] dark:bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#2b3aa3] dark:hover:bg-indigo-500">
                     Guardar Medicamento
                   </button>
                 </form>
@@ -493,7 +501,7 @@ export default function RecordatoriosPage() {
 
             <div className="flex flex-col gap-4">
               {medicines.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+                <div className="rounded-3xl border border-dashed border-slate-300 dark:border-white/20 p-8 text-center text-slate-500 dark:text-slate-400">
                   No tienes medicamentos activos.
                 </div>
               ) : (
@@ -501,35 +509,35 @@ export default function RecordatoriosPage() {
                   const doseInfo = getNextDoseInfo(med);
                   
                   return (
-                    <div key={med.id} className={`relative overflow-hidden flex flex-col rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] border transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${doseInfo.isUrgent ? 'border-[#3649cc]/30 ring-1 ring-[#3649cc]/10' : 'border-slate-100'}`}>
+                    <div key={med.id} className={`relative overflow-hidden flex flex-col rounded-3xl bg-white dark:bg-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${doseInfo.isUrgent ? 'border-[#3649cc]/30 dark:border-indigo-500/50 ring-1 ring-[#3649cc]/10 dark:ring-indigo-500/20' : 'border-slate-100 dark:border-white/10'}`}>
                       {doseInfo.isUrgent && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#3649cc]"></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#3649cc] dark:bg-indigo-500"></div>
                       )}
                       
                       <div className="flex items-center justify-between p-6 pb-4">
                         <div className="flex items-center gap-4 sm:gap-5">
-                          <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl font-medium ${doseInfo.isUrgent ? 'bg-[#3649cc]/10 text-[#3649cc]' : 'bg-slate-50 text-slate-500'}`}>
+                          <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl font-medium ${doseInfo.isUrgent ? 'bg-[#3649cc]/10 dark:bg-indigo-500/20 text-[#3649cc] dark:text-indigo-400' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400'}`}>
                             <span className="text-sm font-bold uppercase">{doseInfo.dateText.split(' ')[0] || doseInfo.dateText}</span>
                             <span className="text-xs">{doseInfo.dateText.split(' ')[1] || ''}</span>
                           </div>
                           <div>
-                            <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 line-clamp-1">
+                            <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white line-clamp-1">
                               {med.name}
                               <button 
                                 onClick={() => fetchMedInfo(med)}
-                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3649cc]/10 text-[#3649cc] transition-all hover:bg-[#3649cc] hover:text-white shadow-sm"
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3649cc]/10 dark:bg-indigo-500/20 text-[#3649cc] dark:text-indigo-400 transition-all hover:bg-[#3649cc] dark:hover:bg-indigo-500 hover:text-white dark:hover:text-white shadow-sm"
                                 title="Información del medicamento"
                               >
                                 <HelpCircle className="h-5 w-5" />
                               </button>
                             </h3>
-                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
                               <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Cada {med.frequencyHours}h</span>
                               <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Por {med.durationDays} días</span>
-                              {med.dosage && <span className="flex items-center gap-1 font-medium text-[#3649cc]/80">Dosis: {med.dosage}</span>}
-                              {med.route && <span className="flex items-center gap-1 font-medium text-slate-600 italic">({med.route})</span>}
+                              {med.dosage && <span className="flex items-center gap-1 font-medium text-[#3649cc]/80 dark:text-indigo-400/80">Dosis: {med.dosage}</span>}
+                              {med.route && <span className="flex items-center gap-1 font-medium text-slate-600 dark:text-slate-400 italic">({med.route})</span>}
                             </div>
-                            <p className={`mt-1.5 text-sm font-semibold ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-400'}`}>
+                            <p className={`mt-1.5 text-sm font-semibold ${doseInfo.isUrgent ? 'text-[#3649cc] dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
                               {doseInfo.text}
                             </p>
                           </div>
@@ -537,25 +545,25 @@ export default function RecordatoriosPage() {
 
                         <button 
                           onClick={() => takeMedicine(med.id)}
-                          className={`transition-all hover:scale-110 active:scale-95 ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-300 hover:text-[#3649cc]'}`}
+                          className={`transition-all hover:scale-110 active:scale-95 ${doseInfo.isUrgent ? 'text-[#3649cc] dark:text-indigo-400' : 'text-slate-300 dark:text-slate-600 hover:text-[#3649cc] dark:hover:text-indigo-400'}`}
                           title="Marcar como tomado"
                         >
                           {doseInfo.isUrgent ? <Circle className="h-10 w-10" strokeWidth={2.5} /> : <CheckCircle2 className="h-10 w-10" strokeWidth={2.5} />}
                         </button>
                       </div>
 
-                      <div className="flex items-center justify-between border-t border-slate-50 bg-slate-50/30 px-6 py-3">
+                      <div className="flex items-center justify-between border-t border-slate-50 dark:border-white/5 bg-slate-50/30 dark:bg-black/10 px-6 py-3">
                         <button 
                           onClick={() => fetchSideEffects(med)}
                           disabled={loadingSideEffects[med.id]}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#3649cc] transition-colors hover:bg-[#3649cc]/5 disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#3649cc] dark:text-indigo-400 transition-colors hover:bg-[#3649cc]/5 dark:hover:bg-indigo-500/10 disabled:opacity-50"
                         >
                           {loadingSideEffects[med.id] ? "Cargando..." : (medSideEffects[med.id] ? "Ocultar efectos" : "Efectos secundarios")}
                         </button>
                         
                         <button 
                           onClick={() => deleteMedicine(med.id)} 
-                          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400"
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Eliminar
                         </button>
@@ -563,7 +571,7 @@ export default function RecordatoriosPage() {
 
                       {medSideEffects[med.id] && (
                         <div className="px-6 pb-6">
-                          <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900 shadow-inner">
+                          <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-200 shadow-inner">
                             <p className="mb-2 flex items-center gap-2 font-bold">
                               <Smile className="h-4 w-4 text-amber-600" /> Información de IA:
                             </p>
@@ -584,14 +592,14 @@ export default function RecordatoriosPage() {
           <section className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300">
                   <Calendar className="h-5 w-5" />
                 </div>
-                <h2 className="text-xl font-semibold text-slate-900">Próximas Citas</h2>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Próximas Citas</h2>
               </div>
               <button 
                 onClick={() => setShowApptForm(!showApptForm)}
-                className="flex items-center gap-1 rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-300"
+                className="flex items-center gap-1 rounded-lg bg-slate-200 dark:bg-white/10 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors hover:bg-slate-300 dark:hover:bg-white/20"
               >
                 <Plus className="h-4 w-4" /> Agregar
               </button>
@@ -599,29 +607,29 @@ export default function RecordatoriosPage() {
 
             {/* Appointment Form */}
             {showApptForm && (
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-bold">{editingApptId ? "Editar Cita" : "Nueva Cita Médica"}</h3>
-                  <button onClick={() => { setShowApptForm(false); setEditingApptId(null); }} className="text-slate-400 hover:text-slate-600">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{editingApptId ? "Editar Cita" : "Nueva Cita Médica"}</h3>
+                  <button onClick={() => { setShowApptForm(false); setEditingApptId(null); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                     <X className="h-5 w-5" />
                   </button>
                 </div>
-                {apptError && <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">{apptError}</div>}
+                {apptError && <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 p-3 text-sm font-medium text-red-600 dark:text-red-400">{apptError}</div>}
                 <form onSubmit={handleAddAppointment} className="flex flex-col gap-4">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">Doctor / Motivo</label>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Doctor / Motivo</label>
                     <div className="relative">
                       <input 
                         type="text" 
                         value={apptTitle}
                         onChange={(e) => setApptTitle(e.target.value)}
                         placeholder="Ej. Dra. Elena - Cardiología" 
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-12 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                        className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3 pr-12 text-sm outline-none focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                       />
                       <button 
                         type="button"
                         onClick={() => handleVoiceInput(setApptTitle)}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                       >
                         <Mic className="h-5 w-5" />
                       </button>
@@ -629,7 +637,7 @@ export default function RecordatoriosPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">Fecha</label>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Fecha</label>
                       <div 
                         className="relative cursor-pointer"
                         onClick={(e) => {
@@ -644,20 +652,20 @@ export default function RecordatoriosPage() {
                           type="date" 
                           value={apptDate}
                           onChange={(e) => setApptDate(e.target.value)}
-                          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full cursor-pointer rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 py-3 pl-10 pr-10 text-sm outline-none transition-all focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                         />
-                        <Calendar className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#3649cc]" />
+                        <Calendar className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#3649cc] dark:text-indigo-400" />
                         <button 
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleVoiceInput(setApptDate); }}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
                           <Mic className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">Hora</label>
+                      <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Hora</label>
                       <div 
                         className="relative cursor-pointer"
                         onClick={(e) => {
@@ -672,20 +680,20 @@ export default function RecordatoriosPage() {
                           type="time" 
                           value={apptTime}
                           onChange={(e) => setApptTime(e.target.value)}
-                          className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm outline-none transition-all focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                          className="w-full cursor-pointer rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 py-3 pl-10 pr-10 text-sm outline-none transition-all focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 text-slate-900 dark:text-white"
                         />
-                        <Clock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#3649cc]" />
+                        <Clock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#3649cc] dark:text-indigo-400" />
                         <button 
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleVoiceInput(setApptTime); }}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500 dark:bg-red-900/40 dark:text-red-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-600 dark:hover:text-slate-300'}`}
                         >
                           <Mic className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                   </div>
-                  <button type="submit" className="mt-2 w-full rounded-xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-slate-700">
+                  <button type="submit" className="mt-2 w-full rounded-xl bg-slate-800 dark:bg-white px-4 py-3 text-sm font-semibold text-white dark:text-slate-900 shadow-md transition-all hover:bg-slate-700 dark:hover:bg-slate-200">
                     {editingApptId ? "Actualizar Cita" : "Guardar Cita"}
                   </button>
                 </form>
@@ -694,7 +702,7 @@ export default function RecordatoriosPage() {
 
             <div className="flex flex-col gap-4">
               {appointments.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
+                <div className="rounded-3xl border border-dashed border-slate-300 dark:border-white/20 p-8 text-center text-slate-500 dark:text-slate-400">
                   No tienes citas programadas.
                 </div>
               ) : (
@@ -704,29 +712,29 @@ export default function RecordatoriosPage() {
                   const timeText = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                   return (
-                    <div key={appt.id} className="group relative flex flex-col rounded-3xl bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                    <div key={appt.id} className="group relative flex flex-col rounded-3xl bg-white dark:bg-white/5 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-white/10 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                       <button 
                         onClick={() => deleteAppointment(appt.id)}
-                        className="absolute right-4 top-4 hidden text-slate-300 hover:text-red-500 group-hover:block"
+                        className="absolute right-4 top-4 hidden text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 group-hover:block transition-colors"
                         title="Eliminar cita"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
 
                       <div className="mb-4 flex items-start justify-between pr-6">
-                        <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
+                        <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                           Confirmada
                         </div>
                       </div>
 
                       <div className="mb-6 flex gap-4">
-                        <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-slate-50 text-slate-700">
+                        <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300">
                           <span className="text-xl font-bold">{dayText.split(' ')[0]}</span>
                           <span className="text-xs font-medium uppercase">{dayText.split(' ')[1]}</span>
                         </div>
                         <div>
-                          <h3 className="mb-1 text-lg font-bold text-slate-900 line-clamp-2">{appt.title}</h3>
-                          <p className="flex items-center gap-1 text-sm font-medium text-[#3649cc]">
+                          <h3 className="mb-1 text-lg font-bold text-slate-900 dark:text-white line-clamp-2">{appt.title}</h3>
+                          <p className="flex items-center gap-1 text-sm font-medium text-[#3649cc] dark:text-indigo-400">
                             <Clock className="h-3.5 w-3.5" /> {timeText}
                           </p>
                         </div>
@@ -735,7 +743,7 @@ export default function RecordatoriosPage() {
                       <div className="mt-auto">
                         <button 
                           onClick={() => startReschedule(appt)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900"
+                          className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-sm transition-all hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                         >
                           Reprogramar
                         </button>
@@ -776,16 +784,16 @@ export default function RecordatoriosPage() {
             </div>
             
             <div className="p-6 sm:p-8 pt-8 sm:pt-10">
-              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">{infoModalMed.name}</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">{infoModalMed.name}</h3>
               
-              <div className="min-h-[100px] text-slate-600 leading-relaxed text-sm sm:text-base">
+              <div className="min-h-[100px] text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base">
                 {loadingInfo ? (
                   <div className="flex flex-col items-center justify-center py-10 gap-3">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#3649cc] border-t-transparent"></div>
                     <p className="text-xs font-medium text-slate-400">Consultando a Mía...</p>
                   </div>
                 ) : (
-                  <div className="prose prose-slate max-w-none whitespace-pre-line">
+                  <div className="prose prose-slate dark:prose-invert max-w-none whitespace-pre-line">
                     {medInfoData}
                   </div>
                 )}
@@ -794,7 +802,7 @@ export default function RecordatoriosPage() {
               <div className="mt-8">
                 <button 
                   onClick={() => setInfoModalMed(null)}
-                  className="w-full rounded-2xl bg-[#3649cc] py-3 sm:py-4 font-bold text-white shadow-lg shadow-[#3649cc]/30 transition-all hover:bg-[#2b3aa3] hover:shadow-xl active:scale-[0.98]"
+                  className="w-full rounded-2xl bg-[#3649cc] dark:bg-indigo-600 py-3 sm:py-4 font-bold text-white shadow-lg shadow-[#3649cc]/30 dark:shadow-indigo-900/30 transition-all hover:bg-[#2b3aa3] dark:hover:bg-indigo-500 hover:shadow-xl active:scale-[0.98]"
                 >
                   Entendido
                 </button>
