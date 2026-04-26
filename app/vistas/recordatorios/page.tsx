@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Pill, Calendar, Clock, CheckCircle2, Circle, MapPin, User, ChevronRight, Plus, Mic, X, Trash2, Smile, HelpCircle, Info, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../../lib/firebase/firebase";
@@ -60,20 +60,27 @@ export default function RecordatoriosPage() {
   const [medSideEffects, setMedSideEffects] = useState<Record<string, string>>({});
   const [loadingSideEffects, setLoadingSideEffects] = useState<Record<string, boolean>>({});
 
-  // Info Modal states
   const [infoModalMed, setInfoModalMed] = useState<Medicine | null>(null);
   const [medInfoData, setMedInfoData] = useState<string>("");
   const [loadingInfo, setLoadingInfo] = useState(false);
 
+  // Magic Voice states
+  const [isAnalyzingMed, setIsAnalyzingMed] = useState(false);
+  const [medVoiceTranscript, setMedVoiceTranscript] = useState("");
+  const [isListeningMed, setIsListeningMed] = useState(false);
+  const medFullTranscriptRef = useRef("");
+
   // Firebase auth & real-time sync
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    let unsubValue: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
         
         // Listen to user data
         const userRef = ref(db, `users/${currentUser.uid}`);
-        const unsubValue = onValue(userRef, (snapshot) => {
+        unsubValue = onValue(userRef, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             if (data.medicines) {
@@ -86,21 +93,27 @@ export default function RecordatoriosPage() {
             } else {
               setAppointments([]);
             }
-
           } else {
             setMedicines([]);
             setAppointments([]);
           }
           setLoadingData(false);
         });
-
-        return () => {};
       } else {
         // No user logged in — allow page to work without Firebase sync
+        setUser(null);
+        if (unsubValue) {
+          unsubValue();
+          unsubValue = null;
+        }
         setLoadingData(false);
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubValue) unsubValue();
+    };
   }, []);
 
   // Update current time every minute for the alarms
@@ -139,6 +152,141 @@ export default function RecordatoriosPage() {
     };
 
     recognition.start();
+  };
+
+  const handleMagicVoiceMed = () => {
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Tu navegador no soporta entrada de voz.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-MX";
+    recognition.interimResults = true; 
+    recognition.continuous = false; 
+
+    recognition.onstart = () => {
+      setIsListeningMed(true);
+      setMedVoiceTranscript("");
+      medFullTranscriptRef.current = "";
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          medFullTranscriptRef.current += " " + chunk;
+        } else {
+          interimTranscript = chunk;
+        }
+      }
+      setMedVoiceTranscript((medFullTranscriptRef.current + " " + interimTranscript).trim());
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      alert("Error en el micrófono: " + event.error);
+      setIsListeningMed(false);
+    };
+
+    recognition.onend = async () => {
+      // Don't auto-process here to give user control, 
+      // or we can auto-process if we want.
+      // For now, let's keep it manual or auto-process if transcript is long enough.
+    };
+
+    // @ts-ignore
+    window._medRecognition = recognition;
+    recognition.start();
+  };
+
+  const processMedVoiceWithAI = async () => {
+    // @ts-ignore
+    if (window._medRecognition) {
+      // @ts-ignore
+      window._medRecognition.stop();
+    }
+    setIsListeningMed(false);
+
+    const finalTranscript = medFullTranscriptRef.current.trim() || medVoiceTranscript.trim();
+    if (!finalTranscript) return;
+
+    setIsAnalyzingMed(true);
+    try {
+      const res = await fetch("/api/deepseek/extract-med", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: finalTranscript }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert("Error de la IA: " + data.error);
+        return;
+      }
+      
+      if (data.extracted) {
+        const { name, dosage, route, frequencyHours, durationDays } = data.extracted;
+        if (name) setMedName(name);
+        if (dosage) setMedDose(dosage);
+        if (route) setMedRoute(route);
+        if (frequencyHours) setMedFreq(frequencyHours);
+        if (durationDays) setMedDays(durationDays);
+      } else {
+        alert("No se pudo extraer información. Prueba a hablar más claro.");
+      }
+    } catch (error) {
+      console.error("Error processing medicine voice:", error);
+      alert("Error al procesar con IA. Revisa tu conexión.");
+    } finally {
+      setIsAnalyzingMed(false);
+      setMedVoiceTranscript("");
+    }
+  };
+
+  const processApptVoiceWithAI = async () => {
+    // @ts-ignore
+    if (window._medRecognition) {
+      // @ts-ignore
+      window._medRecognition.stop();
+    }
+    setIsListeningMed(false);
+
+    const finalTranscript = medFullTranscriptRef.current.trim() || medVoiceTranscript.trim();
+    if (!finalTranscript) return;
+
+    setIsAnalyzingMed(true);
+    try {
+      const res = await fetch("/api/deepseek/extract-med", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: finalTranscript, type: 'appointment' }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert("Error de la IA: " + data.error);
+        return;
+      }
+
+      if (data.extracted) {
+        const { title, date, time } = data.extracted;
+        if (title) setApptTitle(title);
+        if (date) setApptDate(date);
+        if (time) setApptTime(time);
+      } else {
+        alert("No se pudo extraer información de la cita.");
+      }
+    } catch (error) {
+      console.error("Error processing appointment voice:", error);
+      alert("Error al procesar cita con IA.");
+    } finally {
+      setIsAnalyzingMed(false);
+      setMedVoiceTranscript("");
+    }
   };
 
   const handleAddMedicine = async (e: React.FormEvent) => {
@@ -391,6 +539,53 @@ export default function RecordatoriosPage() {
                   </button>
                 </div>
                 {medError && <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 p-3 text-sm font-medium text-red-600 dark:text-red-400">{medError}</div>}
+                
+                {/* Magic Voice UI */}
+                <div className="mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-lg shadow-indigo-500/20">
+                  <div className="rounded-[14px] bg-white dark:bg-slate-900 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                          <Mic className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-800 dark:text-white">Llenado con Voz</span>
+                      </div>
+                      {isListeningMed ? (
+                        <button 
+                          onClick={processMedVoiceWithAI}
+                          className="flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95"
+                        >
+                          <div className="h-2 w-2 animate-pulse rounded-full bg-red-400"></div>
+                          Terminar y Procesar
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleMagicVoiceMed}
+                          disabled={isAnalyzingMed}
+                          className="flex items-center gap-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 px-4 py-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 transition-all hover:bg-indigo-200 dark:hover:bg-indigo-900/50 disabled:opacity-50"
+                        >
+                          {isAnalyzingMed ? "Procesando..." : "Comenzar a hablar"}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {isListeningMed && (
+                      <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-indigo-500 mb-1">Mía te escucha...</p>
+                        <div className="rounded-xl bg-slate-50 dark:bg-white/5 p-3 text-sm text-slate-600 dark:text-slate-300 italic min-h-[60px] border border-slate-100 dark:border-white/10">
+                          {medVoiceTranscript || "Di algo como: 'Tengo que tomar Paracetamol de 500mg vía oral cada 8 horas por 5 días'"}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {isAnalyzingMed && (
+                      <div className="mt-3 flex flex-col items-center justify-center py-4 gap-2">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"></div>
+                        <p className="text-xs font-medium text-slate-500">Mía está extrayendo los datos...</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <form onSubmit={handleAddMedicine} className="flex flex-col gap-4">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre del medicamento</label>
@@ -615,6 +810,46 @@ export default function RecordatoriosPage() {
                   </button>
                 </div>
                 {apptError && <div className="mb-4 rounded-xl bg-red-50 dark:bg-red-900/20 p-3 text-sm font-medium text-red-600 dark:text-red-400">{apptError}</div>}
+
+                {/* Magic Voice UI for Appointments */}
+                <div className="mb-6 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-0.5 shadow-lg shadow-emerald-500/20">
+                  <div className="rounded-[14px] bg-white dark:bg-slate-900 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                          <Mic className="h-4 w-4" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-800 dark:text-white">Cita con Voz</span>
+                      </div>
+                      {isListeningMed ? ( // Reuse listening state
+                        <button 
+                          onClick={processApptVoiceWithAI}
+                          className="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-emerald-700 active:scale-95"
+                        >
+                          <div className="h-2 w-2 animate-pulse rounded-full bg-red-400"></div>
+                          Terminar y Procesar
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleMagicVoiceMed} // Reuse recognition start
+                          disabled={isAnalyzingMed}
+                          className="flex items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-4 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 transition-all hover:bg-emerald-200 dark:hover:bg-emerald-900/50 disabled:opacity-50"
+                        >
+                          {isAnalyzingMed ? "Procesando..." : "Comenzar a hablar"}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {isListeningMed && (
+                      <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-500 mb-1">Mía te escucha...</p>
+                        <div className="rounded-xl bg-slate-50 dark:bg-white/5 p-3 text-sm text-slate-600 dark:text-slate-300 italic min-h-[60px] border border-slate-100 dark:border-white/10">
+                          {medVoiceTranscript || "Di algo como: 'Tengo cita con el dentista mañana a las 4 de la tarde'"}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <form onSubmit={handleAddAppointment} className="flex flex-col gap-4">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Doctor / Motivo</label>
