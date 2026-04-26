@@ -236,12 +236,7 @@ export default function Home() {
           
           <div className="absolute inset-0 z-0">
             <div className="relative w-full h-full group">
-              <Image 
-                src="/mia_ai_medical_assistant_1777163443521.png" 
-                fill
-                className="object-cover opacity-80 dark:opacity-50 transition-opacity duration-1000 will-change-transform"
-                priority
-              />
+
               {/* Holographic Scan Line Effect */}
               <motion.div 
                 animate={{ 
