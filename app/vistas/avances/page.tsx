@@ -2,17 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  ArrowLeftIcon,
-  HomeIcon,
-  UserIcon,
-  PencilSquareIcon,
-  CheckIcon,
-  ClockIcon,
-  ChartBarIcon,
-  ArrowTrendingUpIcon,
-  SparklesIcon
-} from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import {
   AreaChart,
   Area,
@@ -22,13 +12,13 @@ import {
   Tooltip,
   ResponsiveContainer
 } from "recharts";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Smile, Meh, Frown, Moon } from "lucide-react";
+import { Smile, Meh, Frown, Moon, ArrowLeft, Clock, User, Edit, Check, TrendingUp, BarChart2, Sparkles } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, get } from "firebase/database";
 
 export default function AvancesPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [moodHistory, setMoodHistory] = useState<any[]>([]);
   const [diagnostico, setDiagnostico] = useState<string>("");
@@ -191,71 +181,68 @@ export default function AvancesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pb-24 transition-colors duration-300 font-sans">
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link 
-            href="/" 
-            className="p-2 rounded-full text-[#3345CC] hover:bg-[#3345CC]/10 transition-colors"
-          >
-            <ArrowLeftIcon className="w-6 h-6" />
-          </Link>
-          <h1 className="text-lg font-bold tracking-tight text-[#3345CC]">Avances y Bio</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-        </div>
-      </header>
-
-      <main className="pt-28 px-6 max-w-4xl mx-auto space-y-10">
+    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
+      <div className="mx-auto max-w-5xl">
         
-        <header className="text-center space-y-3 mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Historia <span className="text-[#3345CC]">Bio-Digital</span></h1>
-          <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto">
-            Monitorea tu evolución, actualiza tus métricas vitales y revisa tu progreso emocional a lo largo del tiempo.
-          </p>
-          {lastUpdated && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 mt-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium border border-emerald-100 dark:border-emerald-500/20">
-              <ClockIcon className="w-4 h-4" />
-              Última actualización: {formatDate(lastUpdated)}
-            </div>
-          )}
-        </header>
+        <div className="mb-10 flex flex-col gap-4 sm:mb-12">
+          <div>
+            <button 
+              onClick={() => router.push('/')} 
+              className="mb-6 flex w-fit items-center gap-2 rounded-xl bg-white dark:bg-white/5 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-[#3649cc] dark:hover:text-indigo-400 active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" /> Volver al Inicio
+            </button>
+            <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc] dark:text-indigo-400">
+              Avances y Bio
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+              Historia Bio-Digital
+            </h1>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">
+              Monitorea tu evolución, actualiza tus métricas vitales y revisa tu progreso emocional a lo largo del tiempo.
+            </p>
+            {lastUpdated && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 mt-4 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium border border-emerald-100 dark:border-emerald-500/20">
+                <Clock className="w-4 h-4" />
+                Última actualización: {formatDate(lastUpdated)}
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Bio Data Section */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-white/10 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-              <UserIcon className="w-32 h-32 text-[#3345CC]" />
+              <User className="w-32 h-32 text-[#3649cc] dark:text-indigo-400" />
             </div>
             
             <div className="flex items-center justify-between mb-8 relative z-10">
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <div className="w-2 h-6 bg-[#3345CC] rounded-full" />
+                <div className="w-2 h-6 bg-[#3649cc] dark:bg-indigo-500 rounded-full" />
                 Datos Físicos
               </h2>
               {!isEditingBio ? (
-                <button onClick={() => setIsEditingBio(true)} className="p-2 text-slate-400 hover:text-[#3345CC] transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
-                  <PencilSquareIcon className="w-5 h-5" />
+                <button onClick={() => setIsEditingBio(true)} className="p-2 text-slate-400 hover:text-[#3649cc] dark:hover:text-indigo-400 transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
+                  <Edit className="w-5 h-5" />
                 </button>
               ) : (
                 <button onClick={saveBio} className="px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-emerald-500/20">
-                  <CheckIcon className="w-5 h-5" />
+                  <Check className="w-5 h-5" />
                   Guardar
                 </button>
               )}
             </div>
 
             <div className="space-y-6 relative z-10">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-white/5 transition-all">
+              <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5 transition-all">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Edad Actual</p>
-                <p className="text-4xl font-black text-[#3345CC]">{profile?.edad || "--"} <span className="text-lg font-medium text-slate-400">años</span></p>
-                <p className="text-[10px] text-slate-400 mt-2">* Se incrementa automáticamente con el paso del tiempo.</p>
+                <p className="text-4xl font-black text-[#3649cc] dark:text-indigo-400">{profile?.edad || "--"} <span className="text-lg font-medium text-slate-400 dark:text-slate-500">años</span></p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">* Se incrementa automáticamente con el paso del tiempo.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-white/5">
+                <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Peso</p>
                   {isEditingBio ? (
                     <div className="flex items-end gap-2">
@@ -263,16 +250,16 @@ export default function AvancesPage() {
                         type="number" 
                         value={editPeso} 
                         onChange={(e) => setEditPeso(e.target.value)}
-                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xl font-bold focus:ring-2 focus:ring-[#3345CC] outline-none transition-shadow"
+                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xl font-bold focus:ring-2 focus:ring-[#3649cc] dark:focus:ring-indigo-500 outline-none transition-shadow"
                       />
                       <span className="text-slate-400 font-bold mb-2">kg</span>
                     </div>
                   ) : (
-                    <p className="text-3xl font-bold">{profile?.peso || "--"} <span className="text-sm font-medium text-slate-400">kg</span></p>
+                    <p className="text-3xl font-bold">{profile?.peso || "--"} <span className="text-sm font-medium text-slate-400 dark:text-slate-500">kg</span></p>
                   )}
                 </div>
 
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-white/5">
+                <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Estatura</p>
                   {isEditingBio ? (
                     <div className="flex items-end gap-2">
@@ -280,12 +267,12 @@ export default function AvancesPage() {
                         type="number" 
                         value={editEstatura} 
                         onChange={(e) => setEditEstatura(e.target.value)}
-                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xl font-bold focus:ring-2 focus:ring-[#3345CC] outline-none transition-shadow"
+                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xl font-bold focus:ring-2 focus:ring-[#3649cc] dark:focus:ring-indigo-500 outline-none transition-shadow"
                       />
                       <span className="text-slate-400 font-bold mb-2">cm</span>
                     </div>
                   ) : (
-                    <p className="text-3xl font-bold">{profile?.estatura || "--"} <span className="text-sm font-medium text-slate-400">cm</span></p>
+                    <p className="text-3xl font-bold">{profile?.estatura || "--"} <span className="text-sm font-medium text-slate-400 dark:text-slate-500">cm</span></p>
                   )}
                 </div>
               </div>
@@ -317,7 +304,7 @@ export default function AvancesPage() {
           </section>
 
           {/* Diagnosis Section */}
-          <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <div className="w-2 h-6 bg-purple-500 rounded-full" />
@@ -329,16 +316,16 @@ export default function AvancesPage() {
                   disabled={isGeneratingDiag}
                   className="px-4 py-2 text-white bg-purple-500 hover:bg-purple-600 transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-500/20 disabled:opacity-50"
                 >
-                  <SparklesIcon className={isGeneratingDiag ? "w-5 h-5 animate-pulse" : "w-5 h-5"} />
+                  <Sparkles className={isGeneratingDiag ? "w-5 h-5 animate-pulse" : "w-5 h-5"} />
                   {isGeneratingDiag ? "Generando..." : "Generar con IA"}
                 </button>
                 {!isEditingDiag ? (
                   <button onClick={() => setIsEditingDiag(true)} className="p-2 text-slate-400 hover:text-purple-500 transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
-                    <PencilSquareIcon className="w-5 h-5" />
+                    <Edit className="w-5 h-5" />
                   </button>
                 ) : (
                   <button onClick={saveDiag} className="px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-emerald-500/20">
-                    <CheckIcon className="w-5 h-5" />
+                    <Check className="w-5 h-5" />
                     Guardar
                   </button>
                 )}
@@ -363,14 +350,14 @@ export default function AvancesPage() {
         </div>
 
         {/* Mood Progress Section */}
-        <section className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300">
+        <section className="mt-8 bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center gap-4 mb-8">
             <div className="p-3 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-2xl">
-              <ArrowTrendingUpIcon className="w-7 h-7" />
+              <TrendingUp className="w-7 h-7" />
             </div>
             <div>
               <h2 className="text-2xl font-bold">Progreso Emocional</h2>
-              <p className="text-sm text-slate-500">Historial de tu estado de ánimo en escala de intensidad (0-10)</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Historial de tu estado de ánimo en escala de intensidad (0-10)</p>
             </div>
           </div>
 
@@ -427,30 +414,20 @@ export default function AvancesPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center bg-slate-50 dark:bg-slate-800/30 rounded-3xl border border-dashed border-slate-300 dark:border-white/10">
-              <ChartBarIcon className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-6" />
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-slate-50 dark:bg-black/20 rounded-3xl border border-dashed border-slate-300 dark:border-white/10">
+              <BarChart2 className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-6" />
               <p className="text-slate-600 dark:text-slate-400 font-medium mb-3 text-lg">Aún no hay registros emocionales.</p>
               <Link 
                 href="/vistas/registro-emocional" 
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#3345CC] text-white rounded-xl font-bold shadow-lg shadow-[#3345CC]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#3649cc] dark:bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-[#3649cc]/20 dark:shadow-indigo-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Captura cómo te sientes hoy
-                <ArrowLeftIcon className="w-4 h-4 rotate-180" />
+                <ArrowLeft className="w-4 h-4 rotate-180" />
               </Link>
             </div>
           )}
         </section>
-      </main>
-
-      {/* Mobile Nav */}
-      <nav className="fixed bottom-0 w-full h-20 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-slate-200 dark:border-white/10 flex items-center justify-around px-6 z-50 md:hidden">
-        <Link href="/" className="p-3 rounded-xl text-slate-500 hover:text-[#3345CC] hover:bg-[#3345CC]/10 transition-colors">
-          <HomeIcon className="w-7 h-7" />
-        </Link>
-        <Link href="/vistas/perfil" className="p-3 rounded-xl text-slate-500 hover:text-[#3345CC] hover:bg-[#3345CC]/10 transition-colors">
-          <UserIcon className="w-7 h-7" />
-        </Link>
-      </nav>
-    </div>
+      </div>
+    </main>
   );
 }

@@ -35,7 +35,7 @@ const teamViews = [
     color: "text-blue-500 dark:text-blue-400"
   },
   {
-    name: "Captura de datos",
+    name: "Expediente",
     href: "/vistas/captura-datos",
     focus: "Registro manual o por voz con validación humana.",
     icon: ChatBubbleLeftRightIcon,
@@ -170,7 +170,7 @@ export default function Home() {
           <nav className="hidden lg:flex items-center gap-1">
             {[
               { name: "Inicio", href: "/", active: true },
-              { name: "Captura", href: "/vistas/captura-datos" },
+              { name: "Expediente", href: "/vistas/captura-datos" },
               { name: "Salud", href: "/vistas/registro-salud" },
               { name: "Emergencias", href: "/vistas/emergencias" },
             ].map((item) => (
@@ -299,8 +299,8 @@ export default function Home() {
                 INICIAR ESCANEO
                 <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
               </Link>
-              <Link href="/vistas/avances" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 font-black text-lg transition-all backdrop-blur-xl")}>
-                HISTORIAL BIO
+              <Link href="/vistas/avances" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 hover:scale-105 active:scale-95 font-black text-lg transition-all backdrop-blur-xl")}>
+                Avances
               </Link>
             </motion.div>
           </motion.div>

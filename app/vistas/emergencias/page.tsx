@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { DocumentDuplicateIcon, CheckIcon, PhoneIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Phone, Copy, Check, ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type EmergencyData = Record<string, Record<string, Record<string, string>>>;
 
@@ -62,10 +63,56 @@ const emergencyData: EmergencyData = {
 };
 
 export default function EmergenciasPage() {
+  const router = useRouter();
   const countries = Object.keys(emergencyData);
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedState, setSelectedState] = useState<string>("");
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mia_patient_profile");
+      if (saved) {
+        const profile = JSON.parse(saved);
+        const loc = profile.localidad || profile.domicilio;
+        
+        if (loc) {
+          let foundCountry = "";
+          let foundState = "";
+          
+          for (const c of countries) {
+            if (loc.toLowerCase().includes(c.toLowerCase())) {
+              foundCountry = c;
+            }
+            
+            const stateKeys = Object.keys(emergencyData[c]);
+            for (const s of stateKeys) {
+              if (s !== "Todos los estados" && loc.toLowerCase().includes(s.toLowerCase())) {
+                foundCountry = c;
+                foundState = s;
+                break;
+              }
+            }
+          }
+          
+          if (foundCountry) {
+            setSelectedCountry(foundCountry);
+            if (foundState) {
+              setSelectedState(foundState);
+            } else {
+              // Try to default to "Todos los estados" or similar if available
+              const stateKeys = Object.keys(emergencyData[foundCountry]);
+              if (stateKeys.includes("Todos los estados") || stateKeys.includes("Todas las comunidades") || stateKeys.includes("Todos los departamentos") || stateKeys.includes("Todas las provincias") || stateKeys.includes("Todas las regiones")) {
+                setSelectedState(stateKeys[0]); // Usually the "Todos" option is the first
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error al leer el perfil guardado:", e);
+    }
+  }, []); // Run once on mount
 
   const states = selectedCountry ? Object.keys(emergencyData[selectedCountry]) : [];
   const activeNumbers = (selectedCountry && selectedState) 
@@ -83,19 +130,28 @@ export default function EmergenciasPage() {
   };
 
   return (
-    <main className="min-h-[100dvh] bg-slate-50 px-6 py-12 font-sans text-slate-900 sm:px-10">
-      <div className="mx-auto w-full max-w-4xl space-y-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
+      <div className="mx-auto max-w-5xl">
         
+        <div className="mb-8">
+          <button 
+            onClick={() => router.push('/')} 
+            className="mb-6 flex w-fit items-center gap-2 rounded-xl bg-white dark:bg-white/5 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-[#3649cc] dark:hover:text-indigo-400 active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4" /> Volver al Inicio
+          </button>
+        </div>
+
         {/* Header Alert */}
-        <section className="rounded-3xl border border-red-200 bg-red-50 p-6 sm:p-8 shadow-sm">
+        <section className="mb-8 rounded-3xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-red-100">
-              <PhoneIcon className="h-7 w-7 text-red-600 animate-pulse" />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/40">
+              <Phone className="h-7 w-7 text-red-600 dark:text-red-400 animate-pulse" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-500">Aviso Crítico</p>
-              <h1 className="mt-1 text-2xl font-bold text-red-900">Números de Emergencia</h1>
-              <p className="mt-2 text-sm leading-relaxed text-red-800/90 max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-500 dark:text-red-400">Aviso Crítico</p>
+              <h1 className="mt-1 text-2xl font-bold text-red-900 dark:text-red-200">Números de Emergencia</h1>
+              <p className="mt-2 text-sm leading-relaxed text-red-800/90 dark:text-red-200/80 max-w-2xl">
                 Si tú o alguien más presenta dolor fuerte en el pecho, dificultad para respirar, 
                 pérdida de conocimiento, o cualquier situación de riesgo inmediato, 
                 <strong> contacta a emergencias inmediatamente.</strong> Mia es un apoyo, pero no sustituye atención médica urgente.
@@ -105,70 +161,87 @@ export default function EmergenciasPage() {
         </section>
 
         {/* Selection Area */}
-        <section className="rounded-3xl bg-white p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <h2 className="mb-6 text-xl font-bold text-slate-800">Busca los números de tu localidad</h2>
+        <section className="mb-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3649cc]/10 dark:bg-indigo-500/20 text-[#3649cc] dark:text-indigo-400">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Busca los números de tu localidad</h2>
+          </div>
           
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
-              <label htmlFor="country" className="block text-sm font-medium text-slate-700">País</label>
-              <select 
-                id="country" 
-                value={selectedCountry}
-                onChange={(e) => {
-                  setSelectedCountry(e.target.value);
-                  setSelectedState("");
-                }}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-              >
-                <option value="" disabled>Selecciona un país</option>
-                {countries.map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
+              <label htmlFor="country" className="block text-sm font-bold text-slate-700 dark:text-slate-300">País</label>
+              <div className="relative">
+                <select 
+                  id="country" 
+                  value={selectedCountry}
+                  onChange={(e) => {
+                    setSelectedCountry(e.target.value);
+                    setSelectedState("");
+                  }}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3.5 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>Selecciona un país</option>
+                  {countries.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 dark:text-slate-400">
+                  <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="state" className="block text-sm font-medium text-slate-700">Estado / Región</label>
-              <select 
-                id="state" 
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                disabled={!selectedCountry}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
-              >
-                <option value="" disabled>Selecciona un estado</option>
-                {states.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
+              <label htmlFor="state" className="block text-sm font-bold text-slate-700 dark:text-slate-300">Estado / Región</label>
+              <div className="relative">
+                <select 
+                  id="state" 
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  disabled={!selectedCountry}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 py-3.5 text-sm font-medium text-slate-900 dark:text-white outline-none transition-all focus:border-[#3649cc] dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-white/10 focus:ring-4 focus:ring-[#3649cc]/10 dark:focus:ring-indigo-500/20 disabled:opacity-50 appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>Selecciona un estado</option>
+                  {states.map(state => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 dark:text-slate-400">
+                  <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Results Area */}
         {activeNumbers && (
-          <section className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 px-2">Números disponibles</h3>
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white px-2">Números disponibles en tu zona</h3>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Object.entries(activeNumbers).map(([service, number]) => (
-                <div key={service} className="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-red-200 hover:shadow-md">
+                <div key={service} className="group relative flex flex-col justify-between rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:border-red-200 dark:hover:border-red-500/50 hover:shadow-md">
                   <div>
-                    <h4 className="text-sm font-semibold text-slate-500">{service}</h4>
-                    <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{number}</p>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{service}</h4>
+                    <p className="mt-3 text-4xl font-black tracking-tight text-slate-900 dark:text-white">{number}</p>
                   </div>
                   
                   <button 
                     onClick={() => handleCopy(number)}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-300 transition-all hover:bg-[#3649cc] hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white active:scale-95"
                   >
                     {copiedNumber === number ? (
                       <>
-                        <CheckIcon className="h-5 w-5 text-green-500" />
-                        <span className="text-green-600">¡Copiado!</span>
+                        <Check className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+                        <span className="text-emerald-600 dark:text-emerald-400">¡Copiado!</span>
                       </>
                     ) : (
                       <>
-                        <DocumentDuplicateIcon className="h-5 w-5" />
+                        <Copy className="h-4 w-4" />
                         <span>Copiar número</span>
                       </>
                     )}
