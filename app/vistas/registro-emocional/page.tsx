@@ -41,6 +41,7 @@ export default function RegistroEmocionalPage() {
   const [selectedMood, setSelectedMood] = useState<string>("Ansioso");
   const [intensity, setIntensity] = useState<number>(7);
   const [thoughts, setThoughts] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const moods = [
     { name: "Feliz", icon: FaceSmileIcon, label: "FELIZ" },
@@ -219,8 +220,30 @@ export default function RegistroEmocionalPage() {
 
         {/* Action Button */}
         <div className="pt-4">
-          <Button className="w-full h-20 rounded-[2rem] bg-primary text-on-primary text-xl font-black font-public-sans hover:scale-[1.01] active:scale-[0.99] transition-all shadow-2xl shadow-primary/40 tracking-tight">
-            Confirmar Registro Diario
+          <Button 
+            onClick={() => {
+              setIsSubmitting(true);
+              const newEntry = {
+                date: new Date().toISOString(),
+                mood: selectedMood,
+                intensity,
+                thoughts
+              };
+              try {
+                const historyStr = localStorage.getItem("mia_mood_history");
+                const history = historyStr ? JSON.parse(historyStr) : [];
+                history.push(newEntry);
+                localStorage.setItem("mia_mood_history", JSON.stringify(history));
+                alert("Registro guardado con éxito. Puedes ver tu progreso en Avances.");
+              } catch (e) {
+                console.error("Error saving mood", e);
+              }
+              setTimeout(() => setIsSubmitting(false), 1000);
+            }}
+            disabled={isSubmitting}
+            className="w-full h-20 rounded-[2rem] bg-primary text-on-primary text-xl font-black font-public-sans hover:scale-[1.01] active:scale-[0.99] transition-all shadow-2xl shadow-primary/40 tracking-tight"
+          >
+            {isSubmitting ? "Guardando..." : "Confirmar Registro Diario"}
           </Button>
           <p className="text-center text-on-surface-variant/50 text-xs mt-6 font-manrope">
             Tus datos están encriptados y solo son accesibles para tu IA de salud personalizada.
