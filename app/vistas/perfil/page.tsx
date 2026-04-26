@@ -211,7 +211,7 @@ export default function PerfilPage() {
               </div>
               <span className="text-sm font-semibold">Ver mis datos</span>
             </div>
-            <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
+            <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
           </Link>
 
           {!user ? (
@@ -225,11 +225,7 @@ export default function PerfilPage() {
                 </div>
                 <span className="text-sm font-semibold">Iniciar sesión</span>
               </div>
-<<<<<<< HEAD
-              <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
-=======
               <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
->>>>>>> 7a10258387ee6deee878a3e3bba5bca6d30e2a34
             </Link>
           ) : (
             <button
@@ -242,11 +238,7 @@ export default function PerfilPage() {
                 </div>
                 <span className="text-sm font-semibold text-red-600 dark:text-red-400">Cerrar sesión</span>
               </div>
-<<<<<<< HEAD
-              <ChevronRight className="h-5 w-5 text-slate-300 dark:text-slate-600" />
-=======
               <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
->>>>>>> 7a10258387ee6deee878a3e3bba5bca6d30e2a34
             </button>
           )}
         </div>
