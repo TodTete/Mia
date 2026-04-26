@@ -487,11 +487,7 @@ export default function RecordatoriosPage() {
   }
 
   return (
-<<<<<<< HEAD
     <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
-=======
-    <main className="min-h-screen bg-slate-50 dark:bg-black px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10 transition-colors duration-500">
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
       <div className="mx-auto max-w-5xl">
         
         <div className="mb-10 flex flex-col gap-4 sm:mb-12">

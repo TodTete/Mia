@@ -1,5 +1,4 @@
 "use client";
-<<<<<<< HEAD
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -427,66 +426,6 @@ export default function AvancesPage() {
               </Link>
             </div>
           )}
-=======
-
-import { ThemeToggle } from "@/components/theme-toggle";
-import { ChartBarIcon, ArrowTrendingUpIcon, UserIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
-
-export default function AvancesPage() {
-  return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white font-manrope transition-colors duration-500 pb-32">
-      <header className="sticky top-0 w-full z-40 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
-        <h1 className="text-lg font-bold tracking-tight text-[#3649cc] dark:text-primary font-public-sans">Avances</h1>
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Link
-            href="/vistas/perfil"
-            className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 flex items-center justify-center text-slate-400 hover:border-[#3649cc] hover:text-[#3649cc] transition-all"
-          >
-            <UserIcon className="w-6 h-6" />
-          </Link>
-        </div>
-      </header>
-
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-8">
-        <section className="rounded-[2.5rem] bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 p-8 shadow-xl backdrop-blur-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <ChartBarIcon className="w-24 h-24 text-[#3649cc] dark:text-primary" />
-          </div>
-          <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#3649cc] dark:text-primary">Evolución</p>
-          <h2 className="mt-4 text-3xl font-black tracking-tight">Tu Progreso Mia</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-400">
-            Aquí podrás visualizar cómo han evolucionado tus indicadores clave a lo largo del tiempo. 
-            Próximamente incluiremos gráficas interactivas para que veas tu avance en escala del 1 al 10.
-          </p>
-        </section>
-
-        <section className="grid gap-6 md:grid-cols-2">
-          <article className="rounded-[2rem] bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 p-6 shadow-lg transition-all hover:scale-[1.02] active:scale-95">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                <ArrowTrendingUpIcon className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold tracking-tight">Indicadores Vitales</h3>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Monitoreo continuo de peso, edad metabólica y hábitos de sueño.
-            </p>
-          </article>
-
-          <article className="rounded-[2rem] bg-white dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 p-6 shadow-lg transition-all hover:scale-[1.02] active:scale-95">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <ChartBarIcon className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold tracking-tight">Gráfica de Salud</h3>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Visualización semántica de tu bienestar en una escala visual intuitiva.
-            </p>
-          </article>
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
         </section>
       </div>
     </main>

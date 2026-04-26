@@ -49,10 +49,7 @@ export default function RegistroEmocionalPage() {
   const [selectedMood, setSelectedMood] = useState<string>("Ansioso");
   const [intensity, setIntensity] = useState<number>(7);
   const [thoughts, setThoughts] = useState<string>("");
-<<<<<<< HEAD
   const [isSubmitting, setIsSubmitting] = useState(false);
-=======
-  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
@@ -72,41 +69,6 @@ export default function RegistroEmocionalPage() {
     });
     return () => unsubscribe();
   }, []);
-
-  const handleConfirmRecord = async () => {
-    if (!user) {
-      showToast("Por favor, inicia sesión para guardar tu registro.", "error");
-      router.push("/vistas/login");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const recordsRef = ref(db, `users/${user.uid}/emotions`);
-      const newRecordRef = push(recordsRef);
-
-      await set(newRecordRef, {
-        mood: selectedMood,
-        intensity,
-        thoughts,
-        timestamp: serverTimestamp(),
-        date: new Date().toISOString()
-      });
-
-      showToast("✅ Registro emocional guardado con éxito.", "success");
-
-      // Limpiar campos después de guardar
-      setThoughts("");
-
-      // Opcional: Redirigir o mostrar resumen
-    } catch (error: any) {
-      console.error("Error saving to Firebase:", error);
-      showToast("Error al conectar con Firebase: " + error.message, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
 
   const moods = [
     { name: "Feliz", icon: FaceSmileIcon, label: "FELIZ" },
@@ -317,48 +279,35 @@ export default function RegistroEmocionalPage() {
           />
         </section>
 
-<<<<<<< HEAD
-        {/* Action Button */}
-        <div className="pt-4">
-          <Button 
-            onClick={() => {
-              setIsSubmitting(true);
-              const newEntry = {
-                date: new Date().toISOString(),
-                mood: selectedMood,
-                intensity,
-                thoughts
-              };
-              try {
-                const historyStr = localStorage.getItem("mia_mood_history");
-                const history = historyStr ? JSON.parse(historyStr) : [];
-                history.push(newEntry);
-                localStorage.setItem("mia_mood_history", JSON.stringify(history));
-                alert("Registro guardado con éxito. Puedes ver tu progreso en Avances.");
-              } catch (e) {
-                console.error("Error saving mood", e);
-              }
-              setTimeout(() => setIsSubmitting(false), 1000);
-            }}
-            disabled={isSubmitting}
-            className="w-full h-20 rounded-[2rem] bg-primary text-on-primary text-xl font-black font-public-sans hover:scale-[1.01] active:scale-[0.99] transition-all shadow-2xl shadow-primary/40 tracking-tight"
-          >
-            {isSubmitting ? "Guardando..." : "Confirmar Registro Diario"}
-          </Button>
-          <p className="text-center text-on-surface-variant/50 text-xs mt-6 font-manrope">
-            Tus datos están encriptados y solo son accesibles para tu IA de salud personalizada.
-          </p>
-        </div>
-=======
         {/* Action Button Section */}
         <section className="pt-8 flex flex-col items-center space-y-8 px-4">
           <div className="w-full max-w-sm space-y-4">
             <button
-              onClick={handleConfirmRecord}
-              disabled={loading}
+              onClick={() => {
+                setIsSubmitting(true);
+                const newEntry = {
+                  date: new Date().toISOString(),
+                  mood: selectedMood,
+                  intensity,
+                  thoughts
+                };
+                try {
+                  const historyStr = localStorage.getItem("mia_mood_history");
+                  const history = historyStr ? JSON.parse(historyStr) : [];
+                  history.push(newEntry);
+                  localStorage.setItem("mia_mood_history", JSON.stringify(history));
+                  showToast("✅ Registro guardado con éxito.", "success");
+                  setThoughts("");
+                } catch (e) {
+                  console.error("Error saving mood", e);
+                  showToast("Error al guardar el registro.", "error");
+                }
+                setTimeout(() => setIsSubmitting(false), 1000);
+              }}
+              disabled={isSubmitting}
               className="w-full py-6 bg-[#3649cc] dark:bg-primary hover:scale-[1.02] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-[#3649cc]/20 dark:shadow-primary/20 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
             >
-              <span>{loading ? "Guardando..." : "Guardar Registro"}</span>
+              <span>{isSubmitting ? "Guardando..." : "Guardar Registro"}</span>
               <ArrowTrendingUpIcon className="w-6 h-6" />
             </button>
             <p className="text-center text-slate-400 text-[9px] uppercase tracking-[0.3em] font-black">
@@ -366,7 +315,6 @@ export default function RegistroEmocionalPage() {
             </p>
           </div>
         </section>
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
       </main>
 
       {/* Toast Overlay */}
