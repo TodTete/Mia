@@ -252,8 +252,8 @@ export default function RegistroEmocionalPage() {
             className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full blur-3xl animate-pulse opacity-20"
             style={{ backgroundColor: currentMoodConfig.color }}
           />
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white font-public-sans tracking-tight leading-tight">
-            ¿Cómo te sientes <span className="italic" style={{ color: currentMoodConfig.color }}>hoy?</span>
+          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white font-public-sans tracking-tight leading-tight">
+            ¿Cómo te sientes <span className="italic block sm:inline" style={{ color: currentMoodConfig.color }}>hoy?</span>
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-lg font-manrope max-w-xl mx-auto leading-relaxed">
             Tu registro emocional ayuda a Mía a entender mejor tu salud integral.

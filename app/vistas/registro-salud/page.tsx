@@ -45,7 +45,7 @@ export default function RegistroSaludPage() {
   const [selectedStat, setSelectedStat] = useState<VitalStat | null>(null);
   const [newValue, setNewValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" | "info" } | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
@@ -66,7 +66,7 @@ export default function RegistroSaludPage() {
     return () => unsubscribeAuth();
   }, []);
 
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
+  const showToast = (msg: string, type: "success" | "error" | "info" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
@@ -232,7 +232,9 @@ export default function RegistroSaludPage() {
             <ChartBarIcon className="w-3.5 h-3.5" />
             Salud Preventiva
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-4">Registro de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Bienestar</span></h1>
+          <h1 className="text-3xl sm:text-6xl font-black tracking-tight mb-4 leading-[1.1]">
+            Registro de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 block sm:inline">Bienestar</span>
+          </h1>
           <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl leading-relaxed">
             Monitorea tus signos vitales y hábitos diarios para que <span className="text-blue-600 font-bold">Mia</span> pueda darte mejores recomendaciones.
           </p>
@@ -362,7 +364,9 @@ export default function RegistroSaludPage() {
             exit={{ opacity: 0, y: 50 }}
             className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded-2xl bg-slate-900 text-white text-sm font-bold shadow-2xl flex items-center gap-3"
           >
-            <div className={cn("w-2 h-2 rounded-full animate-pulse", toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500')} />
+            <div className={cn("w-2 h-2 rounded-full animate-pulse", 
+              toast.type === 'error' ? 'bg-red-500' : 
+              toast.type === 'success' ? 'bg-emerald-500' : 'bg-blue-500')} />
             {toast.msg}
           </motion.div>
         )}

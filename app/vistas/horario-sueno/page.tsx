@@ -206,7 +206,7 @@ export default function HorarioSuenoPage() {
             <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc] dark:text-indigo-400">
               Horario de Sueño
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white sm:text-6xl">
               Descansa mejor
             </h1>
             <p className="mt-2 text-slate-500 dark:text-slate-400 max-w-2xl">
@@ -230,19 +230,19 @@ export default function HorarioSuenoPage() {
               <div className="flex flex-col gap-8">
                 
                 {/* Despertar */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-500 shadow-inner">
-                      <Sun className="h-7 w-7" />
+                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-500 shadow-inner">
+                      <Sun className="h-6 w-6 sm:h-7 sm:w-7" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2 px-2">Despertar</p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 px-1 sm:px-2">Despertar</p>
                       <div className="relative group/input inline-block">
                         <input 
                           type="time" 
                           value={wakeTime}
                           onChange={(e) => setWakeTime(e.target.value)}
-                          className="text-2xl xs:text-3xl sm:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-3 sm:px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer w-full sm:w-auto"
+                          className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-3 sm:px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer w-full sm:w-auto"
                         />
                         <div className="absolute -right-2 -top-2 bg-[#3649cc] dark:bg-indigo-500 text-white rounded-full p-1.5 opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none shadow-md">
                           <Edit2 className="w-3.5 h-3.5" />
@@ -253,23 +253,23 @@ export default function HorarioSuenoPage() {
                 </div>
 
                 <div className="h-[2px] w-full bg-slate-100 dark:bg-white/10 relative my-2">
-                  <div className="absolute left-1/2 -top-3 -translate-x-1/2 bg-white dark:bg-[#1a1b26] px-4 text-xs font-bold text-slate-300 dark:text-slate-500 tracking-widest rounded-full">HASTA</div>
+                  <div className="absolute left-1/2 -top-3 -translate-x-1/2 bg-white dark:bg-[#1a1b26] px-4 text-[10px] font-bold text-slate-300 dark:text-slate-500 tracking-widest rounded-full">HASTA</div>
                 </div>
 
                 {/* Dormir */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 shadow-inner">
-                      <Moon className="h-7 w-7" />
+                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-500 shadow-inner">
+                      <Moon className="h-6 w-6 sm:h-7 sm:w-7" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-2 px-2">Dormir</p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 mb-1 px-1 sm:px-2">Dormir</p>
                       <div className="relative group/input inline-block">
                         <input 
                           type="time" 
                           value={bedTime}
                           onChange={(e) => setBedTime(e.target.value)}
-                          className="text-2xl xs:text-3xl sm:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-3 sm:px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer w-full sm:w-auto"
+                          className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-3 sm:px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer w-full sm:w-auto"
                         />
                         <div className="absolute -right-2 -top-2 bg-[#3649cc] dark:bg-indigo-500 text-white rounded-full p-1.5 opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none shadow-md">
                           <Edit2 className="w-3.5 h-3.5" />
@@ -303,11 +303,11 @@ export default function HorarioSuenoPage() {
             {/* Tarjeta de estado */}
             <div className={`relative overflow-hidden rounded-3xl border p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all ${isOptimal ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10' : 'border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10'}`}>
               <div className="flex items-center gap-4 mb-2">
-                <div className={`text-4xl xs:text-5xl sm:text-6xl font-black tracking-tight ${isOptimal ? 'text-emerald-900 dark:text-emerald-400' : 'text-amber-900 dark:text-amber-400'}`}>
-                  {hours}<span className="text-2xl sm:text-3xl opacity-50 font-bold">h</span> {mins}<span className="text-2xl sm:text-3xl opacity-50 font-bold">m</span>
+                <div className={`text-3xl xs:text-4xl sm:text-6xl font-black tracking-tight ${isOptimal ? 'text-emerald-900 dark:text-emerald-400' : 'text-amber-900 dark:text-amber-400'}`}>
+                  {hours}<span className="text-xl sm:text-3xl opacity-50 font-bold">h</span> {mins}<span className="text-xl sm:text-3xl opacity-50 font-bold">m</span>
                 </div>
               </div>
-              <p className={`text-lg font-bold mb-2 ${isOptimal ? 'text-emerald-700 dark:text-emerald-500' : 'text-amber-700 dark:text-amber-500'}`}>Tiempo en cama</p>
+              <p className={`text-base sm:text-lg font-bold mb-2 ${isOptimal ? 'text-emerald-700 dark:text-emerald-500' : 'text-amber-700 dark:text-amber-500'}`}>Tiempo en cama</p>
               
               {isOptimal ? (
                 <div className="flex items-start gap-3 mt-6 text-emerald-800 dark:text-emerald-200 bg-emerald-100/50 dark:bg-emerald-900/30 p-4 rounded-2xl">

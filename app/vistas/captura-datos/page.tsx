@@ -372,8 +372,8 @@ export default function CapturaDatosPage() {
             <SparklesIcon className="w-3.5 h-3.5" />
             Salud Inteligente
           </motion.div>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-4 leading-[1.1]">
-            Expediente <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">Médico</span>
+          <h1 className="text-3xl sm:text-6xl font-black tracking-tight mb-4 leading-[1.1]">
+            Expediente <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 block sm:inline">Médico</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl leading-relaxed">
             Organiza tu historia clínica con la ayuda de <span className="text-blue-600 font-bold">Mia AI</span>.
