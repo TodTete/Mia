@@ -338,9 +338,7 @@ export default function Home() {
                 className="relative"
               >
                 <div
-                  // --- ESTO SE DESCOMENTARÁ MÁS ADELANTE PARA ACTIVAR LAS RUTAS ---
-                  // onClick={() => router.push(view.href)}
-                  // Nota: al descomentar lo de arriba, cambia 'cursor-default' por 'cursor-pointer' en la clase de abajo
+                   onClick={() => router.push(view.href)}
                   className="group block bg-white/5 dark:bg-white/[0.02] backdrop-blur-2xl rounded-[2.5rem] p-10 h-full border border-white/10 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/20 cursor-default"
                 >
                   <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-on-surface/10 to-transparent flex items-center justify-center mb-10 group-hover:rotate-[15deg] group-hover:scale-125 transition-all duration-500 ${view.color}`}>
