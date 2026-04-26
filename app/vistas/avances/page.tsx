@@ -435,7 +435,10 @@ export default function AvancesPage() {
               </Link>
             </div>
           )}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
         </section>
       </div>
     </main>

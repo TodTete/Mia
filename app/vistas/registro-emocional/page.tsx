@@ -49,7 +49,11 @@ export default function RegistroEmocionalPage() {
   const [selectedMood, setSelectedMood] = useState<string>("Ansioso");
   const [intensity, setIntensity] = useState<number>(7);
   const [thoughts, setThoughts] = useState<string>("");
+<<<<<<< HEAD
   const [loading, setLoading] = useState(false);
+=======
+  const [isSubmitting, setIsSubmitting] = useState(false);
+>>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
@@ -70,6 +74,7 @@ export default function RegistroEmocionalPage() {
     return () => unsubscribe();
   }, []);
 
+<<<<<<< HEAD
   const handleConfirmRecord = async () => {
     if (!user) {
       showToast("Por favor, inicia sesión para guardar tu registro.", "error");
@@ -118,6 +123,8 @@ export default function RegistroEmocionalPage() {
       setLoading(false);
     }
   };
+=======
+>>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
   const moods = [
     { name: "Feliz", icon: FaceSmileIcon, label: "FELIZ" },
     { name: "Tranquilo", icon: SparklesIcon, label: "TRANQUILO" },
@@ -314,11 +321,37 @@ export default function RegistroEmocionalPage() {
         <section className="pt-8 flex flex-col items-center space-y-8 px-4">
           <div className="w-full max-w-sm space-y-4">
             <button
+<<<<<<< HEAD
               onClick={handleConfirmRecord}
               disabled={loading}
               className="w-full py-6 bg-[#3649cc] hover:scale-[1.02] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-[#3649cc]/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+=======
+              onClick={() => {
+                setIsSubmitting(true);
+                const newEntry = {
+                  date: new Date().toISOString(),
+                  mood: selectedMood,
+                  intensity,
+                  thoughts
+                };
+                try {
+                  const historyStr = localStorage.getItem("mia_mood_history");
+                  const history = historyStr ? JSON.parse(historyStr) : [];
+                  history.push(newEntry);
+                  localStorage.setItem("mia_mood_history", JSON.stringify(history));
+                  showToast("✅ Registro guardado con éxito.", "success");
+                  setThoughts("");
+                } catch (e) {
+                  console.error("Error saving mood", e);
+                  showToast("Error al guardar el registro.", "error");
+                }
+                setTimeout(() => setIsSubmitting(false), 1000);
+              }}
+              disabled={isSubmitting}
+              className="w-full py-6 bg-[#3649cc] dark:bg-primary hover:scale-[1.02] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-[#3649cc]/20 dark:shadow-primary/20 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+>>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
             >
-              <span>{loading ? "Guardando..." : "Guardar Registro"}</span>
+              <span>{isSubmitting ? "Guardando..." : "Guardar Registro"}</span>
               <ArrowTrendingUpIcon className="w-6 h-6" />
             </button>
           </div>
