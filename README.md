@@ -106,4 +106,4 @@ Toda la información proporcionada por la IA de Mia, incluyendo el análisis de 
 
 ---
 
-*Hecho con ❤️ para revolucionar el bienestar personal impulsado por IA.*
+*Hecho por Amor a Puebla para revolucionar el bienestar personal impulsado por IA.*
