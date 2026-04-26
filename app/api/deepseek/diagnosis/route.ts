@@ -33,20 +33,21 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { profile, medicines, moodHistory } = body;
+    const { profile, medicines, moodHistory, sleepHistory } = body;
 
     const prompt = [
-      "Eres Mia, una asistente médica inteligente y experta. Basándote en el perfil del paciente, sus medicamentos actuales, y su historial emocional reciente, genera un resumen de su diagnóstico médico actual y su estado de salud general.",
+      "Eres Mia, una asistente médica inteligente y experta. Basándote en el perfil del paciente, sus medicamentos actuales, su historial emocional reciente, y su registro de horas y calidad de sueño, genera un resumen de su diagnóstico médico actual y su estado de salud general.",
       "Debes devolver SOLO un JSON válido con la siguiente estructura exacta:",
       `
       {
-        "diagnostico": "Un resumen médico profesional, empático y claro (1-2 párrafos) sobre el estado de salud actual del paciente, considerando sus condiciones, peso, edad, y la medicación que toma. También menciona brevemente su estado emocional si hay datos."
+        "diagnostico": "Un resumen médico profesional, empático y claro (1-2 párrafos) sobre el estado de salud actual del paciente, considerando sus condiciones, peso, edad, la medicación que toma, su estado emocional y MUY IMPORTANTE: un análisis sobre cómo está cuidando su cuerpo al dormir (basado en sus horas y calidad de sueño)."
       }
       `,
       "Genera un análisis que resalte los puntos más importantes de forma profesional y al mismo tiempo cercana.",
       `Perfil del paciente: ${JSON.stringify(profile || {})}`,
       `Medicamentos recetados: ${JSON.stringify(medicines || [])}`,
-      `Historial emocional: ${JSON.stringify(moodHistory || [])}`
+      `Historial emocional: ${JSON.stringify(moodHistory || [])}`,
+      `Historial de sueño: ${JSON.stringify(sleepHistory || [])}`
     ].join("\n");
 
     const deepseekResponse = await fetch("https://api.deepseek.com/chat/completions", {

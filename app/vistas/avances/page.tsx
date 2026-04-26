@@ -33,6 +33,7 @@ export default function AvancesPage() {
   const [editDiag, setEditDiag] = useState("");
   const [isGeneratingDiag, setIsGeneratingDiag] = useState(false);
   const [latestSleep, setLatestSleep] = useState<any>(null);
+  const [fullSleepHistory, setFullSleepHistory] = useState<any[]>([]);
 
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [medicines, setMedicines] = useState<any[]>([]);
@@ -93,6 +94,7 @@ export default function AvancesPage() {
             if (data) {
               const arr = Object.values(data) as any[];
               arr.sort((a, b) => b.timestamp - a.timestamp);
+              setFullSleepHistory(arr);
               if (arr.length > 0) {
                 setLatestSleep(arr[0]);
               }
@@ -177,7 +179,7 @@ export default function AvancesPage() {
       const response = await fetch("/api/deepseek/diagnosis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile, medicines, moodHistory })
+        body: JSON.stringify({ profile, medicines, moodHistory, sleepHistory: fullSleepHistory })
       });
       
       if (!response.ok) throw new Error("Error fetching diagnosis from AI");
@@ -204,6 +206,8 @@ export default function AvancesPage() {
       hour: '2-digit', minute: '2-digit' 
     }).format(d);
   };
+
+  if (!isMounted) return null;
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
@@ -488,6 +492,98 @@ export default function AvancesPage() {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#3649cc] dark:bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-[#3649cc]/20 dark:shadow-indigo-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 Captura cómo te sientes hoy
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </Link>
+            </div>
+          )}
+        </section>
+
+        {/* Sleep Progress Section */}
+        <section className="mt-8 mb-16 bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+              <Moon className="w-7 h-7" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">Historial de Sueño</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Horas de descanso registradas por día</p>
+            </div>
+          </div>
+
+          {fullSleepHistory.length > 0 ? (
+            <div className="h-[350px] w-full mt-6 bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+              {isMounted ? (
+                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                  <AreaChart data={[...fullSleepHistory].reverse().map(s => {
+                    const d = new Date(s.timestamp || s.date);
+                    return {
+                      name: isNaN(d.getTime()) ? s.date.slice(5) : `${d.getDate()}/${d.getMonth()+1}`,
+                      horas: s.hours,
+                      quality: s.quality,
+                      fullDate: isNaN(d.getTime()) ? s.date : d.toLocaleDateString()
+                    };
+                  })} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorHoras" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150,150,150,0.1)" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#888', fontSize: 12, fontWeight: 500 }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    domain={[0, 14]} 
+                    axisLine={false} 
+                    tickLine={false}
+                    tick={{ fill: '#888', fontSize: 12, fontWeight: 500 }}
+                    dx={-10}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '16px', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                      backgroundColor: 'rgba(0,0,0,0.8)',
+                      color: 'white'
+                    }}
+                    itemStyle={{ color: '#6366f1', fontWeight: 'bold' }}
+                    labelStyle={{ color: '#aaa', marginBottom: '4px', fontSize: '12px' }}
+                    formatter={(value: any) => [`${value} horas`, "Descanso"]}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="horas" 
+                    stroke="#6366f1" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorHoras)" 
+                    activeDot={{ r: 8, strokeWidth: 0, fill: '#6366f1', stroke: 'white' }}
+                  />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="animate-pulse flex space-x-4">
+                    <div className="rounded-full bg-slate-200 dark:bg-white/10 h-10 w-10"></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-slate-50 dark:bg-black/20 rounded-3xl border border-dashed border-slate-300 dark:border-white/10">
+              <Moon className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-6" />
+              <p className="text-slate-600 dark:text-slate-400 font-medium mb-3 text-lg">Aún no hay registros de sueño.</p>
+              <Link 
+                href="/vistas/horario-sueno" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#3649cc] dark:bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-[#3649cc]/20 dark:shadow-indigo-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                Captura cómo dormiste
                 <ArrowLeft className="w-4 h-4 rotate-180" />
               </Link>
             </div>
