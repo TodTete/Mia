@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserIcon } from "@heroicons/react/24/outline";
 
 // Tipos
 interface PatientProfile {
@@ -14,15 +14,12 @@ interface PatientProfile {
   estatura: string;
   genero: string;
   localidad: string;
-  domicilio: string;
   // Opcionales
   tipoSangre: string;
   discapacidad: string;
   medicacion: string;
   alergias: string;
   contactoEmergencia: string;
-  nombreContactoEmergencia: string;
-  parentesco: string;
 }
 
 const EMPTY_PROFILE: PatientProfile = {
@@ -32,28 +29,25 @@ const EMPTY_PROFILE: PatientProfile = {
   estatura: "",
   genero: "",
   localidad: "",
-  domicilio: "",
   tipoSangre: "",
   discapacidad: "",
   medicacion: "",
   alergias: "",
   contactoEmergencia: "",
-  nombreContactoEmergencia: "",
-  parentesco: "",
 };
 
 const REQUIRED_FIELDS: (keyof PatientProfile)[] = [
-  "nombres", "edad", "peso", "estatura", "genero", "localidad", "domicilio", "contactoEmergencia", "nombreContactoEmergencia", "parentesco",
+  "nombres", "edad", "peso", "estatura", "genero", "localidad",
 ];
 
 const OPTIONAL_FIELDS: (keyof PatientProfile)[] = [
-  "tipoSangre", "discapacidad", "medicacion", "alergias",
+  "tipoSangre", "discapacidad", "medicacion", "alergias", "contactoEmergencia",
 ];
 
 const FORM_CATEGORIES = [
   {
     title: "Datos Personales",
-    fields: ["nombres", "edad", "genero", "localidad", "domicilio", "peso", "estatura"],
+    fields: ["nombres", "edad", "genero", "localidad"],
   },
   {
     title: "Métricas Físicas",
@@ -61,7 +55,7 @@ const FORM_CATEGORIES = [
   },
   {
     title: "Información Médica",
-    fields: ["discapacidad", "medicacion", "alergias", "nombreContactoEmergencia", "contactoEmergencia", "parentesco"],
+    fields: ["discapacidad", "medicacion", "alergias", "contactoEmergencia"],
   },
 ];
 
@@ -69,17 +63,14 @@ const FIELD_LABELS: Record<string, string> = {
   nombres: "Nombre Completo",
   edad: "Edad (años)",
   genero: "Género",
-  localidad: "País",
-  domicilio: "Domicilio Completo",
+  localidad: "Localidad / País",
   peso: "Peso (kg)",
   estatura: "Estatura (cm)",
   tipoSangre: "Tipo de Sangre",
   discapacidad: "Discapacidad",
   medicacion: "Medicación",
   alergias: "Alergias",
-  nombreContactoEmergencia: "Nombre del Contacto de Emergencia",
-  contactoEmergencia: "Teléfono del Contacto de Emergencia",
-  parentesco: "Parentesco",
+  contactoEmergencia: "Contacto de Emergencia",
 };
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -123,23 +114,19 @@ function validateProfile(p: PatientProfile): string {
 const VOICE_FIELDS = [
   { label: "Nombre completo", emoji: "👤" },
   { label: "Edad", emoji: "🎂" },
-  { label: "Tu género (hombre, mujer u otro)", emoji: "⚧️" },
-  { label: "País o localidad de residencia", emoji: "🌎" },
-  { label: "Tu domicilio completo", emoji: "🏠" },
-  { label: "Tu peso en kilogramos", emoji: "⚖️" },
+  { label: "Género", emoji: "⚧" },
+  { label: "Localidad / País donde vives", emoji: "🌍" },
+  { label: "Peso en kg", emoji: "⚖️" },
   { label: "Estatura en cm", emoji: "📏" },
   { label: "Tipo de sangre (opcional)", emoji: "🩸" },
   { label: "Discapacidad (opcional)", emoji: "♿" },
   { label: "Medicación (opcional)", emoji: "💊" },
   { label: "Alergias (opcional)", emoji: "🌿" },
-  { label: "Número de contacto de emergencia", emoji: "📞" },
-  { label: "Nombre del contacto de emergencia", emoji: "👤" },
-  { label: "Parentesco del contacto", emoji: "🤝" },
+  { label: "Contacto de emergencia (opcional)", emoji: "📞" },
 ];
 
 
 export default function CapturaDatosPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<PatientProfile>(EMPTY_PROFILE);
   const [isEditing, setIsEditing] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -166,35 +153,6 @@ export default function CapturaDatosPage() {
   const introTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [apiNationalities, setApiNationalities] = useState<{name: string, code: string}[]>([]);
   const [showNationalityList, setShowNationalityList] = useState(false);
-  const nationalityListRef = useRef<HTMLDivElement>(null);
-
-  // Atajo de teclado para buscar países por letra
-  useEffect(() => {
-    if (!showNationalityList) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorar si es una tecla de control o combinaciones
-      if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
-      
-      const char = e.key.toLowerCase();
-      const index = apiNationalities.findIndex(n => 
-        n.name.toLowerCase().startsWith(char)
-      );
-
-      if (index !== -1 && nationalityListRef.current) {
-        const item = nationalityListRef.current.children[index] as HTMLElement;
-        if (item) {
-          nationalityListRef.current.scrollTo({
-            top: item.offsetTop,
-            behavior: "smooth"
-          });
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showNationalityList, apiNationalities]);
 
   useEffect(() => {
     async function fetchNationalities() {
@@ -223,12 +181,7 @@ export default function CapturaDatosPage() {
   }, []);
 
   const updateField = (field: string, value: string) => {
-    let sanitizedValue = value;
-    if (field === "contactoEmergencia") {
-      sanitizedValue = value.replace(/\D/g, "");
-    }
-    
-    setProfile(prev => ({ ...prev, [field]: sanitizedValue }));
+    setProfile(prev => ({ ...prev, [field]: value }));
     setLastUpdatedFields(prev => {
       const next = new Set(prev);
       next.add(field);
@@ -262,13 +215,7 @@ export default function CapturaDatosPage() {
     setProfile(normalized);
     setSavedProfile(normalized);
     setIsEditing(false);
-    showToast("✅ Tu perfil ha sido guardado con éxito.", "success");
-    setIsEditing(false);
-    
-    // Redirigir a la landing page
-    setTimeout(() => {
-      router.push("/");
-    }, 1500);
+    showToast("✅ Perfil médico guardado correctamente.", "success");
   };
 
   const clearAllData = () => {
@@ -394,7 +341,7 @@ export default function CapturaDatosPage() {
     }
 
     setIsAnalyzing(true);
-    showToast("Mia está analizando tu respuesta...", "info", 30000);
+    // Mia está analizando tu respuesta...
 
     try {
       const res = await fetch("/api/deepseek/extract-profile", {
@@ -429,6 +376,18 @@ export default function CapturaDatosPage() {
     }
   };
 
+  const stopVoiceCapture = () => {
+    const win = window as any;
+    if (win._miaRecognition) {
+      try { win._miaRecognition.stop(); } catch (_) {}
+    }
+    setIsListening(false);
+  };
+
+  const startInterview = () => {
+    showToast("Función de Entrevista IA en desarrollo", "info");
+  };
+
   const replayVoiceCapture = () => {
     setTranscript("");
     fullTranscriptRef.current = "";
@@ -439,40 +398,47 @@ export default function CapturaDatosPage() {
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header de Sección */}
-        <section className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">Expediente Médico <span className="text-[#3345CC]">Digital</span></h1>
-            <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-lg">
+        <section className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+              Expediente Médico <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#3345CC] to-[#5566ee]">Digital</span>
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-xl leading-relaxed">
               Completa tu perfil para que <span className="text-[#3345CC] font-bold">Mia</span> pueda brindarte un diagnóstico preciso y personalizado.
             </p>
           </div>
-          <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
-            <button 
-              onClick={() => { 
-                setMode("manual"); 
-                setIntroFieldCount(0);
-                // Detener síntesis de voz
-                if (typeof window !== "undefined" && window.speechSynthesis) {
-                  window.speechSynthesis.cancel();
-                }
-                // Detener reconocimiento de voz
-                const win = window as any;
-                if (win._miaRecognition) {
-                  try { win._miaRecognition.stop(); } catch (_) {}
-                }
-                setIsListening(false);
-              }}
-              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${mode === "manual" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+          <div className="flex bg-white dark:bg-white/5 p-2 rounded-2xl shadow-xl backdrop-blur-sm items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/vistas/perfil"
+              className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 flex items-center justify-center text-slate-400 hover:border-[#3345CC] hover:text-[#3345CC] transition-all"
             >
-              Teclado
+              <UserIcon className="w-6 h-6" />
+            </Link>
+            <div className="h-8 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
+            <button 
+              onClick={() => { setMode("manual"); setIntroFieldCount(0); }}
+              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${mode === "manual" ? "bg-[#3345CC] text-white shadow-lg shadow-[#3345CC]/20 scale-105" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+            >
+              ⌨️ Teclado
             </button>
             <button 
-              onClick={startVoiceWithIntro}
+              onClick={() => {
+                setMode("voz");
+                startVoiceWithIntro();
+              }}
               disabled={isListening || isAnalyzing}
-              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${mode === "voz" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${mode === "voz" ? "bg-[#3345CC] text-white shadow-lg shadow-[#3345CC]/20 scale-105" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
-              <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-400 animate-ping" : "bg-emerald-500 animate-pulse"}`} />
-              Hablar con Mia
+              <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-400 animate-ping" : (mode === "voz" ? "bg-emerald-400 animate-pulse" : "bg-slate-400")}`} />
+              🎙️ Voz
+            </button>
+            <button 
+              onClick={startInterview}
+              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 text-emerald-500 hover:bg-emerald-500/5 group`}
+            >
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse group-hover:scale-125 transition-transform" />
+              ✨ Entrevista IA
             </button>
           </div>
         </section>
@@ -500,12 +466,9 @@ export default function CapturaDatosPage() {
             }
           }}
         >
-          <div className={cn(
-            "grid gap-8 items-start",
-            mode === "manual" ? "lg:grid-cols-[380px_1fr]" : "max-w-2xl mx-auto w-full"
-          )}>
-            {/* Sidebar con Resumen y Voz */}
-            <aside className={cn("space-y-6 lg:sticky lg:top-8", mode === "manual" ? "lg:order-1 order-1" : "")}>
+          <div className="grid gap-16 lg:grid-cols-[420px_1fr] items-start">
+            {/* Sidebar con Resumen y Voz (Ahora a la izquierda en desktop) */}
+            <aside className="space-y-10 lg:sticky lg:top-8 lg:order-1 order-1">
               {/* Card de voz */}
               {mode === "voz" && (
                 <article className={`rounded-3xl border transition-all duration-500 ${
@@ -581,9 +544,6 @@ export default function CapturaDatosPage() {
                     </div>
                   )}
 
-                  {/* Error / Status en card de voz */}
-                  {isAnalyzing && <p className="text-xs text-emerald-400 mb-3 animate-pulse">Mia está analizando...</p>}
-
                   {/* Botones */}
                   <div className="space-y-2">
                     {/* Botón principal: solo si NO está escuchando ni analizando */}
@@ -599,7 +559,6 @@ export default function CapturaDatosPage() {
                       </button>
                     )}
 
-                    {/* Botón Enviar: solo cuando está escuchando */}
                     {isListening && (
                       <button
                         onClick={stopAndSendToAI}
@@ -612,7 +571,6 @@ export default function CapturaDatosPage() {
                       </button>
                     )}
 
-                    {/* Analizando */}
                     {isAnalyzing && (
                       <div className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 animate-pulse">
                         <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -623,7 +581,6 @@ export default function CapturaDatosPage() {
                       </div>
                     )}
 
-                    {/* Reiniciar grabación */}
                     {(transcript || isListening) && !isAnalyzing && (
                       <button
                         onClick={replayVoiceCapture}
@@ -636,48 +593,53 @@ export default function CapturaDatosPage() {
                   </div>
                 </article>
               )}
-              <article className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-xl dark:shadow-none">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#0028b3] rounded-full" />
-                  Resumen Actual
+
+              <article className="rounded-[2.5rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 bg-[#3345CC] rounded-full shadow-lg shadow-[#3345CC]/40" />
+                  Resumen del Perfil
                 </h2>
                 
                 {!savedProfile && !profile.nombres ? (
-                  <div className="text-center py-8">
-                    <p className="text-xs text-slate-500">Sin datos registrados aún.</p>
+                  <div className="text-center py-12 px-4 bg-slate-50 dark:bg-white/[0.02] rounded-3xl border border-dashed border-slate-200 dark:border-white/10">
+                    <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">👤</div>
+                    <p className="text-sm font-semibold text-slate-400">Sin datos registrados aún.</p>
+                    <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Completa el formulario</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="p-4 bg-[#0028b3]/10 border border-[#0028b3]/20 rounded-2xl">
-                      <p className="text-[10px] font-bold text-[#0028b3] uppercase tracking-widest">Identidad</p>
-                      <p className="text-lg font-bold truncate">{profile.nombres || "Sin nombre"}</p>
-                      <p className="text-xs text-slate-400">{profile.edad ? `${profile.edad} años` : "Edad N/D"} • {profile.genero || "Género N/D"}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">📍 {profile.localidad || "Localidad N/D"}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-center">
-                        <p className="text-[9px] font-bold text-slate-500 uppercase">Peso</p>
-                        <p className="text-sm font-bold">{profile.peso ? `${profile.peso} kg` : "--"}</p>
-                      </div>
-                      <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-center">
-                        <p className="text-[9px] font-bold text-slate-500 uppercase">Altura</p>
-                        <p className="text-sm font-bold">{profile.estatura ? `${profile.estatura} cm` : "--"}</p>
+                  <div className="space-y-6">
+                    <div className="p-6 bg-gradient-to-br from-[#3345CC] to-[#5566ee] rounded-3xl text-white shadow-xl shadow-[#3345CC]/20">
+                      <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-2">Identidad</p>
+                      <p className="text-2xl font-bold truncate mb-1">{profile.nombres || "Sin nombre"}</p>
+                      <p className="text-sm opacity-90">{profile.edad ? `${profile.edad} años` : "Edad N/D"} • {profile.genero || "Género N/D"}</p>
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
+                        <span className="text-xs">📍 {profile.localidad || "Localidad N/D"}</span>
                       </div>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-2xl border border-white/5 space-y-1.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 text-center shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight mb-1">Peso</p>
+                        <p className="text-base font-bold">{profile.peso ? `${profile.peso} kg` : "--"}</p>
+                      </div>
+                      <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 text-center shadow-sm">
+                        <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight mb-1">Altura</p>
+                        <p className="text-base font-bold">{profile.estatura ? `${profile.estatura} cm` : "--"}</p>
+                      </div>
+                    </div>
+                    <div className="p-5 bg-slate-50 dark:bg-white/[0.02] rounded-3xl border border-slate-100 dark:border-white/5 space-y-3">
                       {[
-                        { label: "Sangre", value: profile.tipoSangre, color: "text-red-400" },
-                        { label: "Discapacidad", value: profile.discapacidad, color: "" },
-                        { label: "Medicación", value: profile.medicacion, color: "" },
-                        { label: "Alergias", value: profile.alergias, color: "" },
-                        { label: "Domicilio", value: profile.domicilio, color: "" },
-                        { label: "Emergencia", value: profile.contactoEmergencia, color: "" },
-                        { label: "Nombre contacto", value: profile.nombreContactoEmergencia, color: "" },
-                        { label: "Parentesco", value: profile.parentesco, color: "" },
-                      ].map(({ label, value, color }) => value ? (
-                        <div key={label} className="flex justify-between items-center text-xs">
-                          <span className="text-slate-400">{label}</span>
-                          <span className={`font-bold truncate max-w-[120px] ${color}`}>{value}</span>
+                        { label: "Sangre", value: profile.tipoSangre, color: "text-red-500", icon: "🩸" },
+                        { label: "Discapacidad", value: profile.discapacidad, color: "", icon: "♿" },
+                        { label: "Medicación", value: profile.medicacion, color: "", icon: "💊" },
+                        { label: "Alergias", value: profile.alergias, color: "", icon: "⚠️" },
+                        { label: "Emergencia", value: profile.contactoEmergencia, color: "text-[#3345CC]", icon: "📞" },
+                      ].map(({ label, value, color, icon }) => value ? (
+                        <div key={label} className="flex justify-between items-center text-xs group">
+                          <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <span className="opacity-70">{icon}</span>
+                            {label}
+                          </span>
+                          <span className={`font-bold truncate max-w-[140px] ${color}`}>{value}</span>
                         </div>
                       ) : null)}
                     </div>
@@ -686,20 +648,27 @@ export default function CapturaDatosPage() {
               </article>
             </aside>
 
-            {/* Formulario de Datos Personales (Solo visible en modo manual) */}
-            {mode === "manual" && (
-              <div className="space-y-8 lg:order-2 order-2">
-              <section className="card-mia relative md:p-10">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-t-[2rem] overflow-hidden">
-                  <div className="h-full bg-[#3345CC] transition-all duration-500 ease-out" style={{ width: `${((currentStep + 1) / FORM_CATEGORIES.length) * 100}%` }} />
+            {/* Formulario de Datos Personales (Ahora a la derecha en desktop) */}
+            <div className="space-y-10 lg:order-2 order-2">
+              <section className="card-mia relative overflow-hidden p-8 md:p-14 shadow-2xl shadow-slate-200/50 dark:shadow-none border-slate-200 dark:border-white/10">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-white/5">
+                  <div className="h-full bg-[#3345CC] transition-all duration-700 ease-in-out" style={{ width: `${((currentStep + 1) / FORM_CATEGORIES.length) * 100}%` }} />
                 </div>
 
-                <div className="flex items-center justify-between mb-10">
-                  <div>
-                    <span className="text-[10px] font-bold text-[#3345CC] uppercase tracking-widest">Paso {currentStep + 1} de {FORM_CATEGORIES.length}</span>
-                    <h2 className="text-3xl font-bold tracking-tight mt-1">{FORM_CATEGORIES[currentStep].title}</h2>
+                <div className="flex items-center justify-between mb-12">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-[#3345CC] uppercase tracking-widest bg-[#3345CC]/10 px-3 py-1 rounded-full">Paso {currentStep + 1} de {FORM_CATEGORIES.length}</span>
+                    <h2 className="text-4xl font-extrabold tracking-tight mt-3">{FORM_CATEGORIES[currentStep].title}</h2>
                   </div>
-                  {isAnalyzing && <div className="text-xs font-bold text-[#3345CC] animate-pulse">IA ANALIZANDO...</div>}
+                  {isAnalyzing && (
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#3345CC] animate-pulse bg-[#3345CC]/10 px-4 py-2 rounded-xl">
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                      </svg>
+                      IA ANALIZANDO...
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid gap-8 md:grid-cols-2 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-white/5">
@@ -707,7 +676,7 @@ export default function CapturaDatosPage() {
                     const isOptional = OPTIONAL_FIELDS.includes(field as keyof PatientProfile);
                     const isUpdated = lastUpdatedFields.has(field);
                     return (
-                    <div key={field} className="space-y-2 transition-all duration-500">
+                    <div key={field} className={`space-y-2 transition-all duration-500 ${isUpdated ? "ring-2 ring-emerald-400 rounded-xl" : ""}`}>
                       <label className="text-xs font-bold text-slate-500 ml-1 flex items-center gap-1">
                         {FIELD_LABELS[field]}
                         {!isOptional && <span className="text-red-500">*</span>}
@@ -715,7 +684,7 @@ export default function CapturaDatosPage() {
                       </label>
                       <div className="relative">
                         {field === "genero" ? (
-                          <select value={profile.genero} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400")}>
+                          <select value={profile.genero} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className="input-mia">
                             <option value="">Seleccionar...</option>
                             <option value="hombre">Hombre</option>
                             <option value="mujer">Mujer</option>
@@ -728,18 +697,15 @@ export default function CapturaDatosPage() {
                               type="button"
                               onClick={() => isEditing && setShowNationalityList(!showNationalityList)}
                               disabled={!isEditing}
-                              className={cn("input-mia flex items-center justify-between text-left w-full", isUpdated && "ring-2 ring-emerald-400")}
+                              className="input-mia flex items-center justify-between text-left w-full"
                             >
-                              <span>{profile.localidad || "Seleccionar pa\u00eds"}</span>
+                              <span>{profile.localidad || "Seleccionar pa\u00eds / localidad..."}</span>
                               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                               </svg>
                             </button>
                             {showNationalityList && (
-                              <div 
-                                ref={nationalityListRef}
-                                className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl"
-                              >
+                              <div className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl">
                                 {apiNationalities.length > 0 ? apiNationalities.map(n => (
                                   <button
                                     key={n.name}
@@ -747,11 +713,7 @@ export default function CapturaDatosPage() {
                                     className="w-full px-4 py-3 text-sm text-left hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-3 transition-colors"
                                     onClick={() => { updateField("localidad", n.name); setShowNationalityList(false); }}
                                   >
-                                    <img 
-                                      src={`https://flagcdn.com/w80/${n.code}.png`} 
-                                      alt={n.name} 
-                                      className="w-7 h-5 rounded-[2px] object-cover flex-shrink-0 shadow-[0_0_2px_rgba(0,0,0,0.1)]" 
-                                    />
+                                    <img src={`https://flagcdn.com/w40/${n.code}.png`} alt={n.name} className="w-5 h-3.5 rounded-sm object-cover flex-shrink-0" />
                                     <span>{n.name}</span>
                                   </button>
                                 )) : (
@@ -761,44 +723,20 @@ export default function CapturaDatosPage() {
                             )}
                           </div>
                         ) : field === "tipoSangre" ? (
-                          <select value={profile.tipoSangre} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400")}>
+                          <select value={profile.tipoSangre} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className="input-mia">
                             <option value="">Sin especificar</option>
                             {BLOOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                           </select>
-                        ) : field === "parentesco" ? (
-                          <select value={profile.parentesco} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400")}>
-                            <option value="">Seleccionar...</option>
-                            <option value="padre">Padre</option>
-                            <option value="madre">Madre</option>
-                            <option value="tutor">Tutor</option>
-                            <option value="abuelo">Abuelo</option>
-                            <option value="abuela">Abuela</option>
-                            <option value="hermano/a">Hermano/a</option>
-                            <option value="conyuge">Cónyuge / Pareja</option>
-                            <option value="amigo/a">Amigo/a</option>
-                            <option value="otro">Otro</option>
-                          </select>
                         ) : (
-                          <div className="relative">
-                            <input
-                              type={field === "edad" || field === "peso" || field === "estatura" ? "number" : "text"}
-                              inputMode={field === "contactoEmergencia" ? "tel" : undefined}
-                              value={profile[field as keyof PatientProfile] ?? ""}
-                              onChange={(e) => updateField(field, e.target.value)}
-                              disabled={!isEditing}
-                              placeholder={isOptional ? `${FIELD_LABELS[field]} (opcional)` : FIELD_LABELS[field]}
-                              className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400", isOptional && "pr-24")}
-                            />
-                            {isOptional && isEditing && (
-                              <button
-                                type="button"
-                                onClick={() => updateField(field, "Ninguno")}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-100 dark:bg-white/10 hover:bg-[#3345CC]/10 hover:text-[#3345CC] text-[10px] font-bold text-slate-500 rounded-lg transition-all"
-                              >
-                                Ninguno
-                              </button>
-                            )}
-                          </div>
+                          <input
+                            type={field === "edad" || field === "peso" || field === "estatura" ? "number" : "text"}
+                            inputMode={field === "contactoEmergencia" ? "tel" : undefined}
+                            value={profile[field as keyof PatientProfile] ?? ""}
+                            onChange={(e) => updateField(field, e.target.value)}
+                            disabled={!isEditing}
+                            placeholder={isOptional ? `${FIELD_LABELS[field]} (opcional)` : FIELD_LABELS[field]}
+                            className="input-mia"
+                          />
                         )}
                       </div>
                     </div>
@@ -807,24 +745,9 @@ export default function CapturaDatosPage() {
                 </div>
               </section>
             </div>
-            )}
           </div>
-          <div className={cn("pt-8 border-t border-slate-100 dark:border-white/5", mode === "voz" && "hidden")}>
+          <div className="pt-8 border-t border-slate-100 dark:border-white/5">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex gap-6 items-center justify-center w-full sm:w-auto">
-                <button 
-                  type="button" 
-                  onClick={clearAllData} 
-                  className="flex items-center gap-2 text-sm font-bold text-red-500/60 hover:text-red-600 transition-colors py-2 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Limpiar todo
-                </button>
-                {!isEditing && <button type="button" onClick={editSavedData} className="text-sm font-bold text-slate-400 hover:text-[#3345CC] py-2">Editar Perfil</button>}
-              </div>
-
               <div className="flex gap-3 w-full sm:w-auto">
                 {currentStep > 0 && (
                   <button type="button" onClick={() => setCurrentStep(prev => prev - 1)} className="px-6 py-4 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-sm">
@@ -838,6 +761,10 @@ export default function CapturaDatosPage() {
                 >
                   {currentStep === FORM_CATEGORIES.length - 1 ? "Finalizar y Guardar" : "Siguiente Paso"}
                 </button>
+              </div>
+              <div className="flex gap-6 items-center justify-center w-full sm:w-auto">
+                {!isEditing && <button type="button" onClick={editSavedData} className="text-sm font-bold text-slate-400 hover:text-[#3345CC] py-2">Editar Perfil</button>}
+                <button type="button" onClick={clearAllData} className="text-sm font-bold text-slate-300 hover:text-red-500 py-2">Limpiar todo</button>
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { Brain, Moon, ShieldCheck, Dumbbell, Utensils, HeartPulse, RefreshCw } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -196,8 +197,8 @@ export default function RecomendacionesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-manrope selection:bg-[#3345CC]/30 pb-24 transition-colors duration-300">
-      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 md:px-10 h-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 font-manrope selection:bg-[#3345CC]/30 pb-24 transition-colors duration-500">
+      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 md:px-10 h-20 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-4">
           <Link 
             href="/" 
@@ -209,6 +210,9 @@ export default function RecomendacionesPage() {
             <HeartPulse className="w-6 h-6" />
             Mia
           </h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
         </div>
       </header>
 

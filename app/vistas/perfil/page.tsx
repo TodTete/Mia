@@ -79,8 +79,8 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-slate-500 font-medium">Cargando perfil...</p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-black">
+        <p className="text-slate-500 dark:text-slate-400 font-medium">Cargando perfil...</p>
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function PerfilPage() {
     : [];
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 font-sans text-slate-900 sm:px-10">
+    <main className="min-h-screen bg-slate-50 dark:bg-black px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10 transition-colors duration-500">
       <div className="mx-auto max-w-lg">
         {/* Back link */}
         <Link
@@ -120,10 +120,10 @@ export default function PerfilPage() {
         </Link>
 
         {/* Avatar & Name Card */}
-        <div className="mb-6 flex flex-col items-center rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div className="mb-6 flex flex-col items-center rounded-3xl border border-slate-100 dark:border-white/5 bg-white dark:bg-zinc-900 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           {/* Avatar */}
           {user?.photoURL ? (
-            <div className="relative mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-slate-100 shadow-md">
+            <div className="relative mb-4 h-24 w-24 overflow-hidden rounded-full border-4 border-slate-100 dark:border-white/10 shadow-md">
               <Image
                 src={user.photoURL}
                 alt="Foto de perfil"
@@ -148,13 +148,13 @@ export default function PerfilPage() {
 
         {/* Profile Data */}
         {infoItems.length > 0 ? (
-          <div className="mb-6 rounded-3xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+          <div className="mb-6 rounded-3xl border border-slate-100 dark:border-white/5 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
             <div className="px-6 pt-5 pb-3">
               <h2 className="text-sm font-bold uppercase tracking-widest text-[#3649cc]">
                 Datos de salud
               </h2>
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
               {infoItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -162,14 +162,14 @@ export default function PerfilPage() {
                     key={item.label}
                     className="flex items-center gap-4 px-6 py-4"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 dark:bg-black text-slate-500 dark:text-slate-400">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
                         {item.label}
                       </p>
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
                         {item.value}
                       </p>
                     </div>
@@ -179,7 +179,7 @@ export default function PerfilPage() {
             </div>
           </div>
         ) : (
-          <div className="mb-6 rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="mb-6 rounded-3xl border border-dashed border-slate-300 dark:border-white/10 bg-white dark:bg-zinc-900/50 p-8 text-center">
             <p className="text-sm text-slate-500">
               Aún no has capturado tus datos de salud.
             </p>
