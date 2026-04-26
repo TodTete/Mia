@@ -160,6 +160,23 @@ export default function Home() {
           </Link>
           
           <nav className="hidden lg:flex items-center gap-1">
+<<<<<<< HEAD
+=======
+            {[
+              { name: "Expediente", href: "/vistas/captura-datos" },
+              { name: "Salud", href: "/vistas/registro-salud" },
+              { name: "Emergencias", href: "/vistas/emergencias" },
+            ].map((item) => (
+              <Link 
+                key={item.name} 
+                href={item.href}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface`}
+              >
+                {item.name}
+              </Link>
+            ))}
+
+>>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
             <div className="relative group">
               <button className="px-4 py-2 rounded-full text-sm font-bold text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface transition-all flex items-center gap-1">
                 Seguimiento y Apoyo

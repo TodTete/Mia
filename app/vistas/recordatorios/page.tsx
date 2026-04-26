@@ -125,6 +125,7 @@ export default function RecordatoriosPage() {
   }, []);
 
   const handleVoiceInput = (setter: (val: string) => void) => {
+    if (typeof window === "undefined") return;
     // @ts-ignore
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -157,6 +158,7 @@ export default function RecordatoriosPage() {
   };
 
   const handleMagicVoiceMed = () => {
+    if (typeof window === "undefined") return;
     // @ts-ignore
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -200,16 +202,15 @@ export default function RecordatoriosPage() {
       // For now, let's keep it manual or auto-process if transcript is long enough.
     };
 
-    // @ts-ignore
-    window._medRecognition = recognition;
+    if (typeof window !== "undefined") {
+      (window as any)._medRecognition = recognition;
+    }
     recognition.start();
   };
 
   const processMedVoiceWithAI = async () => {
-    // @ts-ignore
-    if (window._medRecognition) {
-      // @ts-ignore
-      window._medRecognition.stop();
+    if (typeof window !== "undefined" && (window as any)._medRecognition) {
+      (window as any)._medRecognition.stop();
     }
     setIsListeningMed(false);
 
@@ -250,10 +251,8 @@ export default function RecordatoriosPage() {
   };
 
   const processApptVoiceWithAI = async () => {
-    // @ts-ignore
-    if (window._medRecognition) {
-      // @ts-ignore
-      window._medRecognition.stop();
+    if (typeof window !== "undefined" && (window as any)._medRecognition) {
+      (window as any)._medRecognition.stop();
     }
     setIsListeningMed(false);
 
