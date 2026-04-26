@@ -256,10 +256,6 @@ export default function EmergenciasPage() {
                 </div>
               )}
             </section>
-<<<<<<< HEAD
-=======
-
->>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
           </div>
 
           {/* Location Selection Section */}

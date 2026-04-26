@@ -168,8 +168,6 @@ export default function RegistroEmocionalPage() {
       setLoading(false);
     }
   };
-<<<<<<< HEAD
-=======
   const moodConfigs: Record<string, { color: string; advice: (intensity: number) => string }> = {
     "Feliz": {
       color: "#fbbf24", // amber-400
@@ -198,7 +196,6 @@ export default function RegistroEmocionalPage() {
   };
 
   const currentMoodConfig = selectedMood ? moodConfigs[selectedMood] : { color: "#3649cc", advice: () => "Selecciona una emoción para que pueda darte un consejo personalizado." };
->>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
 
   const moods = [
     { name: "Feliz", icon: SunIcon, label: "FELIZ" },
@@ -423,15 +420,11 @@ export default function RegistroEmocionalPage() {
             <button
               onClick={handleConfirmRecord}
               disabled={loading}
-<<<<<<< HEAD
-              className="w-full py-6 bg-[#3649cc] hover:scale-[1.02] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-[#3649cc]/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
-=======
               className="w-full py-6 text-white rounded-[2rem] font-black text-xl shadow-xl transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3 hover:scale-[1.02]"
               style={{ 
                 backgroundColor: currentMoodConfig.color,
                 boxShadow: `0 20px 25px -5px ${currentMoodConfig.color}40, 0 8px 10px -6px ${currentMoodConfig.color}40`
               }}
->>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
             >
               <span>{loading ? "Guardando..." : "Guardar Registro"}</span>
               <ArrowTrendingUpIcon className="w-6 h-6" />

@@ -197,8 +197,6 @@ export default function CapturaDatosPage() {
     }
   };
 
-<<<<<<< HEAD
-=======
   const clearAllData = () => {
     if (confirm("¿Estás seguro de que deseas limpiar todos los datos?")) {
       localStorage.removeItem("mia_patient_profile");
@@ -214,8 +212,6 @@ export default function CapturaDatosPage() {
     setCurrentStep(0);
   };
 
-  // ref para acumular el transcript final (evita stale closure)
-  const fullTranscriptRef = useRef("");
 
   // --- Lógica de Voz: intro animada + grabación continua + DeepSeek ---
   const speakText = (text: string, onEnd?: () => void) => {
@@ -238,7 +234,6 @@ export default function CapturaDatosPage() {
     else { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; trySpeak(); }; }
   };
 
->>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
   const startVoiceWithIntro = () => {
     setMode("voz");
     setTranscript("");
@@ -275,15 +270,10 @@ export default function CapturaDatosPage() {
   };
 
   const stopAndSendToAI = async () => {
-<<<<<<< HEAD
-    const win = window as any;
-    if (win._miaRecognition) win._miaRecognition.stop();
-=======
     if (typeof window !== "undefined") {
       const win = window as any;
       if (win._miaRecognition) { try { win._miaRecognition.stop(); } catch (_) {} }
     }
->>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
     setIsListening(false);
     const fullText = transcript.trim();
     if (!fullText) return;
@@ -306,8 +296,6 @@ export default function CapturaDatosPage() {
     }
   };
 
-<<<<<<< HEAD
-=======
   const stopVoiceCapture = () => {
     if (typeof window !== "undefined") {
       const win = window as any;
@@ -323,8 +311,6 @@ export default function CapturaDatosPage() {
     fullTranscriptRef.current = "";
     startVoiceCapture();
   };
-
->>>>>>> 2247277f0f9a6e67f7f1fa9a579e4a707c67fa30
   return (
     <main className="min-h-screen bg-[#fcfcfd] dark:bg-[#050505] text-slate-900 dark:text-white pb-32 overflow-x-hidden">
       {/* Dynamic Background Elements */}
