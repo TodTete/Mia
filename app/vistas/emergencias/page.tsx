@@ -154,22 +154,12 @@ export default function EmergenciasPage() {
   };
 
   return (
-<<<<<<< HEAD
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link
             href="/"
             className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
-=======
-    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
-      <div className="mx-auto max-w-5xl">
-        
-        <div className="mb-8">
-          <button 
-            onClick={() => router.push('/')} 
-            className="mb-6 flex w-fit items-center gap-2 rounded-xl bg-white dark:bg-white/5 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-[#3649cc] dark:hover:text-indigo-400 active:scale-95"
->>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
           >
             <ArrowLeft className="w-5 h-5" />
             Volver al Inicio
@@ -180,19 +170,12 @@ export default function EmergenciasPage() {
 
       <div className="mx-auto max-w-5xl px-6">
         {/* Header Alert */}
-<<<<<<< HEAD
         <section className="mb-10 rounded-[2.5rem] border border-red-200 dark:border-red-500/30 bg-red-50/50 dark:bg-red-500/5 p-8 shadow-[0_20px_50px_rgba(239,68,68,0.1)] backdrop-blur-sm overflow-hidden relative">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-red-500/5 rounded-full blur-3xl" />
           
           <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[2rem] bg-red-100 dark:bg-red-900/40 shadow-inner">
               <Phone className="h-10 w-10 text-red-600 dark:text-red-400 animate-pulse" />
-=======
-        <section className="mb-8 rounded-3xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/40">
-              <Phone className="h-7 w-7 text-red-600 dark:text-red-400 animate-pulse" />
->>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -213,7 +196,6 @@ export default function EmergenciasPage() {
           </div>
         </section>
 
-<<<<<<< HEAD
         <div className="grid gap-8 lg:grid-cols-3 mb-12">
           {/* Medical ID Card */}
           <div className="lg:col-span-2">
@@ -285,15 +267,7 @@ export default function EmergenciasPage() {
                 </div>
               )}
             </section>
-=======
-        {/* Selection Area */}
-        <section className="mb-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3649cc]/10 dark:bg-indigo-500/20 text-[#3649cc] dark:text-indigo-400">
-              <ShieldAlert className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Busca los números de tu localidad</h2>
->>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
+
           </div>
 
           {/* Location Selection Section */}
@@ -338,13 +312,8 @@ export default function EmergenciasPage() {
                 </select>
               </div>
             </div>
-<<<<<<< HEAD
           </section>
         </div>
-=======
-          </div>
-        </section>
->>>>>>> 2d72c6a45b28b2b60e2daba9232df07e9900aa83
 
         {/* Results Area */}
         {activeNumbers ? (

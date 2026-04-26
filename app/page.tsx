@@ -168,11 +168,7 @@ export default function Home() {
               <Link 
                 key={item.name} 
                 href={item.href}
-                className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                  item.active 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface"
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-all text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface`}
               >
                 {item.name}
               </Link>
