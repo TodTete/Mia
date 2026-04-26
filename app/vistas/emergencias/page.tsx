@@ -130,13 +130,8 @@ export default function EmergenciasPage() {
   };
 
   return (
-<<<<<<< HEAD
     <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
       <div className="mx-auto max-w-5xl">
-=======
-    <main className="min-h-[100dvh] bg-slate-50 dark:bg-black px-6 py-12 font-sans text-slate-900 dark:text-white sm:px-10 transition-colors duration-500">
-      <div className="mx-auto w-full max-w-4xl space-y-8">
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
         
         <div className="mb-8">
           <button 
@@ -148,11 +143,7 @@ export default function EmergenciasPage() {
         </div>
 
         {/* Header Alert */}
-<<<<<<< HEAD
         <section className="mb-8 rounded-3xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-=======
-        <section className="rounded-3xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-950/20 p-6 sm:p-8 shadow-sm">
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/40">
               <Phone className="h-7 w-7 text-red-600 dark:text-red-400 animate-pulse" />
@@ -170,7 +161,6 @@ export default function EmergenciasPage() {
         </section>
 
         {/* Selection Area */}
-<<<<<<< HEAD
         <section className="mb-8 rounded-3xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3649cc]/10 dark:bg-indigo-500/20 text-[#3649cc] dark:text-indigo-400">
@@ -222,44 +212,6 @@ export default function EmergenciasPage() {
                   <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
-=======
-        <section className="rounded-3xl bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-white/5">
-          <h2 className="mb-6 text-xl font-bold text-slate-800 dark:text-white">Busca los números de tu localidad</h2>
-          
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor="country" className="block text-sm font-medium text-slate-700 dark:text-slate-300">País</label>
-              <select 
-                id="country" 
-                value={selectedCountry}
-                onChange={(e) => {
-                  setSelectedCountry(e.target.value);
-                  setSelectedState("");
-                }}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black px-4 py-3 text-sm text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 focus:ring-4 focus:ring-blue-500/10"
-              >
-                <option value="" disabled>Selecciona un país</option>
-                {countries.map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="state" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Estado / Región</label>
-              <select 
-                id="state" 
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                disabled={!selectedCountry}
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black px-4 py-3 text-sm text-slate-900 dark:text-white outline-none transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-50"
-              >
-                <option value="" disabled>Selecciona un estado</option>
-                {states.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
->>>>>>> c8f62c6 (Backup de cambios antes de implementar tabs y firebase en captura-datos)
             </div>
           </div>
         </section>
