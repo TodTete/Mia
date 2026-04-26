@@ -206,6 +206,13 @@ export default function CapturaDatosPage() {
   };
 
   const saveProfile = async () => {
+    // Validar campos requeridos
+    const missing = REQUIRED_FIELDS.filter(f => !profile[f]);
+    if (missing.length > 0) {
+      showToast(`Faltan campos obligatorios: ${missing.map(m => FIELD_LABELS[m] || m).join(', ')}`, "error");
+      return;
+    }
+
     setLoading(true);
     try {
       if (user) {
@@ -579,6 +586,7 @@ export default function CapturaDatosPage() {
                               value={profile.genero} 
                               onChange={(e) => updateField(field, e.target.value)}
                               disabled={!isEditing}
+                              required={REQUIRED_FIELDS.includes(field as any)}
                               className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm outline-none focus:border-blue-600 transition-colors disabled:opacity-50"
                             >
                               <option value="">Seleccionar...</option>
@@ -615,6 +623,7 @@ export default function CapturaDatosPage() {
                               value={profile.tipoSangre} 
                               onChange={(e) => updateField(field, e.target.value)}
                               disabled={!isEditing}
+                              required={REQUIRED_FIELDS.includes(field as any)}
                               className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm outline-none focus:border-blue-600 transition-colors disabled:opacity-50"
                             >
                               <option value="">Seleccionar...</option>
@@ -633,6 +642,7 @@ export default function CapturaDatosPage() {
                               disabled={!isEditing}
                               value={(profile as any)[field]}
                               onChange={(e) => e.target.value !== undefined && updateField(field, e.target.value)}
+                              required={REQUIRED_FIELDS.includes(field as any)}
                               placeholder="..."
                               className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm outline-none focus:border-blue-600 transition-colors disabled:opacity-50"
                             />
