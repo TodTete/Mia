@@ -1,48 +1,26 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
-type CaptureMode = "manual" | "voz";
-
-type PatientProfile = {
-  nombre: string;
+// Tipos
+interface PatientProfile {
+  // Obligatorios
+  nombres: string;
   edad: string;
   peso: string;
   estatura: string;
   genero: string;
   localidad: string;
+  // Opcionales
   tipoSangre: string;
   discapacidad: string;
   medicacion: string;
   alergias: string;
   contactoEmergencia: string;
-};
-
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-type SpeechRecognitionEventLike = {
-  resultIndex?: number;
-  results: ArrayLike<ArrayLike<{ transcript: string }>>;
-};
-
-type WindowWithSpeech = Window & {
-  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-  SpeechRecognition?: new () => SpeechRecognitionLike;
-};
-
-const STORAGE_KEY = "mia-profile-v1";
+}
 
 const EMPTY_PROFILE: PatientProfile = {
-  nombre: "",
+  nombres: "",
   edad: "",
   peso: "",
   estatura: "",
@@ -55,1022 +33,894 @@ const EMPTY_PROFILE: PatientProfile = {
   contactoEmergencia: "",
 };
 
-const REQUIRED_FIELDS: Array<keyof PatientProfile> = [
-  "nombre",
-  "edad",
-  "peso",
-  "estatura",
-  "genero",
-  "localidad",
+const REQUIRED_FIELDS: (keyof PatientProfile)[] = [
+  "nombres", "edad", "peso", "estatura", "genero", "localidad",
+];
+
+const OPTIONAL_FIELDS: (keyof PatientProfile)[] = [
+  "tipoSangre", "discapacidad", "medicacion", "alergias", "contactoEmergencia",
 ];
 
 const FORM_CATEGORIES = [
   {
     title: "Datos Personales",
-    fields: ["nombre", "edad", "genero", "localidad"] as Array<keyof PatientProfile>,
+    fields: ["nombres", "edad", "genero", "localidad"],
   },
   {
-    title: "Medidas Físicas",
-    fields: ["peso", "estatura", "tipoSangre"] as Array<keyof PatientProfile>,
+    title: "Métricas Físicas",
+    fields: ["peso", "estatura", "tipoSangre"],
   },
   {
     title: "Información Médica",
-    fields: ["medicacion", "alergias", "discapacidad", "contactoEmergencia"] as Array<keyof PatientProfile>,
+    fields: ["discapacidad", "medicacion", "alergias", "contactoEmergencia"],
   },
 ];
 
-const PUEBLA_LOCALITIES = [
-  "Puebla, Pue",
-  "Tecamachalco, Pue",
-  "Tehuacán, Pue",
-  "San Andrés Cholula, Pue",
-  "San Pedro Cholula, Pue",
-  "Atlixco, Pue",
-  "Amozoc, Pue",
-  "Huauchinango, Pue",
-  "San Martín Texmelucan, Pue",
-];
-
-const FIELD_LABELS: Record<keyof PatientProfile, string> = {
-  nombre: "Nombre",
-  edad: "Edad",
+const FIELD_LABELS: Record<string, string> = {
+  nombres: "Nombre Completo",
+  edad: "Edad (años)",
+  genero: "Género",
+  localidad: "Localidad / País",
   peso: "Peso (kg)",
   estatura: "Estatura (cm)",
-  genero: "Genero",
-  localidad: "Localidad",
-  tipoSangre: "Tipo de sangre",
+  tipoSangre: "Tipo de Sangre",
   discapacidad: "Discapacidad",
-  medicacion: "Medicacion",
+  medicacion: "Medicación",
   alergias: "Alergias",
-  contactoEmergencia: "Contacto de emergencia",
+  contactoEmergencia: "Contacto de Emergencia",
 };
 
-const OPTIONAL_FIELDS: Array<keyof PatientProfile> = [
-  "tipoSangre",
-  "discapacidad",
-  "medicacion",
-  "alergias",
-  "contactoEmergencia",
-];
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const GENDER_OPTIONS = ["hombre", "mujer", "prefiero no decir"] as const;
-const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
-
-const COUNTRY_FALLBACK = [
-  "Afganistan",
-  "Albania",
-  "Alemania",
-  "Andorra",
-  "Arabia Saudita",
-  "Argelia",
-  "Argentina",
-  "Australia",
-  "Austria",
-  "Belgica",
-  "Bolivia",
-  "Brasil",
-  "Canada",
-  "Chile",
-  "China",
-  "Colombia",
-  "Corea del Sur",
-  "Costa Rica",
-  "Cuba",
-  "Dinamarca",
-  "Ecuador",
-  "Egipto",
-  "El Salvador",
-  "Emiratos Arabes Unidos",
-  "Espana",
-  "Estados Unidos",
-  "Filipinas",
-  "Finlandia",
-  "Francia",
-  "Grecia",
-  "Guatemala",
-  "Honduras",
-  "India",
-  "Indonesia",
-  "Irlanda",
-  "Israel",
-  "Italia",
-  "Japon",
-  "Marruecos",
-  "Mexico",
-  "Nicaragua",
-  "Noruega",
-  "Nueva Zelanda",
-  "Paises Bajos",
-  "Panama",
-  "Paraguay",
-  "Peru",
-  "Polonia",
-  "Portugal",
-  "Reino Unido",
-  "Republica Dominicana",
-  "Rumania",
-  "Rusia",
-  "Suecia",
-  "Suiza",
-  "Turquia",
-  "Ucrania",
-  "Uruguay",
-  "Venezuela",
-];
-
+// Tokens que se interpretan como "ninguno" → N/A
 const NONE_TOKENS = new Set([
-  "ninguna",
-  "ninguno",
-  "ningun",
-  "na",
-  "n/a",
-  "no",
-  "sin",
-  "no tengo",
-  "no aplica",
+  "ninguna", "ninguno", "ningun", "na", "n/a", "no", "sin", "no tengo",
+  "no aplica", "no padezco", "no tomo", "no hay", "nada",
 ]);
 
-function readStoredProfile(): PatientProfile | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(stored) as PatientProfile;
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
+function normalizeOptional(value: string | undefined): string {
+  if (!value?.trim()) return "N/A";
+  const lower = value.trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (NONE_TOKENS.has(lower)) return "N/A";
+  return value.trim();
 }
 
-function normalize(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-function getCountryOptions() {
-  return Array.from(new Set(COUNTRY_FALLBACK)).sort((a, b) =>
-    a.localeCompare(b, "es"),
-  );
-}
-
-function valueFromPattern(input: string, patterns: RegExp[]) {
-  for (const pattern of patterns) {
-    const match = input.match(pattern);
-    if (match?.[1]) {
-      return match[1].trim();
-    }
+function validateProfile(p: PatientProfile): string {
+  for (const field of REQUIRED_FIELDS) {
+    if (!(p[field] ?? "").trim()) return `El campo "${FIELD_LABELS[field]}" es obligatorio.`;
+  }
+  const age = Number(p.edad);
+  if (!Number.isFinite(age) || age < 1 || age > 120)
+    return "La edad debe ser un n\u00famero entre 1 y 120.";
+  const weight = Number(p.peso);
+  if (!Number.isFinite(weight) || weight < 20 || weight > 300)
+    return "El peso debe ser un n\u00famero entre 20 y 300 kg.";
+  const height = Number(p.estatura);
+  if (!Number.isFinite(height) || height < 90 || height > 250)
+    return "La estatura debe ser un n\u00famero entre 90 y 250 cm.";
+  // Validar tel\u00e9fono de emergencia solo si fue llenado
+  if (p.contactoEmergencia && p.contactoEmergencia !== "N/A") {
+    const digits = p.contactoEmergencia.replace(/\D/g, "");
+    if (digits.length < 7 || digits.length > 15)
+      return "El tel\u00e9fono de emergencia debe tener entre 7 y 15 d\u00edgitos.";
   }
   return "";
 }
 
-function normalizeNumberValue(value: string) {
-  return value.replace(/,/g, ".").replace(/[^0-9.]/g, "");
-}
+const VOICE_FIELDS = [
+  { label: "Nombre completo", emoji: "👤" },
+  { label: "Edad", emoji: "🎂" },
+  { label: "Género", emoji: "⚧" },
+  { label: "Localidad / País donde vives", emoji: "🌍" },
+  { label: "Peso en kg", emoji: "⚖️" },
+  { label: "Estatura en cm", emoji: "📏" },
+  { label: "Tipo de sangre (opcional)", emoji: "🩸" },
+  { label: "Discapacidad (opcional)", emoji: "♿" },
+  { label: "Medicación (opcional)", emoji: "💊" },
+  { label: "Alergias (opcional)", emoji: "🌿" },
+  { label: "Contacto de emergencia (opcional)", emoji: "📞" },
+];
 
-function normalizeEmergencyContact(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-function normalizeOptional(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return "";
-  }
-
-  const normalized = normalize(trimmed);
-  if (NONE_TOKENS.has(normalized)) {
-    return "N/A";
-  }
-
-  return trimmed;
-}
-
-function normalizeGenderValue(value: string) {
-  const normalized = normalize(value.trim());
-
-  if (["hombre", "masculino", "male", "varon"].includes(normalized)) {
-    return "hombre";
-  }
-
-  if (["mujer", "femenino", "female"].includes(normalized)) {
-    return "mujer";
-  }
-
-  if (["prefiero no decir", "no decir", "omitir"].includes(normalized)) {
-    return "prefiero no decir";
-  }
-
-  return value.trim();
-}
-
-function normalizeBloodTypeValue(value: string) {
-  const raw = normalize(value).replace(/\s+/g, "");
-  if (!raw) {
-    return "";
-  }
-
-  if (NONE_TOKENS.has(raw)) {
-    return "N/A";
-  }
-
-  const expanded = raw.replace("positivo", "+").replace("negativo", "-");
-  const upper = expanded.toUpperCase();
-
-  if ((BLOOD_TYPES as readonly string[]).includes(upper)) {
-    return upper;
-  }
-
-  return value.trim().toUpperCase();
-}
-
-function buildCountryMap(countryOptions: string[]) {
-  const entries = countryOptions.map((country) => [normalize(country), country] as const);
-  const map = new Map<string, string>(entries);
-
-  map.set("mexico", "Mexico");
-  map.set("estados unidos", "Estados Unidos");
-  map.set("eeuu", "Estados Unidos");
-  map.set("usa", "Estados Unidos");
-  map.set("reino unido", "Reino Unido");
-
-  return map;
-}
-
-function normalizeCountry(value: string, countryMap: Map<string, string>) {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return "";
-  }
-
-  return countryMap.get(normalize(trimmed)) ?? trimmed;
-}
-
-function normalizeByField(
-  field: keyof PatientProfile,
-  value: string,
-  countryMap: Map<string, string>,
-) {
-  if (field === "edad" || field === "peso" || field === "estatura") {
-    return normalizeNumberValue(value);
-  }
-
-  if (field === "contactoEmergencia") {
-    const digits = normalizeEmergencyContact(value);
-    return normalizeOptional(digits);
-  }
-
-  if (field === "genero") {
-    return normalizeGenderValue(value);
-  }
-
-  if (field === "localidad") {
-    return normalizeCountry(value, countryMap);
-  }
-
-  if (field === "tipoSangre") {
-    return normalizeBloodTypeValue(value);
-  }
-
-  if (OPTIONAL_FIELDS.includes(field)) {
-    return normalizeOptional(value);
-  }
-
-  return value.trim();
-}
-
-function parseVoiceTranscript(transcript: string) {
-  const source = normalize(transcript);
-
-  const nombre = valueFromPattern(source, [
-    /(?:me llamo|mi nombre es|soy)\s+([a-z\s]{2,40})/i,
-  ]);
-
-  const edad = valueFromPattern(source, [
-    /(?:tengo|edad)\s+([0-9]{1,3})\s*(?:anos|anios)?/i,
-  ]);
-
-  const peso = valueFromPattern(source, [
-    /(?:peso|mi peso es)\s+([0-9]{2,3}(?:[\.,][0-9])?)/i,
-  ]);
-
-  const estatura = valueFromPattern(source, [
-    /(?:mido|estatura|mi estatura es)\s+([0-9]{2,3}(?:[\.,][0-9]{1,2})?)/i,
-  ]);
-
-  const genero = valueFromPattern(source, [
-    /(?:soy|genero)\s+(hombre|mujer|masculino|femenino|prefiero no decir)/i,
-  ]);
-
-  const localidad = valueFromPattern(source, [
-    /(?:vivo en|soy de|localidad)\s+([a-z\s]{2,50})/i,
-  ]);
-
-  const tipoSangre = valueFromPattern(source, [
-    /(?:tipo de sangre|sangre)\s+((?:a|b|ab|o)[+-]|[ab0o]{1,2}\s+(?:positivo|negativo))/i,
-  ]).toUpperCase();
-
-  const discapacidad = valueFromPattern(source, [
-    /(?:discapacidad|tengo discapacidad)\s+([a-z\s]{2,60})/i,
-  ]);
-
-  const medicacion = valueFromPattern(source, [
-    /(?:medicacion|medicamento|tomo)\s+([a-z0-9\s,.-]{2,80})/i,
-  ]);
-
-  const alergias = valueFromPattern(source, [
-    /(?:alergia|alergias|soy alergico a)\s+([a-z0-9\s,.-]{2,80})/i,
-  ]);
-
-  const contactoEmergencia = valueFromPattern(source, [
-    /(?:contacto de emergencia|telefono de emergencia|emergencia)\s+([a-z0-9\s,.-]{2,80})/i,
-  ]);
-
-  return {
-    nombre,
-    edad,
-    peso,
-    estatura,
-    genero,
-    localidad,
-    tipoSangre,
-    discapacidad,
-    medicacion,
-    alergias,
-    contactoEmergencia,
-  };
-}
-
-function mergeProfile(
-  current: PatientProfile,
-  incoming: Partial<PatientProfile>,
-  countryMap: Map<string, string>,
-): PatientProfile {
-  const next: PatientProfile = { ...current };
-
-  for (const key of Object.keys(current) as Array<keyof PatientProfile>) {
-    const value = normalizeByField(key, incoming[key] ?? "", countryMap);
-    if (value) {
-      next[key] = value;
-    }
-  }
-
-  return next;
-}
 
 export default function CapturaDatosPage() {
-  const countryOptions = useMemo(() => getCountryOptions(), []);
-  const countryMap = useMemo(() => buildCountryMap(countryOptions), [countryOptions]);
-  const initialStoredProfile = useMemo(() => readStoredProfile(), []);
-
-  const [mode, setMode] = useState<CaptureMode>("manual");
-  const [profile, setProfile] = useState<PatientProfile>(
-    initialStoredProfile ?? EMPTY_PROFILE,
-  );
-  const [savedProfile, setSavedProfile] = useState<PatientProfile | null>(
-    initialStoredProfile,
-  );
-  const [isEditing, setIsEditing] = useState(!initialStoredProfile);
-  const [error, setError] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
-  const [transcript, setTranscript] = useState<string>("");
-  const [isListening, setIsListening] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
+  const [profile, setProfile] = useState<PatientProfile>(EMPTY_PROFILE);
+  const [isEditing, setIsEditing] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
+  const [mode, setMode] = useState<"manual" | "voz">("manual");
+  // Estados de voz
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [savedProfile, setSavedProfile] = useState<PatientProfile | null>(null);
+  const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
 
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const shouldKeepListeningRef = useRef(false);
-  const fullTranscriptRef = useRef("");
+  // Sistema de toast (alertas auto-desaparecibles)
+  const [toast, setToast] = useState<{ msg: string; type: "error" | "success" | "info" } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const missingRequiredFields = useMemo(() => {
-    return REQUIRED_FIELDS.filter((field) => !profile[field].trim());
-  }, [profile]);
+  const showToast = (msg: string, type: "error" | "success" | "info" = "info", ms = 4000) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ msg, type });
+    toastTimerRef.current = setTimeout(() => setToast(null), ms);
+  };
 
-  function updateField(field: keyof PatientProfile, value: string, isFromIA = false) {
-    const normalizedValue = normalizeByField(field, value, countryMap);
-    setProfile((prev) => ({
-      ...prev,
-      [field]: normalizedValue,
-    }));
+  // Número de campos visibles en la animación de intro
+  const [introFieldCount, setIntroFieldCount] = useState(0);
+  const introTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [apiNationalities, setApiNationalities] = useState<{name: string, code: string}[]>([]);
+  const [showNationalityList, setShowNationalityList] = useState(false);
 
-    if (isFromIA) {
-      setLastUpdatedFields((prev) => new Set([...prev, field]));
-      setTimeout(() => {
-        setLastUpdatedFields((prev) => {
-          const next = new Set(prev);
-          next.delete(field);
-          return next;
-        });
-      }, 2000);
+  useEffect(() => {
+    async function fetchNationalities() {
+      try {
+        const res = await fetch("https://restcountries.com/v3.1/all?fields=name,translations,cca2");
+        const data = await res.json();
+        const list = data.map((c: any) => ({
+          name: c.translations?.spa?.common || c.name.common,
+          code: c.cca2?.toLowerCase() || ""
+        })).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        
+        setApiNationalities(list);
+      } catch (e) {
+        console.error("Error fetching nationalities", e);
+      }
     }
-  }
+    fetchNationalities();
 
-  function validate(profileToValidate: PatientProfile) {
-    const missing = REQUIRED_FIELDS.filter(
-      (field) => !profileToValidate[field].trim(),
-    );
-
-    if (missing.length > 0) {
-      const labels = missing.map((field) => FIELD_LABELS[field]).join(", ");
-      return `Faltan datos obligatorios: ${labels}.`;
+    const saved = localStorage.getItem("mia_patient_profile");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setSavedProfile(parsed);
+      setProfile(parsed);
+      setIsEditing(false);
     }
+  }, []);
 
-    const age = Number(profileToValidate.edad);
-    if (!Number.isFinite(age) || age < 1 || age > 120) {
-      return "La edad debe ser numerica y estar entre 1 y 120.";
-    }
+  const updateField = (field: string, value: string) => {
+    setProfile(prev => ({ ...prev, [field]: value }));
+    setLastUpdatedFields(prev => {
+      const next = new Set(prev);
+      next.add(field);
+      return next;
+    });
+    // Limpiar el efecto de resaltado después de un tiempo
+    setTimeout(() => {
+      setLastUpdatedFields(prev => {
+        const next = new Set(prev);
+        next.delete(field);
+        return next;
+      });
+    }, 2000);
+  };
 
-    const weight = Number(profileToValidate.peso);
-    if (!Number.isFinite(weight) || weight < 20 || weight > 250) {
-      return "El peso debe ser numerico y estar entre 20 y 250 kg para evitar errores de captura.";
-    }
-
-    const height = Number(profileToValidate.estatura);
-    if (!Number.isFinite(height) || height < 90 || height > 250) {
-      return "La estatura debe ser numerica y estar entre 90 y 250 cm.";
-    }
-
-    if (!(GENDER_OPTIONS as readonly string[]).includes(profileToValidate.genero)) {
-      return "Selecciona un genero valido: hombre, mujer o prefiero no decir.";
-    }
-
-    if (!countryMap.has(normalize(profileToValidate.localidad))) {
-      return "La localidad debe ser un pais valido de la lista.";
-    }
-
-    if (
-      profileToValidate.tipoSangre &&
-      profileToValidate.tipoSangre !== "N/A" &&
-      !(BLOOD_TYPES as readonly string[]).includes(profileToValidate.tipoSangre)
-    ) {
-      return "El tipo de sangre no es valido. Usa: A+, A-, B+, B-, AB+, AB-, O+, O-.";
-    }
-
-    if (
-      profileToValidate.contactoEmergencia &&
-      profileToValidate.contactoEmergencia !== "N/A" &&
-      !/^\d{7,15}$/.test(profileToValidate.contactoEmergencia)
-    ) {
-      return "El contacto de emergencia debe ser numerico y tener entre 7 y 15 digitos.";
+  const saveProfile = () => {
+    // Normalizar campos opcionales: si quedan vacíos → N/A
+    const normalized: PatientProfile = { ...profile };
+    for (const field of OPTIONAL_FIELDS) {
+      normalized[field] = normalizeOptional(normalized[field]);
     }
 
-    return "";
-  }
-
-  function saveProfile() {
-    const validationError = validate(profile);
+    // Validar campos obligatorios
+    const validationError = validateProfile(normalized);
     if (validationError) {
-      setError(validationError);
-      setStatus("");
+      showToast(validationError, "error");
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    setSavedProfile(profile);
+    localStorage.setItem("mia_patient_profile", JSON.stringify(normalized));
+    setProfile(normalized);
+    setSavedProfile(normalized);
     setIsEditing(false);
-    setError("");
-    setStatus("Datos guardados correctamente. Ya puedes continuar al dashboard.");
-  }
+    showToast("✅ Perfil médico guardado correctamente.", "success");
+  };
 
-  async function analyzeWithDeepSeek(fullTranscript: string) {
-    if (!fullTranscript.trim()) {
-      setError("No hay conversacion para analizar.");
+  const clearAllData = () => {
+    if (confirm("¿Estás seguro de que deseas limpiar todos los datos?")) {
+      localStorage.removeItem("mia_patient_profile");
+      setProfile(EMPTY_PROFILE);
+      setSavedProfile(null);
+      setIsEditing(true);
+      setCurrentStep(0);
+    }
+  };
+
+  const editSavedData = () => {
+    setIsEditing(true);
+    setCurrentStep(0);
+  };
+
+  // ref para acumular el transcript final (evita stale closure)
+  const fullTranscriptRef = useRef("");
+
+  // --- Lógica de Voz: intro animada + grabación continua + DeepSeek ---
+  const speakText = (text: string, onEnd?: () => void) => {
+    if (!("speechSynthesis" in window)) { onEnd?.(); return; }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-MX";
+    utterance.rate = 1.05;
+    utterance.pitch = 1.6;
+    const trySpeak = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const voice = voices.find(v => v.lang.startsWith("es") && v.name.toLowerCase().includes("google"))
+        ?? voices.find(v => v.lang.startsWith("es"));
+      if (voice) utterance.voice = voice;
+      utterance.onend = () => onEnd?.();
+      utterance.onerror = () => onEnd?.();
+      window.speechSynthesis.speak(utterance);
+    };
+    if (window.speechSynthesis.getVoices().length > 0) trySpeak();
+    else { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; trySpeak(); }; }
+  };
+
+  const startVoiceWithIntro = () => {
+    setMode("voz");
+    setIntroFieldCount(0);
+    setTranscript("");
+    fullTranscriptRef.current = "";
+    setError("");
+    setStatus("");
+
+    const intro = [
+      "Hola, soy Mia, tu asistente de salud personal.",
+      "Para crear tu perfil, por favor dime en voz alta los siguientes datos:",
+      "Tu nombre completo, tu edad, tu género, y la localidad o país donde vives.",
+      "Tu peso en kilogramos y tu estatura en centímetros.",
+      "Si lo conoces, tu tipo de sangre.",
+      "Si tienes alguna discapacidad, qué medicamentos tomas, o si padeces alguna alergia.",
+      "Y el teléfono de tu contacto de emergencia.",
+      "Si algún dato no aplica, simplemente di: no tengo o ninguna.",
+      "Cuando termines, presiona el botón Enviar y Procesar.",
+    ].join(" ");
+
+    // Mostrar campos uno a uno mientras Mia habla (~1.8s por campo)
+    if (introTimerRef.current) clearInterval(introTimerRef.current);
+    let count = 0;
+    introTimerRef.current = setInterval(() => {
+      count++;
+      setIntroFieldCount(count);
+      if (count >= VOICE_FIELDS.length) {
+        if (introTimerRef.current) clearInterval(introTimerRef.current);
+      }
+    }, 1800);
+
+    speakText(intro, () => {
+      startVoiceCapture();
+    });
+  };
+
+  const startVoiceCapture = () => {
+    const win = window as any;
+    const SpeechCtor = win.SpeechRecognition ?? win.webkitSpeechRecognition;
+    if (!SpeechCtor) {
+      setError("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+      return;
+    }
+
+    const rec = new SpeechCtor();
+    rec.lang = "es-MX";
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    rec.onstart = () => { setIsListening(true); setError(""); };
+
+    rec.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const chunk = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          fullTranscriptRef.current += " " + chunk;
+        } else {
+          interim = chunk;
+        }
+      }
+      setTranscript((fullTranscriptRef.current + " " + interim).trim());
+    };
+
+    rec.onerror = (event: any) => {
+      if (event.error !== "no-speech") setError("Error de micrófono: " + event.error);
+    };
+
+    rec.onend = () => { setIsListening(false); };
+
+    win._miaRecognition = rec;
+    rec.start();
+  };
+
+  const stopAndSendToAI = async () => {
+    const win = window as any;
+    if (win._miaRecognition) { try { win._miaRecognition.stop(); } catch (_) {} }
+    setIsListening(false);
+
+    const fullText = fullTranscriptRef.current.trim() || transcript.trim();
+    if (!fullText) {
+      showToast("No capturé ningún audio. Intenta hablar de nuevo.", "error");
       return;
     }
 
     setIsAnalyzing(true);
     setError("");
-    setStatus("Analizando conversacion completa con IA de Mia...");
+    setStatus("Mia está analizando tu respuesta...");
 
     try {
-      const response = await fetch("/api/deepseek/extract-profile", {
+      const res = await fetch("/api/deepseek/extract-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript: fullTranscript,
-          currentProfile: profile,
-        }),
+        body: JSON.stringify({ transcript: fullText, currentProfile: profile }),
       });
 
-      if (!response.ok) {
-        const payload = (await response.json()) as {
-          error?: string;
-          code?: string;
-          detail?: string;
-        };
+      if (!res.ok) throw new Error("Error en la API");
+      const { extracted } = await res.json() as { extracted: Partial<PatientProfile> };
 
-        if (payload.code === "insufficient_balance") {
-          throw new Error(
-            "DeepSeek sin saldo. Recarga creditos o usa otra API key activa.",
-          );
+      // Merge con perfil actual
+      setProfile(prev => {
+        const next = { ...prev };
+        for (const k of Object.keys(extracted) as (keyof PatientProfile)[]) {
+          if (extracted[k]) next[k] = extracted[k]!;
         }
+        return next;
+      });
 
-        throw new Error(payload.detail || payload.error || "Fallo la extraccion");
-      }
-
-      const payload = (await response.json()) as {
-        extracted: Partial<PatientProfile>;
-      };
-
-      const extracted = payload.extracted;
-      setProfile((prev) => mergeProfile(prev, extracted, countryMap));
-      
-      // Highlight updated fields
-      const updatedKeys = Object.keys(extracted).filter(k => !!extracted[k as keyof PatientProfile]);
-      setLastUpdatedFields(new Set(updatedKeys));
+      const updated = Object.keys(extracted).filter(k => !!extracted[k as keyof PatientProfile]);
+      setLastUpdatedFields(new Set(updated));
       setTimeout(() => setLastUpdatedFields(new Set()), 3000);
 
-      setStatus(
-        "Extraccion completada. Revisa y corrige manualmente cualquier dato necesario.",
-      );
+      showToast("✅ Mia llenó tu perfil. Revisa los datos y guarda.", "success");
+      setMode("manual");
+      setIntroFieldCount(0);
     } catch (err) {
-      const localParsed = parseVoiceTranscript(fullTranscript);
-      setProfile((prev) => mergeProfile(prev, localParsed, countryMap));
-
-      const message = err instanceof Error ? err.message : "Error desconocido";
-
-      setError(
-        `No se pudo procesar con DeepSeek (${message}). Se aplico extraccion local de respaldo.`,
-      );
-      setStatus("Verifica y ajusta manualmente antes de guardar.");
+      showToast("No se pudo procesar con DeepSeek. Revisa tu conexión.", "error");
     } finally {
       setIsAnalyzing(false);
     }
-  }
+  };
 
-  function startVoiceCapture() {
-    const voiceWindow = window as WindowWithSpeech;
-    const SpeechCtor =
-      voiceWindow.SpeechRecognition ?? voiceWindow.webkitSpeechRecognition;
-
-    if (!SpeechCtor) {
-      setError(
-        "Tu navegador no soporta reconocimiento de voz. Puedes continuar manualmente.",
-      );
-      return;
-    }
-
-    if (!recognitionRef.current) {
-      recognitionRef.current = new SpeechCtor();
-      recognitionRef.current.lang = "es-MX";
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.continuous = true;
-
-      recognitionRef.current.onresult = (event) => {
-        let finalized = "";
-        let current = "";
-        const start = event.resultIndex ?? 0;
-
-        for (let i = start; i < event.results.length; i += 1) {
-          const result = event.results[i];
-          const piece = result[0]?.transcript ?? "";
-          const isFinal = (result as unknown as { isFinal?: boolean }).isFinal;
-
-          if (isFinal) {
-            finalized += `${piece} `;
-          } else {
-            current += `${piece} `;
-          }
-        }
-
-        if (finalized.trim()) {
-          fullTranscriptRef.current = `${fullTranscriptRef.current} ${finalized}`.trim();
-        }
-
-        setTranscript(`${fullTranscriptRef.current} ${current}`.trim());
-        setStatus("Escuchando en tiempo real. Presiona detener cuando termines.");
-        setError("");
-      };
-
-      recognitionRef.current.onerror = () => {
-        setError("Ocurrio un problema en la captura de voz. Intenta nuevamente.");
-      };
-
-      recognitionRef.current.onend = () => {
-        if (shouldKeepListeningRef.current) {
-          try {
-            recognitionRef.current?.start();
-            return;
-          } catch {
-            setError("No fue posible reanudar la escucha automaticamente.");
-          }
-        }
-        setIsListening(false);
-      };
-    }
-
-    shouldKeepListeningRef.current = true;
-    fullTranscriptRef.current = "";
-    setIsListening(true);
-    setError("");
-    setTranscript("");
-    setStatus("Escuchando de forma continua. Deten cuando termines de hablar.");
-    recognitionRef.current.start();
-  }
-
-  async function stopVoiceCapture() {
-    shouldKeepListeningRef.current = false;
-    recognitionRef.current?.stop();
-    setIsListening(false);
-
-    const transcriptToAnalyze = fullTranscriptRef.current || transcript;
-    await analyzeWithDeepSeek(transcriptToAnalyze);
-  }
-
-  function replayVoiceCapture() {
-    if (isListening || isAnalyzing || !isEditing) {
-      return;
-    }
-
+  const replayVoiceCapture = () => {
     setTranscript("");
     fullTranscriptRef.current = "";
-    setError("");
-    setStatus("Transcripcion reiniciada. Puedes volver a grabar.");
-  }
-
-  function clearAllData() {
-    shouldKeepListeningRef.current = false;
-    recognitionRef.current?.stop();
-
-    localStorage.removeItem(STORAGE_KEY);
-    setProfile(EMPTY_PROFILE);
-    setSavedProfile(null);
-    setTranscript("");
-    fullTranscriptRef.current = "";
-    setIsListening(false);
-    setIsAnalyzing(false);
-    setIsEditing(true);
-    setError("");
-    setStatus("Se eliminaron todos los datos. Puedes iniciar de nuevo.");
-  }
-
-  function editSavedData() {
-    setIsEditing(true);
-    setStatus("Modo edicion activado.");
-  }
-
-  const SoundWave = () => (
-    <div className="flex items-center gap-1 h-6">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className="w-1 bg-[#3345CC] rounded-full animate-bounce"
-          style={{
-            height: `${Math.random() * 100 + 20}%`,
-            animationDelay: `${i * 0.1}s`,
-            animationDuration: "0.5s",
-          }}
-        />
-      ))}
-    </div>
-  );
+    startVoiceCapture();
+  };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black px-4 py-8 text-slate-900 dark:text-white sm:px-10 font-manrope transition-colors duration-300">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
-        <section className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 md:p-8 shadow-sm dark:shadow-none">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div className="space-y-2 flex-1">
-              <p className="text-xs font-bold uppercase tracking-[0.4em] text-black dark:text-white">Captura Inteligente</p>
-              <div className="flex items-center justify-between">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-black dark:text-white">
-                  Perfil Biométrico
-                </h1>
-                <div className="md:hidden">
-                  
-                </div>
-              </div>
-              <p className="text-sm text-slate-400 max-w-xl">
-                Completa tu información paso a paso para que Mia pueda ofrecerte recomendaciones personalizadas.
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="hidden md:block">
-                
-              </div>
-              <div className="flex gap-2 p-1 bg-white/5 rounded-2xl w-fit border border-white/10">
-                <button
-                  onClick={() => setMode("manual")}
-                  className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                    mode === "manual" ? "bg-[#0028b3] text-white shadow-lg shadow-[#0028b3]/20" : "text-black dark:text-white/60 hover:text-black dark:hover:text-white"
-                  }`}
-                >
-                  Manual
-                </button>
-                <button
-                  onClick={() => setMode("voz")}
-                  className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                    mode === "voz" ? "bg-[#0028b3] text-white shadow-lg shadow-[#0028b3]/20" : "text-black dark:text-white/60 hover:text-black dark:hover:text-white"
-                  }`}
-                >
-                  Voz
-                </button>
-              </div>
-            </div>
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Header de Sección */}
+        <section className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">Expediente Médico <span className="text-[#3345CC]">Digital</span></h1>
+            <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-lg">
+              Completa tu perfil para que <span className="text-[#3345CC] font-bold">Mia</span> pueda brindarte un diagnóstico preciso y personalizado.
+            </p>
+          </div>
+          <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <button 
+<<<<<<< HEAD
+              onClick={() => setMode("manual")}
+=======
+              onClick={() => { setMode("manual"); setIntroFieldCount(0); }}
+>>>>>>> 1a5fb0778e328f974785529fc3a9504022995e78
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${mode === "manual" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+            >
+              Teclado
+            </button>
+            <button 
+<<<<<<< HEAD
+              onClick={() => {
+                setMode("voz");
+                startVoiceWithIntro();
+              }}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${mode === "voz" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+              </svg>
+              Voz
+            </button>
+            <button 
+              onClick={startInterview}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-emerald-500 hover:bg-emerald-500/5`}
+            >
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              Entrevista IA
+=======
+              onClick={startVoiceWithIntro}
+              disabled={isListening || isAnalyzing}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${mode === "voz" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+            >
+              <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-400 animate-ping" : "bg-emerald-500 animate-pulse"}`} />
+              Hablar con Mia
+>>>>>>> 1a5fb0778e328f974785529fc3a9504022995e78
+            </button>
           </div>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
-          <div className="space-y-8">
-            <section className="card-mia relative overflow-hidden md:p-10">
-              {/* Progress Bar */}
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800">
-                <div 
-                  className="h-full bg-[#3345CC] transition-all duration-500 ease-out"
-                  style={{ width: `${((currentStep + 1) / FORM_CATEGORIES.length) * 100}%` }}
-                />
-              </div>
+        <form
+          className="space-y-8"
+          onSubmit={(e) => {
+            e.preventDefault();
+            
+            // Validación de campos obligatorios para el paso actual
+            const currentFields = FORM_CATEGORIES[currentStep].fields;
+            const missingFields = currentFields.filter(f =>
+              !OPTIONAL_FIELDS.includes(f as keyof PatientProfile) && !profile[f as keyof PatientProfile]
+            );
 
-              <div className="flex items-center justify-between mb-10">
-                <div>
-                  <span className="text-[10px] font-bold text-[#3345CC] dark:text-[#3345CC] uppercase tracking-widest">Paso {currentStep + 1} de {FORM_CATEGORIES.length}</span>
-                  <h2 className="text-3xl font-bold tracking-tight mt-1 text-black dark:text-white">{FORM_CATEGORIES[currentStep].title}</h2>
-                </div>
-                {isAnalyzing && (
-                  <div className="flex items-center gap-3 px-4 py-2 bg-[#3345CC]/10 dark:bg-[#3345CC]/20 text-[#3345CC] dark:text-[#3345CC] rounded-full text-xs font-bold animate-pulse">
-                    <div className="w-2 h-2 bg-[#3345CC] rounded-full animate-ping" />
-                    IA ANALIZANDO...
-                  </div>
-                )}
-              </div>
+            if (missingFields.length > 0) {
+              showToast(`Completa los campos obligatorios: ${missingFields.map(f => FIELD_LABELS[f]).join(", ")}`, "error");
+              return;
+            }
 
-              <form
-                className="space-y-8"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  
-                  // Validación de campos obligatorios para el paso actual
-                  const currentFields = FORM_CATEGORIES[currentStep].fields;
-                  const missingFields = currentFields.filter(f => 
-                    !OPTIONAL_FIELDS.includes(f) && !profile[f as keyof PatientProfile]
-                  );
+            if (currentStep === FORM_CATEGORIES.length - 1) {
+              saveProfile();
+            } else {
+              setCurrentStep(prev => prev + 1);
+            }
+          }}
+        >
+          <div className="grid gap-8 lg:grid-cols-[380px_1fr] items-start">
+            {/* Sidebar con Resumen y Voz (Ahora a la izquierda en desktop) */}
+            <aside className="space-y-6 lg:sticky lg:top-8 lg:order-1 order-1">
+              {mode === "voz" && (
+                <article className={`rounded-3xl border transition-all duration-500 ${
+                  isListening
+                    ? "border-[#3345CC] bg-[#3345CC]/10 dark:bg-[#3345CC]/20"
+                    : isAnalyzing
+                    ? "border-emerald-400/40 bg-emerald-500/5"
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+                } p-6 shadow-sm dark:shadow-none`}>
 
-                  if (missingFields.length > 0) {
-                    // Podríamos mostrar un mensaje más elegante, pero por ahora esto cumple el requisito
-                    return; 
-                  }
-
-                  if (currentStep === FORM_CATEGORIES.length - 1) {
-                    saveProfile();
-                  } else {
-                    setCurrentStep(prev => prev + 1);
-                  }
-                }}
-              >
-                <div className="grid gap-8 md:grid-cols-2 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-white/5">
-                  {FORM_CATEGORIES[currentStep].fields.map((field) => {
-                    const isOptional = OPTIONAL_FIELDS.includes(field);
-                    const isUpdated = lastUpdatedFields.has(field);
-                    
-                    return (
-                      <div key={field} className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">
-                          {FIELD_LABELS[field]} {!isOptional && <span className="text-red-500 font-bold">*</span>}
-                        </label>
-                        
-                        <div className={`relative transition-all duration-500 ${isUpdated ? "scale-[1.02] ring-2 ring-emerald-400 rounded-xl" : ""}`}>
-                          {field === "genero" ? (
-                            <select
-                              value={profile.genero}
-                              onChange={(e) => updateField(field, e.target.value)}
-                              disabled={!isEditing}
-                              className="input-mia"
-                            >
-                              <option value="">Seleccionar...</option>
-                              <option value="hombre">Hombre</option>
-                              <option value="mujer">Mujer</option>
-                              <option value="otro">Otro</option>
-                              <option value="prefiero no decir">Prefiero no decir</option>
-                            </select>
-                          ) : field === "localidad" ? (
-                            <div className="relative">
-                              <input
-                                list="localities"
-                                type="text"
-                                value={profile.localidad}
-                                onChange={(e) => updateField(field, e.target.value)}
-                                placeholder="Ej: Puebla, Pue"
-                                disabled={!isEditing}
-                                className="input-mia"
-                              />
-                              <datalist id="localities">
-                                {PUEBLA_LOCALITIES.map(l => <option key={l} value={l} />)}
-                                {countryOptions.map(c => <option key={c} value={c} />)}
-                              </datalist>
-                            </div>
-                          ) : field === "tipoSangre" ? (
-                            <select
-                              value={profile.tipoSangre}
-                              onChange={(e) => updateField(field, e.target.value)}
-                              disabled={!isEditing}
-                              className="input-mia"
-                            >
-                              <option value="">Sin especificar</option>
-                              {BLOOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                              <option value="N/A">N/A</option>
-                            </select>
-                          ) : (
-                            <div className="relative group">
-                              <input
-                                type="text"
-                                inputMode={(field === "edad" || field === "peso" || field === "estatura") ? "numeric" : "text"}
-                                value={profile[field]}
-                                onChange={(e) => updateField(field, e.target.value)}
-                                disabled={!isEditing}
-                                placeholder={FIELD_LABELS[field]}
-                                className="input-mia"
-                              />
-                              {(field === "peso" || field === "estatura") && (
-                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                                  <button
-                                    type="button"
-                                    onClick={() => updateField(field, (parseFloat(profile[field] || "0") - 1).toString())}
-                                    className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs hover:bg-slate-200 dark:hover:bg-slate-700"
-                                  >-</button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateField(field, (parseFloat(profile[field] || "0") + 1).toString())}
-                                    className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs hover:bg-slate-200 dark:hover:bg-slate-700"
-                                  >+</button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+<<<<<<< HEAD
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                        isListening ? "bg-[#3345CC]" : isAnalyzing ? "bg-emerald-500" : "bg-slate-100 dark:bg-white/10"
+                      }`}>
+                        {isListening ? (
+                          <div className="flex gap-0.5 items-center">
+                            <div className="w-0.5 h-3 bg-white rounded-full animate-[bounce_0.5s_infinite]" />
+                            <div className="w-0.5 h-5 bg-white rounded-full animate-[bounce_0.5s_infinite_0.1s]" />
+                            <div className="w-0.5 h-3 bg-white rounded-full animate-[bounce_0.5s_infinite_0.2s]" />
+                          </div>
+                        ) : isAnalyzing ? (
+                          <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                          </svg>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-slate-100 dark:border-white/5">
-                  <div className="flex gap-3 w-full sm:w-auto">
-                    {currentStep > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(prev => prev - 1)}
-                        className="px-8 py-4 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-900 transition-all active:scale-95"
-                      >
-                        Anterior
-                      </button>
-                    )}
-                    <button
-                      type="submit"
-                      disabled={FORM_CATEGORIES[currentStep].fields.some(f => !OPTIONAL_FIELDS.includes(f) && !profile[f as keyof PatientProfile])}
-                      className="btn-mia-primary flex-1 sm:flex-none px-10 py-4 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      {currentStep === FORM_CATEGORIES.length - 1 ? "Finalizar y Guardar" : "Siguiente Paso"}
-                    </button>
+                      <div>
+                        <h2 className="text-sm font-bold">Captura por Voz</h2>
+                        <p className="text-[10px] text-slate-400">
+                          {isListening ? "Escuchando..." : isAnalyzing ? "Procesando con IA..." : "Lista para escuchar"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="flex gap-4 items-center">
-                    {!isEditing && (
-                      <button
-                        type="button"
-                        onClick={editSavedData}
-                        className="text-sm font-bold text-slate-400 hover:text-[#3345CC] transition-colors"
-                      >
-                        Editar Perfil
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={clearAllData}
-                      className="text-sm font-bold text-slate-300 hover:text-red-500 transition-colors"
-                    >
-                      Limpiar todo
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </section>
-          </div>
 
-          <aside className="space-y-6 lg:sticky lg:top-8">
-            {mode === "voz" && (
-              <article className={`rounded-3xl border transition-all duration-500 ${isListening ? "border-[#3345CC] bg-[#3345CC]/10 dark:bg-[#3345CC]/20" : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"} p-6 shadow-sm dark:shadow-none`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold">Captura por Voz</h2>
-                  {isListening && <SoundWave />}
-                </div>
-                
-                <p className="text-xs leading-relaxed text-slate-400 mb-6">
-                  Habla con naturalidad sobre tu salud. Mia extraerá los datos automáticamente usando inteligencia artificial.
-                </p>
-
-                <div className="space-y-3">
-                  {!isListening ? (
-                    <button
-                      onClick={startVoiceCapture}
-                      disabled={mode !== "voz" || !isEditing || isAnalyzing}
-                      className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-                      </svg>
-                      Hablar con Mia
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => void stopVoiceCapture()}
-                      className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-sm animate-pulse flex items-center justify-center gap-3 transition-all"
-                    >
-                      <div className="w-2 h-2 bg-white rounded-full animate-ping" />
-                      Detener y Procesar
-                    </button>
+                  {/* Panel animado de campos */}
+                  {introFieldCount > 0 && (
+                    <div className="mb-4 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#3345CC]/10 border-b border-[#3345CC]/20">
+                        <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-500 animate-pulse" : "bg-[#3345CC]"}`} />
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#3345CC]">
+                          {isListening ? "Ahora habla estos datos" : "Datos a mencionar"}
+                        </p>
+                      </div>
+                      <div className="p-3 space-y-1">
+                        {VOICE_FIELDS.map((field, idx) => {
+                          const visible = idx < introFieldCount;
+                          return (
+                            <div
+                              key={field.label}
+                              className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-500 ${
+                                visible ? "opacity-100 translate-y-0 bg-white dark:bg-white/5 shadow-sm" : "opacity-0 translate-y-2 pointer-events-none h-0 overflow-hidden p-0"
+                              }`}
+                              style={{ transitionDelay: visible ? `${idx * 40}ms` : "0ms" }}
+                            >
+                              <span className="text-base leading-none">{field.emoji}</span>
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{field.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                  
-                  <button
-                    onClick={replayVoiceCapture}
-                    disabled={isListening || isAnalyzing || !isEditing}
-                    className="w-full py-3 bg-white/5 border border-white/10 text-white rounded-2xl text-xs font-bold hover:bg-white/10 transition-all disabled:opacity-30"
-                  >
-                    Reiniciar Grabación
-                  </button>
-                </div>
 
-                {(transcript || isListening) && (
-                  <div className="mt-6 p-4 bg-black/40 rounded-2xl border border-white/5">
+                  {/* Transcripción */}
+                  {(isListening || transcript) && (
+                    <div className="mb-4 p-3 bg-black/20 dark:bg-black/40 rounded-2xl border border-white/5 min-h-[60px]">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Escuchando...</p>
+                      <p className="text-xs text-slate-300 italic leading-relaxed line-clamp-3">&quot;{transcript || "..."}&quot;</p>
+                    </div>
+                  )}
 
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Transcripción</p>
-                    <p className="text-sm text-slate-300 italic line-clamp-4">
-                      &quot;{transcript || "Escuchando..."}&quot;
-                    </p>
+                  {/* Botones */}
+                  <div className="space-y-2">
+                    {!isListening && !isAnalyzing && (
+                      <button id="btn-start-voice" onClick={startVoiceWithIntro} className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3 text-sm font-bold">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                        </svg>
+                        Hablar con Mia
+                      </button>
+                    )}
+                    {isListening && (
+                      <button onClick={stopVoiceCapture} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all">
+                        Enviar y Procesar
+                      </button>
+                    )}
+                    {isAnalyzing && (
+                      <div className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 animate-pulse">
+                        Mia está analizando...
+                      </div>
+                    )}
+                  </div>
+                </article>
+              )}
+=======
+              {/* Card de voz */}
+              {mode === "voz" && (
+                <article className={`rounded-3xl border transition-all duration-500 ${
+                  isListening
+                    ? "border-[#3345CC] bg-[#3345CC]/10 dark:bg-[#3345CC]/20"
+                    : isAnalyzing
+                    ? "border-emerald-400/30 bg-emerald-500/5"
+                    : "border-slate-200 dark:border-white/10 bg-white dark:bg-white/5"
+                } p-6 shadow-sm dark:shadow-none`}>
+>>>>>>> 1a5fb0778e328f974785529fc3a9504022995e78
+
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                      isListening ? "bg-[#3345CC]" : isAnalyzing ? "bg-emerald-500" : "bg-slate-100 dark:bg-white/10"
+                    }`}>
+                      {isListening ? (
+                        <div className="flex gap-0.5 items-center">
+                          <div className="w-0.5 h-3 bg-white rounded-full animate-bounce" style={{animationDuration:"0.5s"}} />
+                          <div className="w-0.5 h-5 bg-white rounded-full animate-bounce" style={{animationDuration:"0.5s",animationDelay:"0.1s"}} />
+                          <div className="w-0.5 h-3 bg-white rounded-full animate-bounce" style={{animationDuration:"0.5s",animationDelay:"0.2s"}} />
+                        </div>
+                      ) : isAnalyzing ? (
+                        <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold">Captura por Voz</h2>
+                      <p className="text-[10px] text-slate-400">
+                        {isListening ? "Escuchando..." : isAnalyzing ? "Procesando con IA..." : "Lista para escuchar"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lista animada de campos */}
+                  {introFieldCount > 0 && (
+                    <div className="mb-4 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#3345CC]/10 border-b border-[#3345CC]/20">
+                        <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-500 animate-pulse" : "bg-[#3345CC]"}`} />
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#3345CC]">
+                          {isListening ? "Habla estos datos ahora" : "Datos que Mia necesita"}
+                        </p>
+                      </div>
+                      <div className="p-3 space-y-1">
+                        {VOICE_FIELDS.map((field, idx) => (
+                          <div
+                            key={field.label}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-500 ${
+                              idx < introFieldCount
+                                ? "opacity-100 translate-y-0 bg-white dark:bg-white/5 shadow-sm"
+                                : "opacity-0 translate-y-2 pointer-events-none h-0 overflow-hidden p-0"
+                            }`}
+                          >
+                            <span className="text-base">{field.emoji}</span>
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{field.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transcripción en tiempo real */}
+                  {(isListening || transcript) && (
+                    <div className="mb-4 p-3 bg-black/20 dark:bg-black/40 rounded-2xl border border-white/5 min-h-[56px]">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Escuchando...</p>
+                      <p className="text-xs text-slate-300 italic leading-relaxed line-clamp-3">&quot;{transcript || "..."}&quot;</p>
+                    </div>
+                  )}
+
+                  {/* Error / Status en card de voz */}
+                  {isAnalyzing && <p className="text-xs text-emerald-400 mb-3 animate-pulse">Mia está analizando...</p>}
+
+                  {/* Botones */}
+                  <div className="space-y-2">
+                    {/* Botón principal: solo si NO está escuchando ni analizando */}
+                    {!isListening && !isAnalyzing && introFieldCount === 0 && (
+                      <button
+                        onClick={startVoiceWithIntro}
+                        className="btn-mia-primary w-full py-4 flex items-center justify-center gap-3 text-sm font-bold"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                        </svg>
+                        Hablar con Mia
+                      </button>
+                    )}
+
+                    {/* Botón Enviar: solo cuando está escuchando */}
+                    {isListening && (
+                      <button
+                        onClick={stopAndSendToAI}
+                        className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                        Enviar y Procesar
+                      </button>
+                    )}
+
+                    {/* Analizando */}
+                    {isAnalyzing && (
+                      <div className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 animate-pulse">
+                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                        Mia está analizando...
+                      </div>
+                    )}
+
+                    {/* Reiniciar grabación */}
+                    {(transcript || isListening) && !isAnalyzing && (
+                      <button
+                        onClick={replayVoiceCapture}
+                        disabled={isListening}
+                        className="w-full py-2.5 bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold hover:bg-white/10 transition-all disabled:opacity-30"
+                      >
+                        Reiniciar grabación
+                      </button>
+                    )}
+                  </div>
+                </article>
+              )}
+              <article className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-xl dark:shadow-none">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-[#0028b3] rounded-full" />
+                  Resumen Actual
+                </h2>
+                
+                {!savedProfile && !profile.nombres ? (
+                  <div className="text-center py-8">
+                    <p className="text-xs text-slate-500">Sin datos registrados aún.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-[#0028b3]/10 border border-[#0028b3]/20 rounded-2xl">
+                      <p className="text-[10px] font-bold text-[#0028b3] uppercase tracking-widest">Identidad</p>
+                      <p className="text-lg font-bold truncate">{profile.nombres || "Sin nombre"}</p>
+                      <p className="text-xs text-slate-400">{profile.edad ? `${profile.edad} años` : "Edad N/D"} • {profile.genero || "Género N/D"}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">📍 {profile.localidad || "Localidad N/D"}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-center">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase">Peso</p>
+                        <p className="text-sm font-bold">{profile.peso ? `${profile.peso} kg` : "--"}</p>
+                      </div>
+                      <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-center">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase">Altura</p>
+                        <p className="text-sm font-bold">{profile.estatura ? `${profile.estatura} cm` : "--"}</p>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-white/5 rounded-2xl border border-white/5 space-y-1.5">
+                      {[
+                        { label: "Sangre", value: profile.tipoSangre, color: "text-red-400" },
+                        { label: "Discapacidad", value: profile.discapacidad, color: "" },
+                        { label: "Medicación", value: profile.medicacion, color: "" },
+                        { label: "Alergias", value: profile.alergias, color: "" },
+                        { label: "Emergencia", value: profile.contactoEmergencia, color: "" },
+                      ].map(({ label, value, color }) => value ? (
+                        <div key={label} className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400">{label}</span>
+                          <span className={`font-bold truncate max-w-[120px] ${color}`}>{value}</span>
+                        </div>
+                      ) : null)}
+                    </div>
                   </div>
                 )}
               </article>
-            )}
+            </aside>
 
-            <article className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 shadow-xl dark:shadow-none">
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#0028b3] rounded-full" />
-                Resumen Actual
-              </h2>
-              
-              {!savedProfile && !profile.nombre ? (
-                <div className="text-center py-8 space-y-3">
-                  <div className="w-12 h-12 bg-white/5 rounded-full mx-auto flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-slate-500">Sin datos registrados aún.</p>
+            {/* Formulario de Datos Personales (Ahora a la derecha en desktop) */}
+            <div className="space-y-8 lg:order-2 order-2">
+              <section className="card-mia relative overflow-hidden md:p-10">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800">
+                  <div className="h-full bg-[#3345CC] transition-all duration-500 ease-out" style={{ width: `${((currentStep + 1) / FORM_CATEGORIES.length) * 100}%` }} />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-[#0028b3]/10 border border-[#0028b3]/20 rounded-2xl">
-                    <p className="text-[10px] font-bold text-[#0028b3] uppercase tracking-widest">Identidad</p>
-                    <p className="text-lg font-bold truncate">{profile.nombre || "Sin nombre"}</p>
-                    <p className="text-xs text-slate-400">{profile.edad ? `${profile.edad} años` : "Edad no especificada"} • {profile.genero || "Género N/D"}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase">Peso</p>
-                      <p className="text-sm font-bold">{profile.peso ? `${profile.peso} kg` : "--"}</p>
-                    </div>
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/5">
-                      <p className="text-[9px] font-bold text-slate-500 uppercase">Altura</p>
-                      <p className="text-sm font-bold">{profile.estatura ? `${profile.estatura} cm` : "--"}</p>
-                    </div>
-                  </div>
 
-                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Localidad</span>
-                      <span className="text-xs font-bold">{profile.localidad || "N/D"}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-slate-400">Sangre</span>
-                      <span className="text-xs font-bold text-red-400">{profile.tipoSangre || "N/D"}</span>
-                    </div>
+                <div className="flex items-center justify-between mb-10">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#3345CC] uppercase tracking-widest">Paso {currentStep + 1} de {FORM_CATEGORIES.length}</span>
+                    <h2 className="text-3xl font-bold tracking-tight mt-1">{FORM_CATEGORIES[currentStep].title}</h2>
                   </div>
+                  {isAnalyzing && <div className="text-xs font-bold text-[#3345CC] animate-pulse">IA ANALIZANDO...</div>}
                 </div>
-              )}
-            </article>
 
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-red-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold">!</div>
-                <p className="text-xs text-red-200 leading-relaxed">{error}</p>
+                <div className="grid gap-8 md:grid-cols-2 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-white/5">
+                  {FORM_CATEGORIES[currentStep].fields.map((field) => {
+                    const isOptional = OPTIONAL_FIELDS.includes(field as keyof PatientProfile);
+                    const isUpdated = lastUpdatedFields.has(field);
+                    return (
+                    <div key={field} className={`space-y-2 transition-all duration-500 ${isUpdated ? "ring-2 ring-emerald-400 rounded-xl" : ""}`}>
+                      <label className="text-xs font-bold text-slate-500 ml-1 flex items-center gap-1">
+                        {FIELD_LABELS[field]}
+                        {!isOptional && <span className="text-red-500">*</span>}
+                        {isOptional && <span className="text-slate-400 font-normal">(opcional)</span>}
+                      </label>
+                      <div className="relative">
+                        {field === "genero" ? (
+                          <select value={profile.genero} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className="input-mia">
+                            <option value="">Seleccionar...</option>
+                            <option value="hombre">Hombre</option>
+                            <option value="mujer">Mujer</option>
+                            <option value="otro">Otro</option>
+                            <option value="prefiero no decir">Prefiero no decir</option>
+                          </select>
+                        ) : field === "localidad" ? (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => isEditing && setShowNationalityList(!showNationalityList)}
+                              disabled={!isEditing}
+                              className="input-mia flex items-center justify-between text-left w-full"
+                            >
+                              <span>{profile.localidad || "Seleccionar pa\u00eds / localidad..."}</span>
+                              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                              </svg>
+                            </button>
+                            {showNationalityList && (
+                              <div className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl">
+                                {apiNationalities.length > 0 ? apiNationalities.map(n => (
+                                  <button
+                                    key={n.name}
+                                    type="button"
+                                    className="w-full px-4 py-3 text-sm text-left hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-3 transition-colors"
+                                    onClick={() => { updateField("localidad", n.name); setShowNationalityList(false); }}
+                                  >
+                                    <img src={`https://flagcdn.com/w40/${n.code}.png`} alt={n.name} className="w-5 h-3.5 rounded-sm object-cover flex-shrink-0" />
+                                    <span>{n.name}</span>
+                                  </button>
+                                )) : (
+                                  <div className="px-4 py-3 text-xs text-slate-500">Cargando pa\u00edses...</div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : field === "tipoSangre" ? (
+                          <select value={profile.tipoSangre} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className="input-mia">
+                            <option value="">Sin especificar</option>
+                            {BLOOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        ) : (
+                          <input
+                            type={field === "edad" || field === "peso" || field === "estatura" ? "number" : "text"}
+                            inputMode={field === "contactoEmergencia" ? "tel" : undefined}
+                            value={profile[field as keyof PatientProfile] ?? ""}
+                            onChange={(e) => updateField(field, e.target.value)}
+                            disabled={!isEditing}
+                            placeholder={isOptional ? `${FIELD_LABELS[field]} (opcional)` : FIELD_LABELS[field]}
+                            className="input-mia"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+          </div>
+          <div className="pt-8 border-t border-slate-100 dark:border-white/5">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex gap-3 w-full sm:w-auto">
+                {currentStep > 0 && (
+                  <button type="button" onClick={() => setCurrentStep(prev => prev - 1)} className="px-6 py-4 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-sm">
+                    Anterior
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={FORM_CATEGORIES[currentStep].fields.some(f => !OPTIONAL_FIELDS.includes(f as keyof PatientProfile) && !profile[f as keyof PatientProfile])}
+                  className="btn-mia-primary flex-1 sm:px-10 py-4 disabled:opacity-30 text-center"
+                >
+                  {currentStep === FORM_CATEGORIES.length - 1 ? "Finalizar y Guardar" : "Siguiente Paso"}
+                </button>
               </div>
-            )}
-            {status && !error && (
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex gap-3">
-                <div className="w-5 h-5 bg-emerald-500 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-slate-900">✓</div>
-                <p className="text-xs text-emerald-100 leading-relaxed">{status}</p>
+              <div className="flex gap-6 items-center justify-center w-full sm:w-auto">
+                {!isEditing && <button type="button" onClick={editSavedData} className="text-sm font-bold text-slate-400 hover:text-[#3345CC] py-2">Editar Perfil</button>}
+                <button type="button" onClick={clearAllData} className="text-sm font-bold text-slate-300 hover:text-red-500 py-2">Limpiar todo</button>
               </div>
-            )}
-          </aside>
-        </div>
+            </div>
+          </div>
+        </form>
       </div>
+
+      {/* Toast — esquina superior derecha, auto-desaparece */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "1.5rem",
+            right: "1.5rem",
+            zIndex: 9999,
+            maxWidth: "22rem",
+            width: "100%",
+            animation: "miaSlideIn 0.3s ease-out",
+          }}
+          className={`px-5 py-4 rounded-2xl shadow-2xl flex items-start gap-3 border backdrop-blur-xl relative overflow-hidden ${
+            toast.type === "error"
+              ? "bg-red-950/95 border-red-500/40 text-red-100"
+              : toast.type === "success"
+              ? "bg-emerald-950/95 border-emerald-500/40 text-emerald-100"
+              : "bg-slate-900/95 border-white/10 text-slate-100"
+          }`}
+        >
+          {/* Icono */}
+          <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-black ${
+            toast.type === "error" ? "bg-red-500 text-white" :
+            toast.type === "success" ? "bg-emerald-500 text-slate-900" :
+            "bg-slate-600 text-white"
+          }`}>
+            {toast.type === "error" ? "!" : toast.type === "success" ? "\u2713" : "i"}
+          </div>
+          {/* Contenido */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-sm font-bold leading-tight">
+              {toast.type === "error" ? "Atenci\u00f3n" : toast.type === "success" ? "\u00a1Guardado!" : "Aviso"}
+            </p>
+            <p className="text-xs opacity-80 mt-1 leading-relaxed">{toast.msg}</p>
+          </div>
+          {/* X cerrar */}
+          <button
+            onClick={() => setToast(null)}
+            style={{ lineHeight: 1 }}
+            className="text-2xl leading-none opacity-40 hover:opacity-80 transition-opacity flex-shrink-0"
+          >
+            &times;
+          </button>
+          {/* Barra de progreso animada */}
+          <div
+            style={{ animation: "miaShrink 4s linear forwards" }}
+            className={`absolute bottom-0 left-0 h-0.5 ${
+              toast.type === "error" ? "bg-red-400" :
+              toast.type === "success" ? "bg-emerald-400" : "bg-slate-400"
+            }`}
+          />
+        </div>
+      )}
+
+      <style>{`
+        @keyframes miaSlideIn {
+          from { opacity: 0; transform: translateX(100%); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes miaShrink {
+          from { width: 100%; }
+          to   { width: 0%; }
+        }
+      `}</style>
     </main>
   );
 }
