@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PremiumNav } from "@/components/ui/premium-nav";
+import { AuthGuard } from "@/components/auth-guard";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 const publicSans = Public_Sans({subsets:['latin'],variable:'--font-public-sans'});
@@ -69,8 +70,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <PremiumNav />
+          <AuthGuard>
+            {children}
+            <PremiumNav />
+          </AuthGuard>
         </ThemeProvider>
       </body>
     </html>

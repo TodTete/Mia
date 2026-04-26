@@ -524,23 +524,35 @@ export default function CapturaDatosPage() {
                     </motion.div>
                   </AnimatePresence>
 
-                  <div className="mt-12 flex items-center justify-between gap-4">
-                    <button 
-                      type="button"
-                      onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                      disabled={currentStep === 0}
-                      className="px-6 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-30"
-                    >
-                      <ChevronLeftIcon className="w-4 h-4" />
-                      Atrás
-                    </button>
+                  <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex gap-3 w-full sm:w-auto">
+                      <button 
+                        type="button"
+                        onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                        disabled={currentStep === 0}
+                        className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-30 transition-colors"
+                      >
+                        <ChevronLeftIcon className="w-4 h-4" />
+                        Atrás
+                      </button>
+                      
+                      {currentStep < FORM_CATEGORIES.length - 1 && (
+                        <button 
+                          type="button"
+                          onClick={() => setCurrentStep(currentStep + 1)}
+                          className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs font-bold hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                        >
+                          Saltar
+                        </button>
+                      )}
+                    </div>
                     
                     <button 
                       type="submit"
                       disabled={loading}
-                      className="flex-1 sm:flex-none px-8 py-3 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                     >
-                      {currentStep < 2 ? (
+                      {currentStep < FORM_CATEGORIES.length - 1 ? (
                         <>Continuar <ChevronRightIcon className="w-4 h-4" /></>
                       ) : (
                         <>{loading ? "Guardando..." : "Finalizar Perfil"}</>
@@ -569,13 +581,21 @@ export default function CapturaDatosPage() {
                     Tus datos personales y métricas médicas están guardados de forma segura. Presiona el botón para realizar modificaciones.
                   </p>
                 </div>
-                <button 
-                  onClick={() => setIsEditing(true)}
-                  className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-2xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
-                >
-                  <SparklesIcon className="w-5 h-5" />
-                  MODIFICAR DATOS
-                </button>
+                <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-2xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                  >
+                    <SparklesIcon className="w-5 h-5" />
+                    MODIFICAR DATOS
+                  </button>
+                  <Link 
+                    href="/"
+                    className="px-10 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                  >
+                    OMITIR Y VOLVER
+                  </Link>
+                </div>
               </motion.div>
             )}
 
