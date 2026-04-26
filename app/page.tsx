@@ -18,7 +18,8 @@ import {
   HeartIcon, 
   BookOpenIcon, 
   BeakerIcon,
-  MoonIcon
+  MoonIcon,
+  ArrowRightIcon
 } from "@heroicons/react/24/outline";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -385,25 +386,25 @@ export default function Home() {
                 >
                   <Link
                     href={view.href}
-                    className="group block glass-surface rounded-3xl p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-primary relative"
+                    className="group block glass-surface rounded-3xl p-8 transition-all duration-500 hover:glass-surface-active hover:-translate-y-2 border-l-4 border-l-transparent hover:border-l-sky-400 relative"
                   >
                     <div className="flex items-start justify-between mb-6">
-                      <div className={`w-12 h-12 rounded-xl bg-on-surface/5 flex items-center justify-center transition-all group-hover:bg-primary/10 ${view.color}`}>
+                      <div className={`w-12 h-12 rounded-xl bg-on-surface/5 flex items-center justify-center transition-all group-hover:bg-sky-400/20 group-hover:!text-white ${view.color}`}>
                         <view.icon className="w-7 h-7" />
                       </div>
-                      <div className="text-[10px] font-black tracking-[0.3em] uppercase text-on-surface-variant/40 group-hover:text-primary transition-colors">
+                      <div className="text-[10px] font-black tracking-[0.3em] uppercase text-on-surface-variant/40 group-hover:text-sky-400 transition-colors">
                         {view.href.split('/').pop()?.replace('-', ' ')}
                       </div>
                     </div>
-                    <h3 className="text-xl font-bold font-space-grotesk mb-3 tracking-tight group-hover:text-primary transition-colors">
+                    <h3 className="text-xl font-bold font-space-grotesk mb-3 tracking-tight group-hover:text-sky-400 transition-colors">
                       {view.name}
                     </h3>
                     <p className="text-sm text-on-surface-variant leading-relaxed font-medium line-clamp-2">
                       {view.focus}
                     </p>
                     <div className="absolute bottom-4 right-8 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-0 group-hover:scale-100">
-                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
-                        <span className="text-lg">→</span>
+                      <div className="w-8 h-8 rounded-full bg-sky-400 flex items-center justify-center text-white">
+                        <ArrowRightIcon className="w-4 h-4 stroke-[3]" />
                       </div>
                     </div>
                   </Link>
