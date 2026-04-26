@@ -259,8 +259,6 @@ export default function CapturaDatosPage() {
     setIntroFieldCount(0);
     setTranscript("");
     fullTranscriptRef.current = "";
-    setError("");
-    setStatus("");
 
     const intro = [
       "Hola, soy Mia, tu asistente de salud personal.",
@@ -294,7 +292,7 @@ export default function CapturaDatosPage() {
     const win = window as any;
     const SpeechCtor = win.SpeechRecognition ?? win.webkitSpeechRecognition;
     if (!SpeechCtor) {
-      setError("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+      showToast("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.", "error");
       return;
     }
 
@@ -303,7 +301,7 @@ export default function CapturaDatosPage() {
     rec.continuous = true;
     rec.interimResults = true;
 
-    rec.onstart = () => { setIsListening(true); setError(""); };
+    rec.onstart = () => { setIsListening(true); };
 
     rec.onresult = (event: any) => {
       let interim = "";
@@ -319,7 +317,7 @@ export default function CapturaDatosPage() {
     };
 
     rec.onerror = (event: any) => {
-      if (event.error !== "no-speech") setError("Error de micrófono: " + event.error);
+      if (event.error !== "no-speech") showToast("Error de micrófono: " + event.error, "error");
     };
 
     rec.onend = () => { setIsListening(false); };
@@ -340,8 +338,7 @@ export default function CapturaDatosPage() {
     }
 
     setIsAnalyzing(true);
-    setError("");
-    setStatus("Mia está analizando tu respuesta...");
+    showToast("Mia está analizando tu respuesta...", "info", 30000);
 
     try {
       const res = await fetch("/api/deepseek/extract-profile", {
