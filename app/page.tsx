@@ -264,9 +264,10 @@ export default function Home() {
             }}
             initial="hidden"
             animate="show"
-            className="relative z-20 p-10 md:p-20 max-w-4xl space-y-10"
+            className="relative z-20 p-10 md:p-20 w-full flex flex-col lg:flex-row items-center justify-between gap-12"
           >
-            <div className="space-y-4">
+            <div className="space-y-10 max-w-2xl">
+              <div className="space-y-4">
               <motion.h1 
                 variants={{
                   hidden: { opacity: 0, y: 40 },
@@ -274,7 +275,7 @@ export default function Home() {
                 }}
                 className="text-6xl md:text-8xl font-black tracking-[ -0.05em] leading-[0.85] font-space-grotesk italic"
               >
-                TU SALUD. <br />
+                TU SALUD <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D92626] to-[#001970]">INTELIGENTE.</span>
               </motion.h1>
               <motion.p 
@@ -295,13 +296,29 @@ export default function Home() {
               }}
               className="flex flex-wrap gap-6 pt-6"
             >
-              <Link href="/vistas/captura-datos" className={cn(buttonVariants({ size: "lg" }), "flex items-center gap-3 rounded-2xl px-10 h-16 bg-[#001970] hover:bg-[#000d4d] text-white font-black text-lg shadow-2xl shadow-[#001970]/30 transition-all hover:scale-105 active:scale-95 group border-0")}>
-                INICIAR ESCANEO
-                <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
+              <Link href="/vistas/avances" className={cn(buttonVariants({ size: "lg" }), "flex items-center gap-3 rounded-2xl px-10 h-16 bg-[#3649cc] hover:bg-[#2b3aa3] text-white font-black text-lg shadow-2xl shadow-[#3649cc]/30 transition-all hover:scale-105 active:scale-95 group border-0")}>
+                <ChartBarIcon className="w-6 h-6" />
+                VER MIS AVANCES
+                <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/vistas/avances" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 hover:scale-105 active:scale-95 font-black text-lg transition-all backdrop-blur-xl")}>
-                Avances
-              </Link>
+            </motion.div>
+            </div>
+
+            <motion.div 
+              variants={{
+                hidden: { opacity: 0, scale: 0.8, rotate: -5 },
+                show: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] } }
+              }}
+              className="hidden lg:flex relative w-[280px] h-[280px] xl:w-[350px] xl:h-[350px] flex-shrink-0"
+            >
+              <div className="absolute inset-0 bg-[#3649cc]/20 blur-[60px] rounded-full" />
+              <Image 
+                src="/icon.png" 
+                alt="Mia Icon" 
+                fill 
+                className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-10"
+                priority
+              />
             </motion.div>
           </motion.div>
         </motion.section>
