@@ -125,6 +125,7 @@ export default function RecordatoriosPage() {
   }, []);
 
   const handleVoiceInput = (setter: (val: string) => void) => {
+    if (typeof window === "undefined") return;
     // @ts-ignore
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -157,6 +158,7 @@ export default function RecordatoriosPage() {
   };
 
   const handleMagicVoiceMed = () => {
+    if (typeof window === "undefined") return;
     // @ts-ignore
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -201,7 +203,9 @@ export default function RecordatoriosPage() {
     };
 
     // @ts-ignore
-    window._medRecognition = recognition;
+    if (typeof window !== "undefined") {
+      window._medRecognition = recognition;
+    }
     recognition.start();
   };
 

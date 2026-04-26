@@ -289,7 +289,7 @@ export default function CapturaDatosPage() {
 
   // --- Lógica de Voz: intro animada + grabación continua + DeepSeek ---
   const speakText = (text: string, onEnd?: () => void) => {
-    if (!("speechSynthesis" in window)) { onEnd?.(); return; }
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) { onEnd?.(); return; }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "es-MX";
@@ -343,6 +343,7 @@ export default function CapturaDatosPage() {
   };
 
   const startVoiceCapture = () => {
+    if (typeof window === "undefined") return;
     const win = window as any;
     const SpeechCtor = win.SpeechRecognition ?? win.webkitSpeechRecognition;
     if (!SpeechCtor) {
@@ -381,8 +382,10 @@ export default function CapturaDatosPage() {
   };
 
   const stopAndSendToAI = async () => {
-    const win = window as any;
-    if (win._miaRecognition) { try { win._miaRecognition.stop(); } catch (_) {} }
+    if (typeof window !== "undefined") {
+      const win = window as any;
+      if (win._miaRecognition) { try { win._miaRecognition.stop(); } catch (_) {} }
+    }
     setIsListening(false);
 
     const fullText = fullTranscriptRef.current.trim() || transcript.trim();
@@ -428,9 +431,11 @@ export default function CapturaDatosPage() {
   };
 
   const stopVoiceCapture = () => {
-    const win = window as any;
-    if (win._miaRecognition) {
-      try { win._miaRecognition.stop(); } catch (_) {}
+    if (typeof window !== "undefined") {
+      const win = window as any;
+      if (win._miaRecognition) {
+        try { win._miaRecognition.stop(); } catch (_) {}
+      }
     }
     setIsListening(false);
   };
