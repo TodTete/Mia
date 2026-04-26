@@ -9,6 +9,8 @@ import { ref, onValue, set, remove, update } from "firebase/database";
 type Medicine = {
   id: string;
   name: string;
+  dosage?: string;
+  route?: string;
   frequencyHours: number;
   durationDays: number;
   startDate: number; 
@@ -36,6 +38,8 @@ export default function RecordatoriosPage() {
 
   // New Med Form
   const [medName, setMedName] = useState("");
+  const [medDose, setMedDose] = useState("");
+  const [medRoute, setMedRoute] = useState("");
   const [medFreq, setMedFreq] = useState("");
   const [medDays, setMedDays] = useState("");
   const [medError, setMedError] = useState("");
@@ -162,6 +166,8 @@ export default function RecordatoriosPage() {
     const newMed: Medicine = {
       id: newMedId,
       name: medName,
+      dosage: medDose,
+      route: medRoute,
       frequencyHours: freq,
       durationDays: days,
       startDate: Date.now(),
@@ -171,6 +177,8 @@ export default function RecordatoriosPage() {
     try {
       await set(ref(db, `users/${user.uid}/medicines/${newMedId}`), newMed);
       setMedName("");
+      setMedDose("");
+      setMedRoute("");
       setMedFreq("");
       setMedDays("");
       setShowMedForm(false);
@@ -395,6 +403,47 @@ export default function RecordatoriosPage() {
                       </button>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">Dosis</label>
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          value={medDose}
+                          onChange={(e) => setMedDose(e.target.value)}
+                          placeholder="Ej. 500mg / 1 tableta" 
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => handleVoiceInput(setMedDose)}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                        >
+                          <Mic className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">Vía</label>
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          value={medRoute}
+                          onChange={(e) => setMedRoute(e.target.value)}
+                          placeholder="Ej. Oral" 
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pr-10 text-sm outline-none focus:border-[#3649cc] focus:bg-white focus:ring-4 focus:ring-[#3649cc]/10"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => handleVoiceInput(setMedRoute)}
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${isRecordingVoice ? 'bg-red-100 text-red-500' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+                        >
+                          <Mic className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="mb-1 block text-sm font-medium text-slate-700">Cada (horas)</label>
@@ -477,6 +526,8 @@ export default function RecordatoriosPage() {
                             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
                               <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Cada {med.frequencyHours}h</span>
                               <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Por {med.durationDays} días</span>
+                              {med.dosage && <span className="flex items-center gap-1 font-medium text-[#3649cc]/80">Dosis: {med.dosage}</span>}
+                              {med.route && <span className="flex items-center gap-1 font-medium text-slate-600 italic">({med.route})</span>}
                             </div>
                             <p className={`mt-1.5 text-sm font-semibold ${doseInfo.isUrgent ? 'text-[#3649cc]' : 'text-slate-400'}`}>
                               {doseInfo.text}
