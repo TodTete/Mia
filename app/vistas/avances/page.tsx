@@ -25,10 +25,6 @@ export default function AvancesPage() {
   const [moodHistory, setMoodHistory] = useState<any[]>([]);
   const [diagnostico, setDiagnostico] = useState<string>("");
   
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [editPeso, setEditPeso] = useState("");
-  const [editEstatura, setEditEstatura] = useState("");
-  
   const [isEditingDiag, setIsEditingDiag] = useState(false);
   const [editDiag, setEditDiag] = useState("");
   const [isGeneratingDiag, setIsGeneratingDiag] = useState(false);
@@ -46,8 +42,6 @@ export default function AvancesPage() {
     if (savedProfile) {
       const parsed = JSON.parse(savedProfile);
       setProfile(parsed);
-      setEditPeso(parsed.peso || "");
-      setEditEstatura(parsed.estatura || "");
       if (parsed.lastUpdated) {
         setLastUpdated(parsed.lastUpdated);
       } else {
@@ -128,21 +122,6 @@ export default function AvancesPage() {
     getSleepData();
     getMedicinesData();
   }, []);
-
-  const saveBio = () => {
-    if (!profile) return;
-    const now = new Date().toISOString();
-    const updatedProfile = {
-      ...profile,
-      peso: editPeso,
-      estatura: editEstatura,
-      lastUpdated: now
-    };
-    localStorage.setItem("mia_patient_profile", JSON.stringify(updatedProfile));
-    setProfile(updatedProfile);
-    setLastUpdated(now);
-    setIsEditingBio(false);
-  };
 
   const saveDiag = () => {
     localStorage.setItem("mia_diagnostico", editDiag);
@@ -253,27 +232,17 @@ export default function AvancesPage() {
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Bio Data Section */}
-          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
             {/* Standard icon placement */}
             <div className="absolute -top-6 -right-6 p-8 opacity-5 group-hover:opacity-10 transition-all duration-500 rotate-12">
               <User className="w-24 h-24 text-[#3649cc] dark:text-indigo-400" />
             </div>
             
             <div className="flex items-center justify-between mb-8 relative z-10">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                 <div className="w-2 h-6 bg-[#3649cc] dark:bg-indigo-500 rounded-full" />
                 Datos Físicos
               </h2>
-              {!isEditingBio ? (
-                <button onClick={() => setIsEditingBio(true)} className="p-2 text-slate-400 hover:text-[#3649cc] dark:hover:text-indigo-400 transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
-                  <Edit className="w-5 h-5" />
-                </button>
-              ) : (
-                <button onClick={saveBio} className="px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-emerald-500/20">
-                  <Check className="w-5 h-5" />
-                  Guardar
-                </button>
-              )}
             </div>
 
             <div className="space-y-6 relative z-10">
@@ -286,36 +255,12 @@ export default function AvancesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Peso</p>
-                  {isEditingBio ? (
-                    <div className="flex items-end gap-2">
-                      <input 
-                        type="number" 
-                        value={editPeso} 
-                        onChange={(e) => setEditPeso(e.target.value)}
-                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xl font-bold focus:ring-2 focus:ring-[#3649cc] dark:focus:ring-indigo-500 outline-none transition-shadow"
-                      />
-                      <span className="text-slate-400 font-bold mb-2">kg</span>
-                    </div>
-                  ) : (
-                    <p className="text-3xl font-bold">{profile?.peso || "--"} <span className="text-sm font-medium text-slate-400 dark:text-slate-500">kg</span></p>
-                  )}
+                  <p className="text-3xl font-bold">{profile?.peso || "--"} <span className="text-sm font-medium text-slate-400 dark:text-slate-500">kg</span></p>
                 </div>
 
                 <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Estatura</p>
-                  {isEditingBio ? (
-                    <div className="flex items-end gap-2">
-                      <input 
-                        type="number" 
-                        value={editEstatura} 
-                        onChange={(e) => setEditEstatura(e.target.value)}
-                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xl font-bold focus:ring-2 focus:ring-[#3649cc] dark:focus:ring-indigo-500 outline-none transition-shadow"
-                      />
-                      <span className="text-slate-400 font-bold mb-2">cm</span>
-                    </div>
-                  ) : (
-                    <p className="text-3xl font-bold">{profile?.estatura || "--"} <span className="text-sm font-medium text-slate-400 dark:text-slate-500">cm</span></p>
-                  )}
+                  <p className="text-3xl font-bold">{profile?.estatura || "--"} <span className="text-sm font-medium text-slate-400 dark:text-slate-500">cm</span></p>
                 </div>
               </div>
 
@@ -346,13 +291,13 @@ export default function AvancesPage() {
           </section>
 
           {/* Clinical Insights Link Section */}
-          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
             <div className="absolute -bottom-6 -right-6 p-8 opacity-5 group-hover:opacity-10 transition-all duration-500">
               <Stethoscope className="w-24 h-24 text-blue-600" />
             </div>
             
-            <div className="flex items-center justify-between mb-6 relative z-10">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 relative z-10 gap-4 sm:gap-0">
+              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                 <div className="w-2 h-6 bg-blue-600 rounded-full" />
                 Análisis Clínico
               </h2>
@@ -375,9 +320,9 @@ export default function AvancesPage() {
           </section>
 
           {/* Medicines Section */}
-          <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+          <section className="bg-white dark:bg-white/5 rounded-3xl p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4 sm:gap-0">
+              <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                 <div className="w-2 h-6 bg-purple-500 rounded-full" />
                 Medicamentos
               </h2>
@@ -412,22 +357,22 @@ export default function AvancesPage() {
         </div>
 
         {/* Mood Progress Section */}
-        <section className="mt-8 bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="p-3 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-2xl">
+        <section className="mt-8 bg-white dark:bg-white/5 rounded-3xl p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300 w-full overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+            <div className="p-3 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-2xl self-start sm:self-auto">
               <TrendingUp className="w-7 h-7" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Progreso Emocional</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Historial de tu estado de ánimo en escala de intensidad (0-10)</p>
+              <h2 className="text-xl sm:text-2xl font-bold">Progreso Emocional</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Historial de tu estado de ánimo (0-10)</p>
             </div>
           </div>
 
           {moodHistory.length > 0 ? (
-            <div className="h-[350px] w-full mt-6 bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+            <div className="h-[250px] sm:h-[350px] w-full mt-6 bg-slate-50 dark:bg-black/20 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-white/5">
               {isMounted ? (
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
-                  <AreaChart data={moodHistory} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={moodHistory} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorIntensidad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4}/>
@@ -439,7 +384,7 @@ export default function AvancesPage() {
                     dataKey="name" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#888', fontSize: 12, fontWeight: 500 }}
+                    tick={{ fill: '#888', fontSize: 10, fontWeight: 500 }}
                     dy={10}
                   />
                   <YAxis 
@@ -499,21 +444,21 @@ export default function AvancesPage() {
         </section>
 
         {/* Sleep Progress Section */}
-        <section className="mt-8 mb-16 bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+        <section className="mt-8 mb-16 bg-white dark:bg-white/5 rounded-3xl p-5 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 hover:shadow-2xl transition-all duration-300 w-full overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-2xl self-start sm:self-auto">
               <Moon className="w-7 h-7" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Historial de Sueño</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Horas de descanso registradas por día</p>
+              <h2 className="text-xl sm:text-2xl font-bold">Historial de Sueño</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Horas de descanso registradas por día</p>
             </div>
           </div>
 
           {fullSleepHistory.length > 0 ? (
-            <div className="h-[350px] w-full mt-6 bg-slate-50 dark:bg-black/20 rounded-2xl p-4 border border-slate-100 dark:border-white/5">
+            <div className="h-[250px] sm:h-[350px] w-full mt-6 bg-slate-50 dark:bg-black/20 rounded-2xl p-2 sm:p-4 border border-slate-100 dark:border-white/5">
               {isMounted ? (
-                <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={[...fullSleepHistory].reverse().map(s => {
                     const d = new Date(s.timestamp || s.date);
                     return {
@@ -522,7 +467,7 @@ export default function AvancesPage() {
                       quality: s.quality,
                       fullDate: isNaN(d.getTime()) ? s.date : d.toLocaleDateString()
                     };
-                  })} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  })} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorHoras" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
@@ -534,7 +479,7 @@ export default function AvancesPage() {
                     dataKey="name" 
                     axisLine={false} 
                     tickLine={false} 
-                    tick={{ fill: '#888', fontSize: 12, fontWeight: 500 }}
+                    tick={{ fill: '#888', fontSize: 10, fontWeight: 500 }}
                     dy={10}
                   />
                   <YAxis 
