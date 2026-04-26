@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   AreaChart,
   Area,
@@ -181,17 +182,24 @@ export default function AvancesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver al Inicio
+          </Link>
+        </div>
+        <ThemeToggle />
+      </header>
+
+      <div className="mx-auto max-w-5xl px-6">
         
         <div className="mb-10 flex flex-col gap-4 sm:mb-12">
           <div>
-            <button 
-              onClick={() => router.push('/')} 
-              className="mb-6 flex w-fit items-center gap-2 rounded-xl bg-white dark:bg-white/5 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-[#3649cc] dark:hover:text-indigo-400 active:scale-95"
-            >
-              <ArrowLeft className="w-4 h-4" /> Volver al Inicio
-            </button>
             <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc] dark:text-indigo-400">
               Avances y Bio
             </p>
@@ -213,8 +221,9 @@ export default function AvancesPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Bio Data Section */}
           <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-              <User className="w-32 h-32 text-[#3649cc] dark:text-indigo-400" />
+            {/* Standard icon placement */}
+            <div className="absolute -top-6 -right-6 p-8 opacity-5 group-hover:opacity-10 transition-all duration-500 rotate-12">
+              <User className="w-24 h-24 text-[#3649cc] dark:text-indigo-400" />
             </div>
             
             <div className="flex items-center justify-between mb-8 relative z-10">
@@ -307,20 +316,20 @@ export default function AvancesPage() {
           <section className="bg-white dark:bg-white/5 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200 dark:border-white/10 flex flex-col group hover:shadow-2xl transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <div className="w-2 h-6 bg-purple-500 rounded-full" />
+                <div className="w-2 h-6 bg-[#3649cc] dark:bg-indigo-500 rounded-full" />
                 Diagnóstico Actual
               </h2>
               <div className="flex items-center gap-2">
                 <button 
                   onClick={generateDiagnosisWithAI} 
                   disabled={isGeneratingDiag}
-                  className="px-4 py-2 text-white bg-purple-500 hover:bg-purple-600 transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-purple-500/20 disabled:opacity-50"
+                  className="px-4 py-2 text-white bg-[#3649cc] hover:bg-[#2b3aa3] transition-colors rounded-xl flex items-center gap-2 text-sm font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                 >
                   <Sparkles className={isGeneratingDiag ? "w-5 h-5 animate-pulse" : "w-5 h-5"} />
                   {isGeneratingDiag ? "Generando..." : "Generar con IA"}
                 </button>
                 {!isEditingDiag ? (
-                  <button onClick={() => setIsEditingDiag(true)} className="p-2 text-slate-400 hover:text-purple-500 transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
+                  <button onClick={() => setIsEditingDiag(true)} className="p-2 text-slate-400 hover:text-[#3649cc] transition-colors bg-slate-100 dark:bg-white/5 rounded-xl">
                     <Edit className="w-5 h-5" />
                   </button>
                 ) : (
@@ -332,12 +341,12 @@ export default function AvancesPage() {
               </div>
             </div>
 
-            <div className="flex-1 bg-purple-50 dark:bg-purple-500/5 rounded-2xl p-6 border border-purple-100 dark:border-purple-500/10">
+            <div className="flex-1 bg-indigo-50 dark:bg-indigo-500/5 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-500/10">
               {isEditingDiag ? (
                 <textarea
                   value={editDiag}
                   onChange={(e) => setEditDiag(e.target.value)}
-                  className="w-full h-full min-h-[180px] bg-white dark:bg-black/50 border border-purple-200 dark:border-purple-500/30 rounded-xl p-4 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-purple-500 outline-none resize-none transition-shadow"
+                  className="w-full h-full min-h-[180px] bg-white dark:bg-black/50 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-4 text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-shadow"
                   placeholder="Describe o actualiza tu diagnóstico médico actual..."
                 />
               ) : (

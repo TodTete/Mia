@@ -127,66 +127,49 @@ export default function RegistroEmocionalPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface-container-lowest text-on-surface font-manrope selection:bg-primary/30 pb-32 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020205] text-slate-900 dark:text-white font-manrope selection:bg-[#3345CC]/30 pb-32 transition-colors duration-300 overflow-x-hidden">
       <style jsx global>{`
         .intensity-slider {
           -webkit-appearance: none;
           appearance: none;
           width: 100%;
-          height: 8px;
-          background: rgba(var(--color-on-surface), 0.1);
-          border-radius: 4px;
+          height: 12px;
+          background: rgba(148, 163, 184, 0.2);
+          border-radius: 6px;
           cursor: pointer;
         }
         .intensity-slider::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 24px;
-          height: 24px;
-          background: var(--color-primary);
+          width: 28px;
+          height: 28px;
+          background: #3345CC;
           border-radius: 50%;
           cursor: pointer;
-          box-shadow: 0 0 10px rgba(var(--color-primary), 0.4);
-          border: 2px solid var(--color-surface);
+          box-shadow: 0 4px 15px rgba(51, 69, 204, 0.4);
+          border: 3px solid white;
         }
       `}</style>
 
-      {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 flex items-center justify-between px- margin h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
-        <div className="flex items-center gap-sm px-4">
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
           <Link
-            href="/vistas/inicio"
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "rounded-full text-[#3649cc] hover:bg-slate-100 dark:hover:bg-white/5")}
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
           >
-            <ArrowLeftIcon className="w-6 h-6" />
-          </Link>
-          <h1 className="text-lg font-bold tracking-tight text-[#3649cc] dark:text-primary font-public-sans ml-2">Emociones</h1>
-        </div>
-        <div className="flex items-center gap-4 px-4">
-          <ThemeToggle />
-          <Link
-            href="/vistas/perfil"
-            className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 flex items-center justify-center text-slate-400"
-          >
-            {user?.photoURL ? (
-              <img
-                alt="User Profile"
-                className="w-full h-full object-cover"
-                src={user.photoURL}
-              />
-            ) : (
-              <UserIcon className="w-6 h-6" />
-            )}
+            <ArrowLeftIcon className="w-5 h-5" />
+            Volver al Inicio
           </Link>
         </div>
+        <ThemeToggle />
       </header>
 
       <main className="pt-32 px-margin max-w-4xl mx-auto space-y-24 pb-32">
         {/* Welcome Section */}
         <section className="text-center space-y-4 relative px-4">
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-[#3345CC]/5 rounded-full blur-3xl animate-pulse" />
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white font-public-sans tracking-tight leading-tight">
-            ¿Cómo te sientes <span className="text-[#3649cc] dark:text-primary italic">hoy?</span>
+            ¿Cómo te sientes <span className="text-[#3649cc] italic">hoy?</span>
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-lg font-manrope max-w-xl mx-auto leading-relaxed">
             Tu registro emocional ayuda a Mía a entender mejor tu salud integral.
@@ -197,7 +180,7 @@ export default function RegistroEmocionalPage() {
         <section className="space-y-8 px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] font-black tracking-[0.2em] text-[#3649cc] dark:text-primary uppercase bg-[#3649cc]/10 dark:bg-primary/10 px-3 py-1 rounded-full">Paso 01</span>
+              <span className="text-[10px] font-black tracking-[0.2em] text-[#3649cc] uppercase bg-[#3649cc]/10 px-3 py-1 rounded-full">Paso 01</span>
               <h3 className="text-2xl font-black tracking-tight">Estado de ánimo</h3>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Elige la emoción que mejor represente tu momento.</p>
@@ -218,12 +201,12 @@ export default function RegistroEmocionalPage() {
         <section className="space-y-8 px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] font-black tracking-[0.2em] text-[#3649cc] dark:text-primary uppercase bg-[#3649cc]/10 dark:bg-primary/10 px-3 py-1 rounded-full">Paso 02</span>
+              <span className="text-[10px] font-black tracking-[0.2em] text-[#3649cc] uppercase bg-[#3649cc]/10 px-3 py-1 rounded-full">Paso 02</span>
               <h3 className="text-2xl font-black tracking-tight">Intensidad</h3>
             </div>
-            <div className="flex items-center gap-2 bg-[#3649cc]/10 dark:bg-primary/10 px-4 py-2 rounded-xl border border-[#3649cc]/20 dark:border-primary/20">
-              <span className="text-[10px] font-black text-[#3649cc] dark:text-primary uppercase tracking-widest">Nivel:</span>
-              <span className="text-xl font-black text-[#3649cc] dark:text-primary">{intensity}/10</span>
+            <div className="flex items-center gap-2 bg-[#3649cc]/10 px-4 py-2 rounded-xl border border-[#3649cc]/20">
+              <span className="text-[10px] font-black text-[#3649cc] uppercase tracking-widest">Nivel:</span>
+              <span className="text-xl font-black text-[#3649cc]">{intensity}/10</span>
             </div>
           </div>
 
@@ -243,7 +226,7 @@ export default function RegistroEmocionalPage() {
                   />
                   <div className="flex justify-between text-[9px] font-black tracking-widest text-slate-400 uppercase px-2">
                     <span>Leve</span>
-                    <span className="text-[#3649cc] dark:text-primary">Moderado</span>
+                    <span className="text-[#3649cc]">Moderado</span>
                     <span>Extremo</span>
                   </div>
                 </div>
@@ -314,7 +297,7 @@ export default function RegistroEmocionalPage() {
         {/* Thoughts Section */}
         <section className="bg-white dark:bg-zinc-900/50 rounded-[3rem] p-10 space-y-6 shadow-xl border border-slate-100 dark:border-white/5 relative overflow-hidden backdrop-blur-sm px-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#3649cc]/10 dark:bg-primary/10 flex items-center justify-center text-[#3649cc] dark:text-primary">
+            <div className="w-10 h-10 rounded-xl bg-[#3649cc]/10 flex items-center justify-center text-[#3649cc]">
               <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
             </div>
             <h3 className="text-xl font-black tracking-tight">Notas</h3>
@@ -333,14 +316,11 @@ export default function RegistroEmocionalPage() {
             <button
               onClick={handleConfirmRecord}
               disabled={loading}
-              className="w-full py-6 bg-[#3649cc] dark:bg-primary hover:scale-[1.02] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-[#3649cc]/20 dark:shadow-primary/20 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
+              className="w-full py-6 bg-[#3649cc] hover:scale-[1.02] text-white rounded-[2rem] font-black text-xl shadow-xl shadow-[#3649cc]/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
             >
               <span>{loading ? "Guardando..." : "Guardar Registro"}</span>
               <ArrowTrendingUpIcon className="w-6 h-6" />
             </button>
-            <p className="text-center text-slate-400 text-[9px] uppercase tracking-[0.3em] font-black">
-              MIA Health System • v2.0
-            </p>
           </div>
         </section>
       </main>
@@ -350,13 +330,13 @@ export default function RegistroEmocionalPage() {
         <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className={cn(
             "px-8 py-4 rounded-3xl shadow-2xl backdrop-blur-xl border flex items-center gap-4",
-            toast.type === "error" ? "bg-error/10 border-error/20 text-error" :
-              toast.type === "success" ? "bg-primary/10 border-primary/20 text-primary" :
-                "bg-on-surface/10 border-on-surface/20 text-on-surface"
+            toast.type === "error" ? "bg-red-500/10 border-red-500/20 text-red-500" :
+              toast.type === "success" ? "bg-[#3345CC]/10 border-[#3345CC]/20 text-[#3345CC]" :
+                "bg-slate-900/10 border-slate-900/20 text-slate-900 dark:text-white"
           )}>
             <div className={cn(
               "w-2 h-2 rounded-full",
-              toast.type === "error" ? "bg-error" : toast.type === "success" ? "bg-primary" : "bg-on-surface"
+              toast.type === "error" ? "bg-red-500" : toast.type === "success" ? "bg-[#3345CC]" : "bg-slate-500"
             )} />
             <span className="font-bold tracking-tight">{toast.msg}</span>
           </div>

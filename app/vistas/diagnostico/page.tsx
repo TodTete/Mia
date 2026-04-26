@@ -12,13 +12,15 @@ import {
   Info,
   Calendar,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft
 } from "lucide-react";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { ref, onValue } from "firebase/database";
 import { PremiumNav } from "@/components/ui/premium-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
 
 export default function DiagnosticoPage() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -42,25 +44,20 @@ export default function DiagnosticoPage() {
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white transition-colors duration-300 pb-32">
       {/* Premium Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-200/50 dark:border-white/5 bg-white/80 dark:bg-black/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-5xl items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Panel Médico</p>
-              <h1 className="text-lg font-bold tracking-tight">Diagnóstico</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors hover:bg-slate-200 dark:hover:bg-white/10">
-              <User className="h-5 w-5" />
-            </button>
-          </div>
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver al Inicio
+          </Link>
         </div>
+        <ThemeToggle />
       </header>
 
-      <div className="mx-auto mt-8 w-full max-w-5xl px-6">
+      <div className="mx-auto mt-24 w-full max-w-5xl px-6">
         {/* Warning Banner */}
         <div className="mb-8 overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-600/5 p-8 border border-amber-200/50 dark:border-amber-500/20">
           <div className="flex items-start gap-4">

@@ -20,7 +20,9 @@ import {
   Pill,
   AlertCircle,
   Accessibility,
+  ArrowLeft,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
 
 const STORAGE_KEY = "mia-profile-v1";
@@ -108,16 +110,21 @@ export default function PerfilPage() {
     : [];
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10 transition-colors duration-500">
-      <div className="mx-auto max-w-lg">
-        {/* Back link */}
-        <Link
-          href="/vistas/inicio"
-          className="mb-8 inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition-colors hover:text-[#3649cc]"
-        >
-          <ChevronRight className="h-4 w-4 rotate-180" />
-          Inicio
-        </Link>
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver al Inicio
+          </Link>
+        </div>
+        <ThemeToggle />
+      </header>
+
+      <div className="mx-auto max-w-lg px-6">
 
         {/* Avatar & Name Card */}
         <div className="mb-6 flex flex-col items-center rounded-3xl border border-slate-100 dark:border-white/5 bg-white dark:bg-zinc-900 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">

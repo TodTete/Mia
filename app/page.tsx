@@ -26,14 +26,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { motion, AnimatePresence } from "framer-motion";
 
-const teamViews = [
-  {
-    name: "Login y acceso",
-    href: "/vistas/login",
-    focus: "Entrada, consentimiento y arranque seguro.",
-    icon: UserCircleIcon,
-    color: "text-blue-500 dark:text-blue-400"
-  },
+const supportViews = [
   {
     name: "Expediente",
     href: "/vistas/captura-datos",
@@ -42,11 +35,11 @@ const teamViews = [
     color: "text-purple-500 dark:text-purple-400"
   },
   {
-    name: "Inicio y diagnóstico",
-    href: "/vistas/inicio",
-    focus: "Resumen del paciente y orientación inicial.",
-    icon: HomeIcon,
-    color: "text-primary"
+    name: "Diagnóstico",
+    href: "/vistas/diagnostico",
+    focus: "Registra padecimientos y medicamentos indicados.",
+    icon: ClipboardDocumentCheckIcon,
+    color: "text-orange-500 dark:text-orange-400"
   },
   {
     name: "Recomendaciones",
@@ -55,9 +48,6 @@ const teamViews = [
     icon: SparklesIcon,
     color: "text-amber-500 dark:text-amber-400"
   },
-];
-
-const supportViews = [
   {
     name: "Recordatorios",
     href: "/vistas/recordatorios",
@@ -105,12 +95,14 @@ const supportViews = [
 export default function Home() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
         router.replace("/vistas/login");
       } else {
+        setUser(currentUser);
         setLoadingAuth(false);
       }
     });
@@ -169,7 +161,6 @@ export default function Home() {
           
           <nav className="hidden lg:flex items-center gap-1">
             {[
-              { name: "Inicio", href: "/", active: true },
               { name: "Expediente", href: "/vistas/captura-datos" },
               { name: "Salud", href: "/vistas/registro-salud" },
               { name: "Emergencias", href: "/vistas/emergencias" },
@@ -214,13 +205,17 @@ export default function Home() {
 
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 p-0.5 group cursor-pointer">
-            <img 
-              alt="User Profile" 
-              className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3FgT76GhbbDoWRP0F8il11ONiIEm2MoGYJNpm7wnmgLDt_JqX2S8wZFIX8207kquAI53RWOZiBkG_5d1aS15i5nvWYC0Jc7CzXRk2ZZs1_EDwwHesxoX7_JEs5ZXlUiyapRvggYeq3v29Rdsv6Xd8x5RTKzCGUOaedSKwo8VMovojlcsy7J3IXgqr72gW1Wpmfdre_EfrAIXI6cXRiK7omzH-UxWLk-mtDGBxUZeKT4Eg_4Ybuo7SsNK0OOJzz-WhIbDoOiHfo_w"
-            />
-          </div>
+          <Link href="/vistas/perfil" className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 p-0.5 group cursor-pointer bg-slate-50 dark:bg-zinc-900 flex items-center justify-center text-slate-400 hover:border-[#3649cc] hover:text-[#3649cc] transition-all">
+            {user?.photoURL ? (
+              <img 
+                alt="User Profile" 
+                className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-500" 
+                src={user.photoURL}
+              />
+            ) : (
+              <UserCircleIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            )}
+          </Link>
         </div>
       </header>
 
@@ -327,56 +322,6 @@ export default function Home() {
         <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden opacity-30">
           <div className="absolute top-[30%] -right-[10%] w-[50%] h-[50%] bg-primary/5 blur-[100px] rounded-full" />
         </div>
-
-        {/* Core Functions */}
-        <motion.section 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="space-y-12 will-change-transform"
-        >
-          <div className="flex items-end justify-between px-6 border-l-8 border-primary py-2">
-            <div className="space-y-1">
-              <h2 className="text-4xl font-black font-space-grotesk tracking-tighter uppercase italic">Módulos</h2>
-              <p className="text-on-surface-variant text-sm font-bold tracking-widest uppercase opacity-60">Arquitectura de captura y acceso</p>
-            </div>
-          </div>
-          
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {teamViews.map((view, i) => (
-              <motion.div
-                key={view.href}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{ delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -10, scale: 1.02 }}
-                className="relative"
-              >
-                <div
-                   onClick={() => router.push(view.href)}
-                  className="group block bg-white/5 dark:bg-white/[0.02] backdrop-blur-2xl rounded-[2.5rem] p-10 h-full border border-white/10 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/20 cursor-default"
-                >
-                  <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-on-surface/10 to-transparent flex items-center justify-center mb-10 group-hover:rotate-[15deg] group-hover:scale-125 transition-all duration-500 ${view.color}`}>
-                    <view.icon className="w-9 h-9" />
-                  </div>
-                  <h3 className="text-2xl font-black font-space-grotesk mb-4 group-hover:text-primary transition-colors tracking-tighter leading-none">
-                    {view.name.toUpperCase()}
-                  </h3>
-                  <p className="text-sm text-on-surface-variant leading-relaxed font-bold opacity-70 group-hover:opacity-100 transition-opacity">
-                    {view.focus}
-                  </p>
-                  
-                  {/* Decorative number */}
-                  <div className="absolute top-8 right-10 text-6xl font-black text-white/10 italic group-hover:text-white/30 transition-colors">
-                    0{i + 1}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
 
         {/* Support & Tracking Section */}
         <motion.section 

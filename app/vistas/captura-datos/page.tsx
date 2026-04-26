@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserIcon, ClipboardDocumentCheckIcon, BeakerIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { UserIcon, ClipboardDocumentCheckIcon, BeakerIcon, HeartIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { auth, db } from "@/lib/firebase/firebase";
 import { ref, set, get, serverTimestamp } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
@@ -444,6 +444,20 @@ export default function CapturaDatosPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+      {/* Standardized Header */}
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+            Volver al Inicio
+          </Link>
+        </div>
+        <ThemeToggle />
+      </header>
+
       <div className="max-w-7xl mx-auto px-6">
         {/* Header de Sección */}
         <section className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">

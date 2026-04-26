@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Moon, Sun, Clock, Bed, Bell, AlertCircle, CheckCircle2, Edit2, Plus, Trash2, Smile, Meh, Frown, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { auth, db } from "../../../lib/firebase/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
@@ -183,17 +185,24 @@ export default function HorarioSuenoPage() {
   const isOptimal = totalHours >= 7.5 && totalHours <= 9;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-background px-6 py-10 font-sans text-slate-900 dark:text-white sm:px-10">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pb-20">
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Volver al Inicio
+          </Link>
+        </div>
+        <ThemeToggle />
+      </header>
+
+      <div className="mx-auto max-w-5xl px-6 pt-24">
         
         <div className="mb-10 flex flex-col gap-4 sm:mb-12">
           <div>
-            <button 
-              onClick={() => router.push('/')} 
-              className="mb-6 flex w-fit items-center gap-2 rounded-xl bg-white dark:bg-white/5 px-4 py-2 text-sm font-bold text-slate-500 dark:text-slate-400 shadow-sm border border-slate-200 dark:border-white/10 transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:text-[#3649cc] dark:hover:text-indigo-400 active:scale-95"
-            >
-              <ArrowLeft className="w-4 h-4" /> Volver al Inicio
-            </button>
             <p className="mb-2 text-sm font-bold uppercase tracking-widest text-[#3649cc] dark:text-indigo-400">
               Horario de Sueño
             </p>

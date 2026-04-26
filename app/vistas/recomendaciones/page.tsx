@@ -198,22 +198,17 @@ export default function RecomendacionesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 font-manrope selection:bg-[#3345CC]/30 pb-24 transition-colors duration-500">
-      <header className="fixed top-0 w-full z-50 flex items-center justify-between px-6 md:px-10 h-20 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/" 
-            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "rounded-full text-[#3345CC] hover:bg-[#3345CC]/10")}
+      <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3345CC] transition-colors"
           >
-            <ArrowLeftIcon className="w-6 h-6" />
+            <ArrowLeftIcon className="w-5 h-5" />
+            Volver al Inicio
           </Link>
-          <h1 className="text-xl font-bold tracking-tight text-[#3345CC] font-public-sans flex items-center gap-2">
-            <HeartPulse className="w-6 h-6" />
-            Mia
-          </h1>
         </div>
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </header>
 
       <main className="pt-32 px-6 md:px-10 max-w-6xl mx-auto">
