@@ -1,5 +1,34 @@
+import * as React from "react"
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
-import { Slot } from "@radix-ui/react-slot"
+
+// Local implementation of Slot to avoid dependency issues
+const Slot = React.forwardRef<HTMLElement, { children?: React.ReactNode } & React.HTMLAttributes<HTMLElement>>(
+  ({ children, ...props }, forwardedRef) => {
+    if (React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        ...props,
+        ...children.props,
+        ref: (node: any) => {
+          if (typeof forwardedRef === 'function') {
+            forwardedRef(node);
+          } else if (forwardedRef) {
+            forwardedRef.current = node;
+          }
+          const { ref: childRef } = children as any;
+          if (childRef) {
+            if (typeof childRef === 'function') {
+              childRef(node);
+            } else {
+              childRef.current = node;
+            }
+          }
+        },
+      } as any);
+    }
+    return null;
+  }
+);
+
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"

@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+
 
 // Tipos
 interface PatientProfile {
@@ -11,12 +14,15 @@ interface PatientProfile {
   estatura: string;
   genero: string;
   localidad: string;
+  domicilio: string;
   // Opcionales
   tipoSangre: string;
   discapacidad: string;
   medicacion: string;
   alergias: string;
   contactoEmergencia: string;
+  nombreContactoEmergencia: string;
+  parentesco: string;
 }
 
 const EMPTY_PROFILE: PatientProfile = {
@@ -26,25 +32,28 @@ const EMPTY_PROFILE: PatientProfile = {
   estatura: "",
   genero: "",
   localidad: "",
+  domicilio: "",
   tipoSangre: "",
   discapacidad: "",
   medicacion: "",
   alergias: "",
   contactoEmergencia: "",
+  nombreContactoEmergencia: "",
+  parentesco: "",
 };
 
 const REQUIRED_FIELDS: (keyof PatientProfile)[] = [
-  "nombres", "edad", "peso", "estatura", "genero", "localidad",
+  "nombres", "edad", "peso", "estatura", "genero", "localidad", "domicilio", "contactoEmergencia", "nombreContactoEmergencia", "parentesco",
 ];
 
 const OPTIONAL_FIELDS: (keyof PatientProfile)[] = [
-  "tipoSangre", "discapacidad", "medicacion", "alergias", "contactoEmergencia",
+  "tipoSangre", "discapacidad", "medicacion", "alergias",
 ];
 
 const FORM_CATEGORIES = [
   {
     title: "Datos Personales",
-    fields: ["nombres", "edad", "genero", "localidad"],
+    fields: ["nombres", "edad", "genero", "localidad", "domicilio", "peso", "estatura"],
   },
   {
     title: "Métricas Físicas",
@@ -52,7 +61,7 @@ const FORM_CATEGORIES = [
   },
   {
     title: "Información Médica",
-    fields: ["discapacidad", "medicacion", "alergias", "contactoEmergencia"],
+    fields: ["discapacidad", "medicacion", "alergias", "nombreContactoEmergencia", "contactoEmergencia", "parentesco"],
   },
 ];
 
@@ -60,14 +69,17 @@ const FIELD_LABELS: Record<string, string> = {
   nombres: "Nombre Completo",
   edad: "Edad (años)",
   genero: "Género",
-  localidad: "Localidad / País",
+  localidad: "País",
+  domicilio: "Domicilio Completo",
   peso: "Peso (kg)",
   estatura: "Estatura (cm)",
   tipoSangre: "Tipo de Sangre",
   discapacidad: "Discapacidad",
   medicacion: "Medicación",
   alergias: "Alergias",
-  contactoEmergencia: "Contacto de Emergencia",
+  nombreContactoEmergencia: "Nombre del Contacto de Emergencia",
+  contactoEmergencia: "Teléfono del Contacto de Emergencia",
+  parentesco: "Parentesco",
 };
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -111,19 +123,23 @@ function validateProfile(p: PatientProfile): string {
 const VOICE_FIELDS = [
   { label: "Nombre completo", emoji: "👤" },
   { label: "Edad", emoji: "🎂" },
-  { label: "Género", emoji: "⚧" },
-  { label: "Localidad / País donde vives", emoji: "🌍" },
-  { label: "Peso en kg", emoji: "⚖️" },
+  { label: "Tu género (hombre, mujer u otro)", emoji: "⚧️" },
+  { label: "País o localidad de residencia", emoji: "🌎" },
+  { label: "Tu domicilio completo", emoji: "🏠" },
+  { label: "Tu peso en kilogramos", emoji: "⚖️" },
   { label: "Estatura en cm", emoji: "📏" },
   { label: "Tipo de sangre (opcional)", emoji: "🩸" },
   { label: "Discapacidad (opcional)", emoji: "♿" },
   { label: "Medicación (opcional)", emoji: "💊" },
   { label: "Alergias (opcional)", emoji: "🌿" },
-  { label: "Contacto de emergencia (opcional)", emoji: "📞" },
+  { label: "Número de contacto de emergencia", emoji: "📞" },
+  { label: "Nombre del contacto de emergencia", emoji: "👤" },
+  { label: "Parentesco del contacto", emoji: "🤝" },
 ];
 
 
 export default function CapturaDatosPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<PatientProfile>(EMPTY_PROFILE);
   const [isEditing, setIsEditing] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -150,6 +166,35 @@ export default function CapturaDatosPage() {
   const introTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [apiNationalities, setApiNationalities] = useState<{name: string, code: string}[]>([]);
   const [showNationalityList, setShowNationalityList] = useState(false);
+  const nationalityListRef = useRef<HTMLDivElement>(null);
+
+  // Atajo de teclado para buscar países por letra
+  useEffect(() => {
+    if (!showNationalityList) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorar si es una tecla de control o combinaciones
+      if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return;
+      
+      const char = e.key.toLowerCase();
+      const index = apiNationalities.findIndex(n => 
+        n.name.toLowerCase().startsWith(char)
+      );
+
+      if (index !== -1 && nationalityListRef.current) {
+        const item = nationalityListRef.current.children[index] as HTMLElement;
+        if (item) {
+          nationalityListRef.current.scrollTo({
+            top: item.offsetTop,
+            behavior: "smooth"
+          });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showNationalityList, apiNationalities]);
 
   useEffect(() => {
     async function fetchNationalities() {
@@ -178,7 +223,12 @@ export default function CapturaDatosPage() {
   }, []);
 
   const updateField = (field: string, value: string) => {
-    setProfile(prev => ({ ...prev, [field]: value }));
+    let sanitizedValue = value;
+    if (field === "contactoEmergencia") {
+      sanitizedValue = value.replace(/\D/g, "");
+    }
+    
+    setProfile(prev => ({ ...prev, [field]: sanitizedValue }));
     setLastUpdatedFields(prev => {
       const next = new Set(prev);
       next.add(field);
@@ -212,7 +262,13 @@ export default function CapturaDatosPage() {
     setProfile(normalized);
     setSavedProfile(normalized);
     setIsEditing(false);
-    showToast("✅ Perfil médico guardado correctamente.", "success");
+    showToast("✅ Tu perfil ha sido guardado con éxito.", "success");
+    setIsEditing(false);
+    
+    // Redirigir a la landing page
+    setTimeout(() => {
+      router.push("/");
+    }, 1500);
   };
 
   const clearAllData = () => {
@@ -392,7 +448,20 @@ export default function CapturaDatosPage() {
           </div>
           <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
             <button 
-              onClick={() => { setMode("manual"); setIntroFieldCount(0); }}
+              onClick={() => { 
+                setMode("manual"); 
+                setIntroFieldCount(0);
+                // Detener síntesis de voz
+                if (typeof window !== "undefined" && window.speechSynthesis) {
+                  window.speechSynthesis.cancel();
+                }
+                // Detener reconocimiento de voz
+                const win = window as any;
+                if (win._miaRecognition) {
+                  try { win._miaRecognition.stop(); } catch (_) {}
+                }
+                setIsListening(false);
+              }}
               className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${mode === "manual" ? "bg-[#3345CC] text-white shadow-lg" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
               Teclado
@@ -431,9 +500,12 @@ export default function CapturaDatosPage() {
             }
           }}
         >
-          <div className="grid gap-8 lg:grid-cols-[380px_1fr] items-start">
-            {/* Sidebar con Resumen y Voz (Ahora a la izquierda en desktop) */}
-            <aside className="space-y-6 lg:sticky lg:top-8 lg:order-1 order-1">
+          <div className={cn(
+            "grid gap-8 items-start",
+            mode === "manual" ? "lg:grid-cols-[380px_1fr]" : "max-w-2xl mx-auto w-full"
+          )}>
+            {/* Sidebar con Resumen y Voz */}
+            <aside className={cn("space-y-6 lg:sticky lg:top-8", mode === "manual" ? "lg:order-1 order-1" : "")}>
               {/* Card de voz */}
               {mode === "voz" && (
                 <article className={`rounded-3xl border transition-all duration-500 ${
@@ -598,7 +670,10 @@ export default function CapturaDatosPage() {
                         { label: "Discapacidad", value: profile.discapacidad, color: "" },
                         { label: "Medicación", value: profile.medicacion, color: "" },
                         { label: "Alergias", value: profile.alergias, color: "" },
+                        { label: "Domicilio", value: profile.domicilio, color: "" },
                         { label: "Emergencia", value: profile.contactoEmergencia, color: "" },
+                        { label: "Nombre contacto", value: profile.nombreContactoEmergencia, color: "" },
+                        { label: "Parentesco", value: profile.parentesco, color: "" },
                       ].map(({ label, value, color }) => value ? (
                         <div key={label} className="flex justify-between items-center text-xs">
                           <span className="text-slate-400">{label}</span>
@@ -611,10 +686,11 @@ export default function CapturaDatosPage() {
               </article>
             </aside>
 
-            {/* Formulario de Datos Personales (Ahora a la derecha en desktop) */}
-            <div className="space-y-8 lg:order-2 order-2">
-              <section className="card-mia relative overflow-hidden md:p-10">
-                <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800">
+            {/* Formulario de Datos Personales (Solo visible en modo manual) */}
+            {mode === "manual" && (
+              <div className="space-y-8 lg:order-2 order-2">
+              <section className="card-mia relative md:p-10">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-t-[2rem] overflow-hidden">
                   <div className="h-full bg-[#3345CC] transition-all duration-500 ease-out" style={{ width: `${((currentStep + 1) / FORM_CATEGORIES.length) * 100}%` }} />
                 </div>
 
@@ -631,7 +707,7 @@ export default function CapturaDatosPage() {
                     const isOptional = OPTIONAL_FIELDS.includes(field as keyof PatientProfile);
                     const isUpdated = lastUpdatedFields.has(field);
                     return (
-                    <div key={field} className={`space-y-2 transition-all duration-500 ${isUpdated ? "ring-2 ring-emerald-400 rounded-xl" : ""}`}>
+                    <div key={field} className="space-y-2 transition-all duration-500">
                       <label className="text-xs font-bold text-slate-500 ml-1 flex items-center gap-1">
                         {FIELD_LABELS[field]}
                         {!isOptional && <span className="text-red-500">*</span>}
@@ -639,7 +715,7 @@ export default function CapturaDatosPage() {
                       </label>
                       <div className="relative">
                         {field === "genero" ? (
-                          <select value={profile.genero} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className="input-mia">
+                          <select value={profile.genero} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400")}>
                             <option value="">Seleccionar...</option>
                             <option value="hombre">Hombre</option>
                             <option value="mujer">Mujer</option>
@@ -652,15 +728,18 @@ export default function CapturaDatosPage() {
                               type="button"
                               onClick={() => isEditing && setShowNationalityList(!showNationalityList)}
                               disabled={!isEditing}
-                              className="input-mia flex items-center justify-between text-left w-full"
+                              className={cn("input-mia flex items-center justify-between text-left w-full", isUpdated && "ring-2 ring-emerald-400")}
                             >
-                              <span>{profile.localidad || "Seleccionar pa\u00eds / localidad..."}</span>
+                              <span>{profile.localidad || "Seleccionar pa\u00eds"}</span>
                               <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                               </svg>
                             </button>
                             {showNationalityList && (
-                              <div className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl">
+                              <div 
+                                ref={nationalityListRef}
+                                className="absolute z-50 mt-2 w-full max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl"
+                              >
                                 {apiNationalities.length > 0 ? apiNationalities.map(n => (
                                   <button
                                     key={n.name}
@@ -668,7 +747,11 @@ export default function CapturaDatosPage() {
                                     className="w-full px-4 py-3 text-sm text-left hover:bg-slate-100 dark:hover:bg-white/5 flex items-center gap-3 transition-colors"
                                     onClick={() => { updateField("localidad", n.name); setShowNationalityList(false); }}
                                   >
-                                    <img src={`https://flagcdn.com/w40/${n.code}.png`} alt={n.name} className="w-5 h-3.5 rounded-sm object-cover flex-shrink-0" />
+                                    <img 
+                                      src={`https://flagcdn.com/w80/${n.code}.png`} 
+                                      alt={n.name} 
+                                      className="w-7 h-5 rounded-[2px] object-cover flex-shrink-0 shadow-[0_0_2px_rgba(0,0,0,0.1)]" 
+                                    />
                                     <span>{n.name}</span>
                                   </button>
                                 )) : (
@@ -678,20 +761,44 @@ export default function CapturaDatosPage() {
                             )}
                           </div>
                         ) : field === "tipoSangre" ? (
-                          <select value={profile.tipoSangre} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className="input-mia">
+                          <select value={profile.tipoSangre} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400")}>
                             <option value="">Sin especificar</option>
                             {BLOOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                           </select>
+                        ) : field === "parentesco" ? (
+                          <select value={profile.parentesco} onChange={(e) => updateField(field, e.target.value)} disabled={!isEditing} className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400")}>
+                            <option value="">Seleccionar...</option>
+                            <option value="padre">Padre</option>
+                            <option value="madre">Madre</option>
+                            <option value="tutor">Tutor</option>
+                            <option value="abuelo">Abuelo</option>
+                            <option value="abuela">Abuela</option>
+                            <option value="hermano/a">Hermano/a</option>
+                            <option value="conyuge">Cónyuge / Pareja</option>
+                            <option value="amigo/a">Amigo/a</option>
+                            <option value="otro">Otro</option>
+                          </select>
                         ) : (
-                          <input
-                            type={field === "edad" || field === "peso" || field === "estatura" ? "number" : "text"}
-                            inputMode={field === "contactoEmergencia" ? "tel" : undefined}
-                            value={profile[field as keyof PatientProfile] ?? ""}
-                            onChange={(e) => updateField(field, e.target.value)}
-                            disabled={!isEditing}
-                            placeholder={isOptional ? `${FIELD_LABELS[field]} (opcional)` : FIELD_LABELS[field]}
-                            className="input-mia"
-                          />
+                          <div className="relative">
+                            <input
+                              type={field === "edad" || field === "peso" || field === "estatura" ? "number" : "text"}
+                              inputMode={field === "contactoEmergencia" ? "tel" : undefined}
+                              value={profile[field as keyof PatientProfile] ?? ""}
+                              onChange={(e) => updateField(field, e.target.value)}
+                              disabled={!isEditing}
+                              placeholder={isOptional ? `${FIELD_LABELS[field]} (opcional)` : FIELD_LABELS[field]}
+                              className={cn("input-mia", isUpdated && "ring-2 ring-emerald-400", isOptional && "pr-24")}
+                            />
+                            {isOptional && isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => updateField(field, "Ninguno")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-100 dark:bg-white/10 hover:bg-[#3345CC]/10 hover:text-[#3345CC] text-[10px] font-bold text-slate-500 rounded-lg transition-all"
+                              >
+                                Ninguno
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -700,9 +807,24 @@ export default function CapturaDatosPage() {
                 </div>
               </section>
             </div>
+            )}
           </div>
-          <div className="pt-8 border-t border-slate-100 dark:border-white/5">
+          <div className={cn("pt-8 border-t border-slate-100 dark:border-white/5", mode === "voz" && "hidden")}>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex gap-6 items-center justify-center w-full sm:w-auto">
+                <button 
+                  type="button" 
+                  onClick={clearAllData} 
+                  className="flex items-center gap-2 text-sm font-bold text-red-500/60 hover:text-red-600 transition-colors py-2 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Limpiar todo
+                </button>
+                {!isEditing && <button type="button" onClick={editSavedData} className="text-sm font-bold text-slate-400 hover:text-[#3345CC] py-2">Editar Perfil</button>}
+              </div>
+
               <div className="flex gap-3 w-full sm:w-auto">
                 {currentStep > 0 && (
                   <button type="button" onClick={() => setCurrentStep(prev => prev - 1)} className="px-6 py-4 bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-bold text-sm">
@@ -716,10 +838,6 @@ export default function CapturaDatosPage() {
                 >
                   {currentStep === FORM_CATEGORIES.length - 1 ? "Finalizar y Guardar" : "Siguiente Paso"}
                 </button>
-              </div>
-              <div className="flex gap-6 items-center justify-center w-full sm:w-auto">
-                {!isEditing && <button type="button" onClick={editSavedData} className="text-sm font-bold text-slate-400 hover:text-[#3345CC] py-2">Editar Perfil</button>}
-                <button type="button" onClick={clearAllData} className="text-sm font-bold text-slate-300 hover:text-red-500 py-2">Limpiar todo</button>
               </div>
             </div>
           </div>

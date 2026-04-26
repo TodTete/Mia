@@ -17,7 +17,8 @@ import {
   ExclamationTriangleIcon, 
   HeartIcon, 
   BookOpenIcon, 
-  BeakerIcon 
+  BeakerIcon,
+  MoonIcon
 } from "@heroicons/react/24/outline";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -92,11 +93,11 @@ const supportViews = [
     color: "text-indigo-500 dark:text-indigo-400"
   },
   {
-    name: "Función de diagnóstico",
-    href: "/vistas/diagnostico",
-    focus: "Registro del padecimiento y medicamentos a tomar.",
-    icon: BeakerIcon,
-    color: "text-teal-500 dark:text-teal-400"
+    name: "Horario de sueño",
+    href: "/vistas/horario-sueno",
+    focus: "Monitoreo de descanso y patrones nocturnos.",
+    icon: MoonIcon,
+    color: "text-indigo-500 dark:text-indigo-400"
   },
 ];
 
@@ -184,6 +185,29 @@ export default function Home() {
                 {item.name}
               </Link>
             ))}
+
+            <div className="relative group">
+              <button className="px-4 py-2 rounded-full text-sm font-bold text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface transition-all flex items-center gap-1">
+                Seguimiento y Apoyo
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <div className="absolute top-full right-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                <div className="w-64 bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden p-2 flex flex-col gap-1">
+                  {supportViews.map((view) => (
+                    <Link
+                      key={view.href}
+                      href={view.href}
+                      className="px-4 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 transition-colors flex items-center gap-3"
+                    >
+                      <view.icon className={`w-5 h-5 ${view.color}`} />
+                      {view.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </nav>
         </div>
 
@@ -214,7 +238,6 @@ export default function Home() {
             <div className="relative w-full h-full group">
               <Image 
                 src="/mia_ai_medical_assistant_1777163443521.png" 
-                alt="Futuristic Medical AI" 
                 fill
                 className="object-cover opacity-80 dark:opacity-50 transition-opacity duration-1000 will-change-transform"
                 priority
@@ -235,18 +258,47 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative z-20 p-10 md:p-20 max-w-4xl space-y-10">
+          <motion.div 
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.15, delayChildren: 0.4 }
+              }
+            }}
+            initial="hidden"
+            animate="show"
+            className="relative z-20 p-10 md:p-20 max-w-4xl space-y-10"
+          >
             <div className="space-y-4">
-              <h1 className="text-6xl md:text-8xl font-black tracking-[ -0.05em] leading-[0.85] font-space-grotesk italic">
+              <motion.h1 
+                variants={{
+                  hidden: { opacity: 0, y: 40 },
+                  show: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
+                }}
+                className="text-6xl md:text-8xl font-black tracking-[ -0.05em] leading-[0.85] font-space-grotesk italic"
+              >
                 TU SALUD. <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D92626] to-[#001970]">INTELIGENTE.</span>
-              </h1>
-              <p className="text-xl md:text-2xl text-on-surface-variant leading-relaxed font-manrope max-w-2xl font-medium opacity-80">
+              </motion.h1>
+              <motion.p 
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  show: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
+                }}
+                className="text-xl md:text-2xl text-on-surface-variant leading-relaxed font-manrope max-w-2xl font-medium opacity-80"
+              >
                 La evolución del bienestar digital. Mia fusiona biometría avanzada con IA predictiva para transformar tu vida hoy.
-              </p>
+              </motion.p>
             </div>
 
-            <div className="flex flex-wrap gap-6 pt-6">
+            <motion.div 
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }
+              }}
+              className="flex flex-wrap gap-6 pt-6"
+            >
               <Link href="/vistas/captura-datos" className={cn(buttonVariants({ size: "lg" }), "flex items-center gap-3 rounded-2xl px-10 h-16 bg-[#001970] hover:bg-[#000d4d] text-white font-black text-lg shadow-2xl shadow-[#001970]/30 transition-all hover:scale-105 active:scale-95 group border-0")}>
                 INICIAR ESCANEO
                 <span className="text-2xl group-hover:translate-x-2 transition-transform">→</span>
@@ -254,8 +306,8 @@ export default function Home() {
               <Link href="/vistas/avances" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-2xl px-10 h-16 border-2 border-on-surface/20 hover:bg-on-surface/5 font-black text-lg transition-all backdrop-blur-xl")}>
                 HISTORIAL BIO
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </motion.section>
 
         {/* Simplified Background Layer */}
@@ -273,7 +325,7 @@ export default function Home() {
         >
           <div className="flex items-end justify-between px-6 border-l-8 border-primary py-2">
             <div className="space-y-1">
-              <h2 className="text-4xl font-black font-space-grotesk tracking-tighter uppercase italic">Módulos Core</h2>
+              <h2 className="text-4xl font-black font-space-grotesk tracking-tighter uppercase italic">Módulos</h2>
               <p className="text-on-surface-variant text-sm font-bold tracking-widest uppercase opacity-60">Arquitectura de captura y acceso</p>
             </div>
           </div>
@@ -282,16 +334,15 @@ export default function Home() {
             {teamViews.map((view, i) => (
               <motion.div
                 key={view.href}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
-                whileHover={{ y: -15, scale: 1.02 }}
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{ delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -10, scale: 1.02 }}
                 className="relative"
               >
-                <Link
-                  href={view.href}
-                  className="group block bg-white/5 dark:bg-white/[0.02] backdrop-blur-2xl rounded-[2.5rem] p-10 h-full border border-white/10 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/20"
+                <div
+                  className="group block bg-white/5 dark:bg-white/[0.02] backdrop-blur-2xl rounded-[2.5rem] p-10 h-full border border-white/10 hover:border-primary/50 transition-all duration-500 shadow-xl hover:shadow-primary/20 cursor-default"
                 >
                   <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-on-surface/10 to-transparent flex items-center justify-center mb-10 group-hover:rotate-[15deg] group-hover:scale-125 transition-all duration-500 ${view.color}`}>
                     <view.icon className="w-9 h-9" />
@@ -307,7 +358,7 @@ export default function Home() {
                   <div className="absolute top-8 right-10 text-6xl font-black text-white/10 italic group-hover:text-white/30 transition-colors">
                     0{i + 1}
                   </div>
-                </Link>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -332,10 +383,10 @@ export default function Home() {
               {supportViews.map((view, i) => (
                 <motion.div
                   key={view.href}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Link
                     href={view.href}
@@ -346,7 +397,7 @@ export default function Home() {
                         <view.icon className="w-7 h-7" />
                       </div>
                       <div className="text-[10px] font-black tracking-[0.3em] uppercase text-on-surface-variant/40 group-hover:text-primary transition-colors">
-                        MÓDULO: {view.href.split('/').pop()}
+                        {view.href.split('/').pop()?.replace('-', ' ')}
                       </div>
                     </div>
                     <h3 className="text-xl font-bold font-space-grotesk mb-3 tracking-tight group-hover:text-primary transition-colors">
@@ -410,7 +461,7 @@ export default function Home() {
             <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
               <HeartIcon className="w-8 h-8 text-primary animate-pulse" />
             </div>
-            <h3 className="text-xl font-bold font-public-sans mb-4">Estado del Sistema</h3>
+            <h3 className="text-xl font-bold font-public-sans mb-4">Estado del Paciente</h3>
             <div className="space-y-2 w-full">
               <div className="flex justify-between text-xs">
                 <span>Precisión de Datos</span>
