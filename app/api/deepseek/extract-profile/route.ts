@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
 type PatientProfile = {
-  nombre: string;
+  nombres: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
   edad: string;
   peso: string;
   estatura: string;
@@ -15,7 +17,9 @@ type PatientProfile = {
 };
 
 const EMPTY_PROFILE: PatientProfile = {
-  nombre: "",
+  nombres: "",
+  apellidoPaterno: "",
+  apellidoMaterno: "",
   edad: "",
   peso: "",
   estatura: "",
@@ -95,7 +99,8 @@ export async function POST(req: Request) {
     const prompt = [
       "Extrae datos de paciente desde una conversación en español.",
       "Devuelve SOLO JSON.",
-      "Campos: nombre, edad, peso, estatura, genero (hombre, mujer, otro, prefiero no decir), localidad (país), tipoSangre, discapacidad, medicacion, alergias, contactoEmergencia.",
+      "Campos: nombres, apellidoPaterno, apellidoMaterno, edad, peso, estatura, genero (hombre, mujer, otro, prefiero no decir), nacionalidad, tipoSangre, discapacidad, medicacion, alergias, contactoEmergencia.",
+      "Importante: 'nombres' puede incluir dos nombres separados por espacio.",
       "Si no hay dato, usa cadena vacía.",
       `Contexto actual: ${JSON.stringify(currentProfile)}`,
       `Texto: ${transcript}`,

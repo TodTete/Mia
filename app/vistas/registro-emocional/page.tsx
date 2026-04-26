@@ -1,4 +1,4 @@
-"use client";
+git"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -34,6 +34,7 @@ import {
   ChartContainer, 
   type ChartConfig 
 } from "@/components/ui/chart";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 
 export default function RegistroEmocionalPage() {
@@ -86,6 +87,7 @@ export default function RegistroEmocionalPage() {
           <h1 className="text-lg font-semibold tracking-tight text-primary font-public-sans">Registro Emocional</h1>
         </div>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <div className="w-10 h-10 rounded-full overflow-hidden border border-on-surface/20">
             <img 
               alt="User Profile" 
