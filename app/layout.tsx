@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PremiumNav } from "@/components/ui/premium-nav";
 import { AuthGuard } from "@/components/auth-guard";
+import { Footer } from "@/components/ui/footer";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 const publicSans = Public_Sans({subsets:['latin'],variable:'--font-public-sans'});
@@ -63,7 +64,7 @@ export default function RootLayout({
         spaceGrotesk.variable
       )}
     >
-      <body className="min-h-full font-manrope bg-slate-50 dark:bg-black text-black dark:text-white transition-colors duration-300">
+      <body className="min-h-screen flex flex-col font-manrope bg-slate-50 dark:bg-black text-black dark:text-white transition-colors duration-300">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -71,7 +72,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthGuard>
-            {children}
+            <div className="flex-1 flex flex-col">
+              {children}
+              <Footer />
+            </div>
             <PremiumNav />
           </AuthGuard>
         </ThemeProvider>

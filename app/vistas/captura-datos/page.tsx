@@ -378,6 +378,11 @@ export default function CapturaDatosPage() {
           <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl leading-relaxed">
             Organiza tu historia clínica con la ayuda de <span className="text-blue-600 font-bold">Mia AI</span>.
           </p>
+          
+          <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full w-fit">
+            <ShieldCheckIcon className="w-3.5 h-3.5" />
+            SUS DATOS SON PRIVADOS: NO SE RECABAN EN SERVIDORES EXTERNOS Y SE ALMACENAN LOCALMENTE.
+          </div>
         </section>
 
         {/* Mode Selector - Floating Style */}
@@ -509,6 +514,23 @@ export default function CapturaDatosPage() {
                                 </div>
                               )}
                             </div>
+                          ) : field === "tipoSangre" ? (
+                            <select 
+                              value={profile.tipoSangre} 
+                              onChange={(e) => updateField(field, e.target.value)}
+                              disabled={!isEditing}
+                              className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 text-sm outline-none focus:border-blue-600 transition-colors disabled:opacity-50"
+                            >
+                              <option value="">Seleccionar...</option>
+                              <option value="O+">O+</option>
+                              <option value="O-">O-</option>
+                              <option value="A+">A+</option>
+                              <option value="A-">A-</option>
+                              <option value="B+">B+</option>
+                              <option value="B-">B-</option>
+                              <option value="AB+">AB+</option>
+                              <option value="AB-">AB-</option>
+                            </select>
                           ) : (
                             <input 
                               type="text"
