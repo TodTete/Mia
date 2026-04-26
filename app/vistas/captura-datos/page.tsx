@@ -25,6 +25,7 @@ interface PatientProfile {
   medicacion: string;
   alergias: string;
   contactoEmergencia: string;
+  nombreContactoEmergencia: string;
 }
 
 const EMPTY_PROFILE: PatientProfile = {
@@ -39,6 +40,7 @@ const EMPTY_PROFILE: PatientProfile = {
   medicacion: "",
   alergias: "",
   contactoEmergencia: "",
+  nombreContactoEmergencia: "",
 };
 
 const REQUIRED_FIELDS: (keyof PatientProfile)[] = [
@@ -46,7 +48,7 @@ const REQUIRED_FIELDS: (keyof PatientProfile)[] = [
 ];
 
 const OPTIONAL_FIELDS: (keyof PatientProfile)[] = [
-  "tipoSangre", "discapacidad", "medicacion", "alergias", "contactoEmergencia",
+  "tipoSangre", "discapacidad", "medicacion", "alergias", "contactoEmergencia", "nombreContactoEmergencia",
 ];
 
 const FORM_CATEGORIES = [
@@ -62,7 +64,7 @@ const FORM_CATEGORIES = [
   },
   {
     title: "Información Médica",
-    fields: ["discapacidad", "medicacion", "alergias", "contactoEmergencia"],
+    fields: ["discapacidad", "medicacion", "alergias", "nombreContactoEmergencia", "contactoEmergencia"],
     icon: HeartIcon,
   },
 ];
@@ -78,7 +80,8 @@ const FIELD_LABELS: Record<string, string> = {
   discapacidad: "Discapacidad",
   medicacion: "Medicación",
   alergias: "Alergias",
-  contactoEmergencia: "Contacto de Emergencia",
+  nombreContactoEmergencia: "Nombre de Contacto",
+  contactoEmergencia: "Tel. Contacto de Emergencia",
 };
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
@@ -432,10 +435,6 @@ export default function CapturaDatosPage() {
     setIsListening(false);
   };
 
-  const startInterview = () => {
-    showToast("Función de Entrevista IA en desarrollo", "info");
-  };
-
   const replayVoiceCapture = () => {
     setTranscript("");
     fullTranscriptRef.current = "";
@@ -479,14 +478,7 @@ export default function CapturaDatosPage() {
               className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${mode === "voz" ? "bg-[#3345CC] text-white shadow-lg shadow-[#3345CC]/20 scale-105" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"}`}
             >
               <div className={`w-2 h-2 rounded-full ${isListening ? "bg-red-400 animate-ping" : (mode === "voz" ? "bg-emerald-400 animate-pulse" : "bg-slate-400")}`} />
-              🎙️ Voz
-            </button>
-            <button 
-              onClick={startInterview}
-              className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 text-emerald-500 hover:bg-emerald-500/5 group`}
-            >
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse group-hover:scale-125 transition-transform" />
-              ✨ Entrevista IA
+              🎙️ Voz / IA
             </button>
           </div>
         </section>
@@ -748,10 +740,10 @@ export default function CapturaDatosPage() {
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentStep}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
                     className="grid gap-8 md:grid-cols-2 p-6 bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-white/5"
                   >
                   {FORM_CATEGORIES[currentStep].fields.map((field) => {
