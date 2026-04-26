@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { PremiumNav } from "@/components/ui/premium-nav";
 import { AuthGuard } from "@/components/auth-guard";
 import { Footer } from "@/components/ui/footer";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 const publicSans = Public_Sans({subsets:['latin'],variable:'--font-public-sans'});
@@ -78,6 +79,7 @@ export default function RootLayout({
               <Footer />
             </div>
             <PremiumNav />
+            <PWAInstallPrompt />
           </AuthGuard>
         </ThemeProvider>
       </body>

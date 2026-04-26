@@ -21,10 +21,15 @@ import {
   AlertCircle,
   Accessibility,
   ArrowLeft,
+  Trash2,
+  X,
+  ShieldAlert,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
 import { ViewTutorialModal } from "@/components/ui/view-tutorial-modal";
+import { motion, AnimatePresence } from "framer-motion";
+import { remove } from "firebase/database";
 
 const STORAGE_KEY = "mia-profile-v1";
 
@@ -47,6 +52,8 @@ export default function PerfilPage() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     // Load local profile
@@ -76,6 +83,20 @@ export default function PerfilPage() {
   }, []);
 
   const handleLogout = async () => {
+    await signOut(auth);
+    router.push("/vistas/login");
+  };
+
+  const handleDeleteData = async () => {
+    if (user) {
+      // Clear Firebase data
+      await remove(ref(db, `users/${user.uid}`));
+    }
+    // Clear localStorage
+    localStorage.clear();
+    setProfile(null);
+    setShowDeleteConfirm(false);
+    // Optionally logout too
     await signOut(auth);
     router.push("/vistas/login");
   };
@@ -111,7 +132,7 @@ export default function PerfilPage() {
     : [];
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20">
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pt-24 pb-20 transition-colors duration-500">
       <ViewTutorialModal 
         viewId="perfil"
         title="Tu Perfil Médico"
@@ -235,7 +256,7 @@ export default function PerfilPage() {
             </Link>
           ) : (
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="flex w-full items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-white/5 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
             >
               <div className="flex items-center gap-3">
@@ -247,16 +268,104 @@ export default function PerfilPage() {
               <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
             </button>
           )}
+
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="flex w-full items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-white/5 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-semibold text-red-600 dark:text-red-400">Borrar mis datos</span>
+            </div>
+            <ChevronRight className="h-5 w-5 text-slate-300 dark:text-white/20" />
+          </button>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-2 text-sm text-slate-400 pt-4">
+        <div className="flex items-center justify-center gap-2 text-sm text-slate-400 pt-4 pb-12">
           <div className="relative h-4 w-4 overflow-hidden opacity-50">
             <Image src="/logo.png" alt="" fill sizes="16px" className="object-contain" />
           </div>
           <span>MIA v0.1.0</span>
         </div>
       </div>
+
+      {/* Confirmation Modals */}
+      <AnimatePresence>
+        {/* Logout Confirmation */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10"
+            >
+              <div className="p-8 text-center">
+                <div className="mx-auto w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mb-6">
+                  <LogOut className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">¿Cerrar sesión?</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
+                  Tendrás que volver a ingresar tus credenciales para acceder a tu historial de salud.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 hover:bg-red-700 transition-all"
+                  >
+                    Confirmar Salida
+                  </button>
+                  <button
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Delete Data Confirmation */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10"
+            >
+              <div className="p-8 text-center">
+                <div className="mx-auto w-16 h-16 bg-red-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-red-500/40">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">¿Borrar todos tus datos?</h3>
+                <p className="text-sm text-on-surface-variant mb-8">
+                  Esta acción es <span className="font-bold text-red-600">irreversible</span>. Se eliminará tu historial, padecimientos y configuración local y en la nube.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleDeleteData}
+                    className="w-full py-4 bg-red-600 text-white font-bold rounded-2xl shadow-lg shadow-red-500/20 hover:bg-red-700 transition-all"
+                  >
+                    Borrar Permanentemente
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  >
+                    Mantener mis datos
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
