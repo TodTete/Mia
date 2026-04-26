@@ -215,4 +215,14 @@
   .input-mia {
     @apply w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black px-4 py-3 text-sm text-slate-900 dark:text-white outline-none transition-all duration-300 focus:ring-2 focus:ring-[#3345CC]/20 focus:border-[#3345CC];
   }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 dark:bg-white/10 rounded-full hover:bg-slate-300 dark:hover:bg-white/20;
+  }
 }

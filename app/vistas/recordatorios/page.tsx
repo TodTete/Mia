@@ -1004,14 +1004,15 @@ export default function RecordatoriosPage() {
       {/* Medicine Info Modal */}
       {infoModalMed && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setInfoModalMed(null)}
         >
           <div 
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[32px] bg-white shadow-2xl animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md h-auto max-h-[85vh] sm:max-h-[600px] flex flex-col rounded-[32px] bg-white dark:bg-zinc-900 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative h-28 sm:h-32 bg-[#3649cc] p-6 sm:p-8">
+            {/* Modal Header - Fixed */}
+            <div className="relative h-28 sm:h-32 bg-[#3649cc] p-6 sm:p-8 shrink-0">
               <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-white/20 text-white backdrop-blur-md">
                 <Info className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
@@ -1021,15 +1022,16 @@ export default function RecordatoriosPage() {
               >
                 <X className="h-4 w-4" />
               </button>
-              <div className="absolute -bottom-5 left-6 sm:left-8 rounded-xl bg-white px-3 py-1.5 shadow-lg border border-slate-50">
-                <h4 className="text-[10px] sm:text-xs font-bold text-[#3649cc] uppercase tracking-wider">Información Médica</h4>
+              <div className="absolute -bottom-5 left-6 sm:left-8 rounded-xl bg-white dark:bg-zinc-800 px-3 py-1.5 shadow-lg border border-slate-50 dark:border-white/5">
+                <h4 className="text-[10px] sm:text-xs font-bold text-[#3649cc] dark:text-indigo-400 uppercase tracking-wider">Información Médica</h4>
               </div>
             </div>
             
-            <div className="p-6 sm:p-8 pt-8 sm:pt-10">
+            {/* Modal Body - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 pt-10 sm:pt-12 custom-scrollbar">
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">{infoModalMed.name}</h3>
               
-              <div className="min-h-[100px] text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base">
+              <div className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm sm:text-base">
                 {loadingInfo ? (
                   <div className="flex flex-col items-center justify-center py-10 gap-3">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#3649cc] border-t-transparent"></div>
@@ -1037,19 +1039,20 @@ export default function RecordatoriosPage() {
                   </div>
                 ) : (
                   <div className="prose prose-slate dark:prose-invert max-w-none whitespace-pre-line">
-                    {medInfoData}
+                    {medInfoData || "Cargando información..."}
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="mt-8">
-                <button 
-                  onClick={() => setInfoModalMed(null)}
-                  className="w-full rounded-2xl bg-[#3649cc] dark:bg-indigo-600 py-3 sm:py-4 font-bold text-white shadow-lg shadow-[#3649cc]/30 dark:shadow-indigo-900/30 transition-all hover:bg-[#2b3aa3] dark:hover:bg-indigo-500 hover:shadow-xl active:scale-[0.98]"
-                >
-                  Entendido
-                </button>
-              </div>
+            {/* Modal Footer - Fixed */}
+            <div className="p-6 pt-2 shrink-0 border-t border-slate-50 dark:border-white/5">
+              <button 
+                onClick={() => setInfoModalMed(null)}
+                className="w-full rounded-2xl bg-[#3649cc] dark:bg-indigo-600 py-3 sm:py-4 font-bold text-white shadow-lg shadow-[#3649cc]/30 dark:shadow-indigo-900/30 transition-all hover:bg-[#2b3aa3] dark:hover:bg-indigo-500 hover:shadow-xl active:scale-[0.98]"
+              >
+                Entendido
+              </button>
             </div>
           </div>
         </div>
