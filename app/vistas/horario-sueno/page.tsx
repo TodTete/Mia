@@ -185,7 +185,7 @@ export default function HorarioSuenoPage() {
   const isOptimal = totalHours >= 7.5 && totalHours <= 9;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pb-20">
+    <main className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white pb-20 overflow-x-hidden">
       <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-6 h-16 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2">
           <Link
@@ -226,7 +226,7 @@ export default function HorarioSuenoPage() {
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Tu Horario</h2>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
               <div className="flex flex-col gap-8">
                 
                 {/* Despertar */}
@@ -242,7 +242,7 @@ export default function HorarioSuenoPage() {
                           type="time" 
                           value={wakeTime}
                           onChange={(e) => setWakeTime(e.target.value)}
-                          className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer"
+                          className="text-2xl xs:text-3xl sm:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-3 sm:px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer w-full sm:w-auto"
                         />
                         <div className="absolute -right-2 -top-2 bg-[#3649cc] dark:bg-indigo-500 text-white rounded-full p-1.5 opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none shadow-md">
                           <Edit2 className="w-3.5 h-3.5" />
@@ -269,7 +269,7 @@ export default function HorarioSuenoPage() {
                           type="time" 
                           value={bedTime}
                           onChange={(e) => setBedTime(e.target.value)}
-                          className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer"
+                          className="text-2xl xs:text-3xl sm:text-5xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors rounded-2xl px-3 sm:px-4 py-2 border border-slate-200 dark:border-white/20 outline-none focus:ring-4 focus:ring-[#3649cc]/20 cursor-pointer w-full sm:w-auto"
                         />
                         <div className="absolute -right-2 -top-2 bg-[#3649cc] dark:bg-indigo-500 text-white rounded-full p-1.5 opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none shadow-md">
                           <Edit2 className="w-3.5 h-3.5" />
@@ -301,10 +301,10 @@ export default function HorarioSuenoPage() {
             </div>
 
             {/* Tarjeta de estado */}
-            <div className={`relative overflow-hidden rounded-3xl border p-6 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all ${isOptimal ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10' : 'border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10'}`}>
+            <div className={`relative overflow-hidden rounded-3xl border p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all ${isOptimal ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10' : 'border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10'}`}>
               <div className="flex items-center gap-4 mb-2">
-                <div className={`text-6xl font-black tracking-tight ${isOptimal ? 'text-emerald-900 dark:text-emerald-400' : 'text-amber-900 dark:text-amber-400'}`}>
-                  {hours}<span className="text-3xl opacity-50 font-bold">h</span> {mins}<span className="text-3xl opacity-50 font-bold">m</span>
+                <div className={`text-4xl xs:text-5xl sm:text-6xl font-black tracking-tight ${isOptimal ? 'text-emerald-900 dark:text-emerald-400' : 'text-amber-900 dark:text-amber-400'}`}>
+                  {hours}<span className="text-2xl sm:text-3xl opacity-50 font-bold">h</span> {mins}<span className="text-2xl sm:text-3xl opacity-50 font-bold">m</span>
                 </div>
               </div>
               <p className={`text-lg font-bold mb-2 ${isOptimal ? 'text-emerald-700 dark:text-emerald-500' : 'text-amber-700 dark:text-amber-500'}`}>Tiempo en cama</p>
